@@ -31,7 +31,15 @@ export default function RootLayout({
       lang="en"
       className={cn("dark", "h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
     >
-      <body className="h-dvh overflow-hidden flex flex-col">{children}</body>
+      {/* suppressHydrationWarning: browser extensions (e.g. ColorZilla's
+          cz-shortcut-listen) mutate <body> before hydration. Only ignores
+          attribute diffs on <body> itself, not its children. */}
+      <body
+        className="h-dvh overflow-hidden flex flex-col"
+        suppressHydrationWarning
+      >
+        {children}
+      </body>
     </html>
   );
 }
