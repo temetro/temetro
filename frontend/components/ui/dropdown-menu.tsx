@@ -57,11 +57,14 @@ function DropdownMenuLabel({
   className,
   inset,
   ...props
-}: MenuPrimitive.GroupLabel.Props & {
+}: React.ComponentProps<"div"> & {
   inset?: boolean
 }) {
+  // Base UI's Menu.GroupLabel requires a surrounding Menu.Group (unlike Radix's
+  // standalone Label). These menus use the label as a plain heading, so render a
+  // <div> directly to avoid the "MenuGroupContext is missing" error.
   return (
-    <MenuPrimitive.GroupLabel
+    <div
       data-slot="dropdown-menu-label"
       data-inset={inset}
       className={cn(
