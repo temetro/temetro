@@ -3,14 +3,14 @@
 import type { ChatStatus } from "ai";
 import {
   ArrowUp,
+  Building2,
+  CalendarRange,
   ChevronDown,
-  FolderGit2,
-  GitBranch,
   Hand,
-  Laptop,
   Mic,
   Plus,
   Square,
+  Stethoscope,
 } from "lucide-react";
 import { type KeyboardEvent, useCallback, useState } from "react";
 
@@ -72,30 +72,30 @@ export function ChatInput({ onSubmit, status, onStop }: ChatInputProps) {
           className="field-sizing-content block max-h-48 min-h-16 w-full resize-none bg-transparent px-5 pt-5 pb-2 text-base text-foreground outline-none placeholder:text-muted-foreground"
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Do anything"
+          placeholder="Look up a patient — try /patient 10293"
           rows={1}
           value={value}
         />
 
         <div className="flex items-center justify-between gap-2 px-3 pb-3">
           <div className="flex min-w-0 items-center gap-1">
-            <button aria-label="Add context" className={iconButton} type="button">
+            <button aria-label="Attach file" className={iconButton} type="button">
               <Plus className="size-[18px]" />
             </button>
             <button className={pillButton} type="button">
               <Hand className="size-4" />
-              <span className="truncate">Default permissions</span>
+              <span className="truncate">Standard access</span>
               <ChevronDown className="size-4 opacity-70" />
             </button>
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
             <button className={cn(pillButton, "mr-1")} type="button">
-              <span className="font-medium text-foreground">Custom</span>
-              <span>High</span>
+              <span className="font-medium text-foreground">Clinical</span>
+              <span>Detailed</span>
               <ChevronDown className="size-4 opacity-70" />
             </button>
-            <button aria-label="Voice input" className={iconButton} type="button">
+            <button aria-label="Dictate" className={iconButton} type="button">
               <Mic className="size-[18px]" />
             </button>
             <button
@@ -123,18 +123,18 @@ export function ChatInput({ onSubmit, status, onStop }: ChatInputProps) {
       {/* Bottom (darker) card peeking out below, more rounded: context selectors */}
       <div className="flex flex-wrap items-center gap-1 px-3 pt-2.5 pb-3">
         <button className={contextPill} type="button">
-          <FolderGit2 className="size-4" />
-          <span>design-ai</span>
+          <Stethoscope className="size-4" />
+          <span>Internal Medicine</span>
           <ChevronDown className="size-3.5 opacity-70" />
         </button>
         <button className={contextPill} type="button">
-          <Laptop className="size-4" />
-          <span>Work locally</span>
+          <Building2 className="size-4" />
+          <span>Main Hospital</span>
           <ChevronDown className="size-3.5 opacity-70" />
         </button>
         <button className={contextPill} type="button">
-          <GitBranch className="size-4" />
-          <span>main</span>
+          <CalendarRange className="size-4" />
+          <span>Last 12 months</span>
           <ChevronDown className="size-3.5 opacity-70" />
         </button>
       </div>

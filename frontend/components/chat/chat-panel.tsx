@@ -15,21 +15,31 @@ import {
   MessageResponse,
 } from "@/components/ai-elements/message";
 import { ChatInput } from "@/components/chat/chat-input";
+import { PatientResult } from "@/components/chat/patient-cards";
+import { getPatient, type Patient } from "@/lib/patients";
 
-type ChatMessage = {
-  id: string;
-  role: "user" | "assistant";
-  text: string;
-};
+type ChatMessage =
+  | { id: string; role: "user"; text: string }
+  | { id: string; role: "assistant"; kind: "text"; text: string }
+  | {
+      id: string;
+      role: "assistant";
+      kind: "patient";
+      fileNumber: string;
+      status: "loading" | "ready" | "not-found";
+      patient?: Patient;
+    };
 
-const HEADING = "What should we build in design-ai?";
+const HEADING = "Which patient would you like to look up?";
+
+// Strict trigger: only `/patient <fileNumber>` pulls up records.
+const PATIENT_COMMAND = /^\/patient\s+(\S+)$/i;
 
 export function ChatPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>("ready");
 
-  // UI-only: append the user's message and a mock assistant reply.
-  const send = useCallback((text: string) => {
+  const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed) {
       return;
@@ -39,8 +49,46 @@ export function ChatPanel() {
       ...prev,
       { id: nanoid(), role: "user", text: trimmed },
     ]);
-    setStatus("submitted");
 
+    const match = trimmed.match(PATIENT_COMMAND);
+
+    // Patient lookup: append a loading card set, then fill it in once the
+    // (mock) record comes back.
+    if (match) {
+      const fileNumber = match[1];
+      const resultId = nanoid();
+      setStatus("submitted");
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: resultId,
+          role: "assistant",
+          kind: "patient",
+          fileNumber,
+          status: "loading",
+        },
+      ]);
+
+      const patient = await getPatient(fileNumber);
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.id === resultId &&
+          message.role === "assistant" &&
+          message.kind === "patient"
+            ? {
+                ...message,
+                status: patient ? "ready" : "not-found",
+                patient: patient ?? undefined,
+              }
+            : message
+        )
+      );
+      setStatus("ready");
+      return;
+    }
+
+    // UI-only: mock assistant reply for anything that isn't a command.
+    setStatus("submitted");
     window.setTimeout(() => {
       setStatus("streaming");
       setMessages((prev) => [
@@ -48,7 +96,8 @@ export function ChatPanel() {
         {
           id: nanoid(),
           role: "assistant",
-          text: `This is a **UI-only preview** of temetro. Connecting to your records and a model comes next.\n\nYou asked:\n\n> ${trimmed}`,
+          kind: "text",
+          text: `This is a **UI-only preview** of temetro. Try \`/patient 10293\` to pull up a patient's records.\n\nYou asked:\n\n> ${trimmed}`,
         },
       ]);
       window.setTimeout(() => setStatus("ready"), 250);
@@ -78,17 +127,33 @@ export function ChatPanel() {
     <div className="flex flex-1 flex-col overflow-hidden">
       <Conversation>
         <ConversationContent className="mx-auto w-full max-w-3xl">
-          {messages.map((message) => (
-            <Message from={message.role} key={message.id}>
-              <MessageContent>
-                {message.role === "assistant" ? (
-                  <MessageResponse>{message.text}</MessageResponse>
-                ) : (
-                  <span className="whitespace-pre-wrap">{message.text}</span>
-                )}
-              </MessageContent>
-            </Message>
-          ))}
+          {messages.map((message) => {
+            if (message.role === "assistant" && message.kind === "patient") {
+              return (
+                <Message from="assistant" key={message.id}>
+                  <MessageContent className="w-full">
+                    <PatientResult
+                      fileNumber={message.fileNumber}
+                      patient={message.patient}
+                      status={message.status}
+                    />
+                  </MessageContent>
+                </Message>
+              );
+            }
+
+            return (
+              <Message from={message.role} key={message.id}>
+                <MessageContent>
+                  {message.role === "user" ? (
+                    <span className="whitespace-pre-wrap">{message.text}</span>
+                  ) : (
+                    <MessageResponse>{message.text}</MessageResponse>
+                  )}
+                </MessageContent>
+              </Message>
+            );
+          })}
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
