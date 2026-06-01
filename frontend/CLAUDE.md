@@ -10,9 +10,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-`temetro` — an open-source AI chat that lets clinicians retrieve patient information in natural
-language. The product surface is currently **UI-only**: the chat appends a mock assistant reply
-(`components/chat/chat-panel.tsx`); there is no backend, model call, or patient data yet.
+`temetro` — an **open-source** clinical "AI middleman" (see the project vision in the root
+`../CLAUDE.md`). This app is the clinician-facing chat UI. It is **UI-only** — no backend, no real
+model call — but it now drives a working patient-records flow over a **mock fixture**
+(`lib/patients.ts`, in-memory, session-only):
+
+- The chat parses `/patient <file#>` (or a bare `/<file#>`) in `components/chat/chat-panel.tsx` and
+  renders the record as a horizontal row of cards (`components/chat/patient-cards.tsx`), with small
+  dependency-free trend sparklines (`components/chat/sparkline.tsx`). Each card opens a detail
+  dialog; the Summary card has an **Edit record** button.
+- Patients can be **created and edited** via the shared `components/chat/patient-form-dialog.tsx`
+  (mode `create` | `edit`). The "Add patient" pill in `chat-input.tsx` opens it; saving writes to the
+  fixture (`addPatient`) and opens/updates the record in the chat.
+- Non-command messages still get a mock assistant reply.
+
+The signing / patient-owned-storage / approval features described in the root vision are **not built
+yet** — the fixture is the swap point for a future API.
 
 ## Commands
 
@@ -45,7 +58,8 @@ trailer. See the root `../CLAUDE.md` for the project-wide per-folder commit poli
   `ChatStatus`, `FileUIPart`). Note: `@ai-sdk/react` (`useChat`) is **not installed** — chat state
   is managed with local React state.
 - **`components/sidebar-02/`** — the dashboard sidebar (`SidebarProvider` / `Sidebar` /
-  `SidebarInset` from `components/ui/sidebar.tsx`). `app-sidebar.tsx` holds the nav/teams config.
+  `SidebarInset` from `components/ui/sidebar.tsx`). `app-sidebar.tsx` holds the nav config (New chat
+  · Patients · Settings) + notifications; `team-switcher.tsx` exists but is no longer used.
 - **`components/chat/`** — the product chat UI. `chat-panel.tsx` owns message state + empty/active
   layouts; `chat-input.tsx` is a bespoke (non–ai-elements) input matching a specific design.
 

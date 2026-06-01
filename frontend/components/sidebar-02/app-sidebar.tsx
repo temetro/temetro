@@ -10,19 +10,11 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import {
-  Bookmark,
-  MessageSquare,
-  Plus,
-  Settings,
-  Users,
-} from "lucide-react";
+import { Plus, Settings, Users } from "lucide-react";
 import Image from "next/image";
-import { Logo } from "@/components/sidebar-02/logo";
 import type { Route } from "./nav-main";
 import DashboardNavigation from "@/components/sidebar-02/nav-main";
 import { NotificationsPopover } from "@/components/sidebar-02/nav-notifications";
-import { TeamSwitcher } from "@/components/sidebar-02/team-switcher";
 
 const sampleNotifications = [
   {
@@ -62,26 +54,12 @@ const dashboardRoutes: Route[] = [
     link: "#",
   },
   {
-    id: "conversations",
-    title: "Conversations",
-    icon: <MessageSquare className="size-4" />,
-    link: "#",
-  },
-  {
-    id: "saved",
-    title: "Saved",
-    icon: <Bookmark className="size-4" />,
-    link: "#",
-  },
-  {
     id: "settings",
     title: "Settings",
     icon: <Settings className="size-4" />,
     link: "/settings",
   },
 ];
-
-const teams = [{ id: "1", name: "temetro", logo: Logo, plan: "Clinic" }];
 
 export function DashboardSidebar() {
   const { state } = useSidebar();
@@ -131,7 +109,12 @@ export function DashboardSidebar() {
         <DashboardNavigation routes={dashboardRoutes} />
       </SidebarContent>
       <SidebarFooter className="px-2">
-        <TeamSwitcher teams={teams} />
+        {!isCollapsed && (
+          <div className="flex items-baseline gap-2 px-2 py-1.5">
+            <span className="font-semibold text-foreground">temetro</span>
+            <span className="text-xs text-muted-foreground">open source</span>
+          </div>
+        )}
       </SidebarFooter>
     </Sidebar>
   );
