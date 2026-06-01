@@ -32,8 +32,8 @@ type ChatMessage =
 
 const HEADING = "Which patient would you like to look up?";
 
-// Strict trigger: only `/patient <fileNumber>` pulls up records.
-const PATIENT_COMMAND = /^\/patient\s+(\S+)$/i;
+// Trigger: `/patient 10293` or just `/10293` pulls up records.
+const PATIENT_COMMAND = /^\/(?:patient\s+)?(\d+)$/i;
 
 export function ChatPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
