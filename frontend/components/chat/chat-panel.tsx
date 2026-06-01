@@ -134,6 +134,17 @@ export function ChatPanel() {
                   <MessageContent className="w-full">
                     <PatientResult
                       fileNumber={message.fileNumber}
+                      onPatientUpdated={(updated) =>
+                        setMessages((prev) =>
+                          prev.map((m) =>
+                            m.id === message.id &&
+                            m.role === "assistant" &&
+                            m.kind === "patient"
+                              ? { ...m, patient: updated, status: "ready" }
+                              : m
+                          )
+                        )
+                      }
                       patient={message.patient}
                       status={message.status}
                     />

@@ -1,6 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { Pencil } from "lucide-react";
+import { type ReactNode, useState } from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import { Sparkline } from "@/components/chat/sparkline";
 import { cn } from "@/lib/utils";
 import type { AllergySeverity, LabFlag, Patient, Trend } from "@/lib/patients";
@@ -31,6 +33,7 @@ type PatientResultProps = {
   status: "loading" | "ready" | "not-found";
   fileNumber: string;
   patient?: Patient;
+  onPatientUpdated?: (patient: Patient) => void;
 };
 
 const severityVariant: Record<AllergySeverity, BadgeVariant> = {
@@ -183,7 +186,13 @@ function ExpandableCard({
   );
 }
 
-function SummaryCard({ patient }: { patient: Patient }) {
+function SummaryCard({
+  patient,
+  onEdit,
+}: {
+  patient: Patient;
+  onEdit?: () => void;
+}) {
   const idLine = `${patient.age} · ${sexLabel[patient.sex]} · MRN ${patient.fileNumber}`;
   return (
     <ExpandableCard
@@ -233,6 +242,17 @@ function SummaryCard({ patient }: { patient: Patient }) {
           <Stat label="Open problems" value={patient.problems.length} />
         </div>
         <AlertBadges alerts={patient.alerts} />
+        <button
+          className="mt-auto flex items-center justify-center gap-1.5 rounded-2xl border border-border/60 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          onClick={(event) => {
+            event.stopPropagation();
+            onEdit?.();
+          }}
+          type="button"
+        >
+          <Pencil className="size-4" />
+          Edit record
+        </button>
       </CardContent>
     </ExpandableCard>
   );
@@ -542,7 +562,16 @@ function LoadingCards() {
   );
 }
 
-export function PatientResult({ status, fileNumber, patient }: PatientResultProps) {
+export function PatientResult({
+  status,
+  fileNumber,
+  patient,
+  onPatientUpdated,
+}: PatientResultProps) {
+  const [editOpen, setEditOpen] = useState(false);
+  // Bumped on open so the editor remounts with the latest patient data.
+  const [editKey, setEditKey] = useState(0);
+
   if (status === "not-found") {
     return (
       <Card size="sm">
@@ -561,13 +590,27 @@ export function PatientResult({ status, fileNumber, patient }: PatientResultProp
         <LoadingCards />
       ) : (
         <>
-          <SummaryCard patient={patient} />
+          <SummaryCard
+            onEdit={() => {
+              setEditKey((k) => k + 1);
+              setEditOpen(true);
+            }}
+            patient={patient}
+          />
           <VitalsCard patient={patient} />
           <LabsCard patient={patient} />
           <MedicationsCard patient={patient} />
           <ProblemsCard patient={patient} />
           <AllergiesCard patient={patient} />
           <VisitsCard patient={patient} />
+          <PatientFormDialog
+            key={editKey}
+            mode="edit"
+            onOpenChange={setEditOpen}
+            onSaved={(updated) => onPatientUpdated?.(updated)}
+            open={editOpen}
+            patient={patient}
+          />
         </>
       )}
     </div>

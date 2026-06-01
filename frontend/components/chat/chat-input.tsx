@@ -23,7 +23,7 @@ import {
   useState,
 } from "react";
 
-import { AddPatientDialog } from "@/components/chat/add-patient-dialog";
+import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -343,8 +343,9 @@ export function ChatInput({ onSubmit, status, onStop }: ChatInputProps) {
       </div>
     </form>
 
-    <AddPatientDialog
+    <PatientFormDialog
       key={addKey}
+      mode="create"
       onCreated={(fileNumber) => onSubmit(`/patient ${fileNumber}`)}
       onOpenChange={setAddOpen}
       open={addOpen}
