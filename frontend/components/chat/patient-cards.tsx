@@ -266,7 +266,7 @@ export function PatientResult({ status, fileNumber, patient }: PatientResultProp
   }
 
   return (
-    <div className="flex w-full snap-x items-start gap-4 overflow-x-auto pb-2">
+    <div className="no-scrollbar flex w-full snap-x items-stretch gap-4 overflow-x-auto pb-2">
       {status === "loading" || !patient ? (
         <LoadingCards />
       ) : (

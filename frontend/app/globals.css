@@ -85,7 +85,7 @@
 
 /* Linear-inspired dark palette: near-black canvas, #5e6ad2 indigo accent, hairline borders. */
 .dark {
-  --background: oklch(0.146 0.005 277);
+  --background: oklch(0.172 0.004 277);
   --foreground: oklch(0.98 0.002 277);
   --card: oklch(0.193 0.005 277);
   --card-foreground: oklch(0.98 0.002 277);
@@ -108,7 +108,7 @@
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --sidebar: oklch(0.165 0.005 277);
+  --sidebar: oklch(0.138 0.004 277);
   --sidebar-foreground: oklch(0.98 0.002 277);
   --sidebar-primary: oklch(0.556 0.155 277);
   --sidebar-primary-foreground: oklch(0.985 0.001 277);
