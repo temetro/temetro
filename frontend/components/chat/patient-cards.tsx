@@ -42,6 +42,9 @@ const statusVariant: Record<Patient["status"], BadgeVariant> = {
 
 const sexLabel: Record<Patient["sex"], string> = { F: "Female", M: "Male" };
 
+// Fixed width so the cards sit in a horizontal scroll row instead of squashing.
+const rowCard = "w-80 shrink-0 snap-start";
+
 function SectionLabel({ children }: { children: string }) {
   return (
     <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -52,7 +55,7 @@ function SectionLabel({ children }: { children: string }) {
 
 function SummaryCard({ patient }: { patient: Patient }) {
   return (
-    <Card size="sm">
+    <Card className={rowCard} size="sm">
       <CardHeader>
         <div className="flex items-center gap-3">
           <Avatar className="size-10">
@@ -79,7 +82,7 @@ function SummaryCard({ patient }: { patient: Patient }) {
 
 function AllergiesCard({ patient }: { patient: Patient }) {
   return (
-    <Card size="sm">
+    <Card className={rowCard} size="sm">
       <CardHeader>
         <CardTitle>Allergies & alerts</CardTitle>
       </CardHeader>
@@ -127,7 +130,7 @@ function AllergiesCard({ patient }: { patient: Patient }) {
 
 function MedicationsCard({ patient }: { patient: Patient }) {
   return (
-    <Card size="sm">
+    <Card className={rowCard} size="sm">
       <CardHeader>
         <CardTitle>Medications & problems</CardTitle>
       </CardHeader>
@@ -171,7 +174,7 @@ function VitalsCard({ patient }: { patient: Patient }) {
   ];
 
   return (
-    <Card size="sm">
+    <Card className={rowCard} size="sm">
       <CardHeader>
         <CardTitle>Vitals, labs & visits</CardTitle>
         <CardDescription>Vitals taken {vitals.takenAt}</CardDescription>
@@ -222,7 +225,7 @@ function VitalsCard({ patient }: { patient: Patient }) {
 function LoadingCards() {
   return (
     <>
-      <Card size="sm">
+      <Card className={rowCard} size="sm">
         <CardHeader>
           <div className="flex items-center gap-3">
             <Skeleton className="size-10 rounded-full" />
@@ -234,7 +237,7 @@ function LoadingCards() {
         </CardHeader>
       </Card>
       {[0, 1, 2].map((card) => (
-        <Card key={card} size="sm">
+        <Card className={rowCard} key={card} size="sm">
           <CardHeader>
             <Skeleton className="h-4 w-44" />
           </CardHeader>
@@ -263,7 +266,7 @@ export function PatientResult({ status, fileNumber, patient }: PatientResultProp
   }
 
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="flex w-full snap-x items-start gap-4 overflow-x-auto pb-2">
       {status === "loading" || !patient ? (
         <LoadingCards />
       ) : (
