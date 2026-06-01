@@ -57,7 +57,7 @@ const sexLabel: Record<Patient["sex"], string> = { F: "Female", M: "Male" };
 // Fixed width so the cards sit in a horizontal scroll row instead of squashing,
 // plus a subtle clickable affordance (they open a detail dialog).
 const rowCard =
-  "w-80 shrink-0 cursor-pointer snap-start text-left outline-none transition hover:ring-foreground/20 focus-visible:ring-2 focus-visible:ring-ring";
+  "w-80 shrink-0 cursor-pointer text-left outline-none transition hover:ring-foreground/20 focus-visible:ring-2 focus-visible:ring-ring";
 
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
@@ -480,7 +480,7 @@ function VisitsCard({ patient }: { patient: Patient }) {
 function LoadingCards() {
   return (
     <>
-      <Card className="w-80 shrink-0 snap-start" size="sm">
+      <Card className="w-80 shrink-0" size="sm">
         <CardHeader>
           <div className="flex items-center gap-3">
             <Skeleton className="size-10 rounded-full" />
@@ -497,7 +497,7 @@ function LoadingCards() {
         </CardContent>
       </Card>
       {[0, 1, 2, 3, 4, 5].map((card) => (
-        <Card className="w-80 shrink-0 snap-start" key={card} size="sm">
+        <Card className="w-80 shrink-0" key={card} size="sm">
           <CardHeader>
             <Skeleton className="h-4 w-28" />
           </CardHeader>
@@ -527,7 +527,7 @@ export function PatientResult({ status, fileNumber, patient }: PatientResultProp
   }
 
   return (
-    <div className="no-scrollbar flex w-full snap-x items-stretch gap-4 overflow-x-auto p-2">
+    <div className="no-scrollbar flex w-full items-stretch gap-4 overflow-x-auto p-2">
       {status === "loading" || !patient ? (
         <LoadingCards />
       ) : (
