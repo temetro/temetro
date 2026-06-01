@@ -7,15 +7,15 @@ import {
   SettingsCard,
   SettingsSection,
 } from "@/components/settings/settings-parts";
-import { BillingPanel } from "@/components/settings/settings-billing";
-import { PreferencesPanel } from "@/components/settings/settings-preferences";
+import { SigningPanel } from "@/components/settings/settings-billing";
+import { ProfilePanel } from "@/components/settings/settings-preferences";
 
 const TABS = [
-  "Preferences",
-  "Billing",
-  "Members",
-  "Webhooks",
-  "Custom Fields",
+  "Profile",
+  "Records",
+  "Signing",
+  "Care team",
+  "Developers",
 ] as const;
 
 type Tab = (typeof TABS)[number];
@@ -37,7 +37,7 @@ function PlaceholderPanel({
 }
 
 export function SettingsView() {
-  const [tab, setTab] = useState<Tab>("Preferences");
+  const [tab, setTab] = useState<Tab>("Profile");
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-10">
@@ -63,24 +63,24 @@ export function SettingsView() {
       </div>
 
       <div className="mt-10 space-y-12">
-        {tab === "Preferences" && <PreferencesPanel />}
-        {tab === "Billing" && <BillingPanel />}
-        {tab === "Members" && (
+        {tab === "Profile" && <ProfilePanel />}
+        {tab === "Records" && (
           <PlaceholderPanel
-            description="Invite and manage members of your organization"
-            title="Members"
+            description="How patient records are sourced, stored, and displayed"
+            title="Records"
           />
         )}
-        {tab === "Webhooks" && (
+        {tab === "Signing" && <SigningPanel />}
+        {tab === "Care team" && (
           <PlaceholderPanel
-            description="Send event notifications to your own endpoints"
-            title="Webhooks"
+            description="Clinicians with access to this workspace"
+            title="Care team"
           />
         )}
-        {tab === "Custom Fields" && (
+        {tab === "Developers" && (
           <PlaceholderPanel
-            description="Collect additional information from your customers"
-            title="Custom Fields"
+            description="Access tokens for the temetro API"
+            title="Developers"
           />
         )}
       </div>

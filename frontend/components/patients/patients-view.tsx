@@ -1,0 +1,136 @@
+"use client";
+
+import { Plus, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { listPatients, type Patient } from "@/lib/patients";
+
+type BadgeVariant = "secondary" | "destructive" | "outline";
+
+const statusVariant: Record<Patient["status"], BadgeVariant> = {
+  active: "secondary",
+  inpatient: "destructive",
+  discharged: "outline",
+};
+
+export function PatientsView() {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  // Bumped on open so the create dialog remounts with a fresh file # / form.
+  const [addKey, setAddKey] = useState(0);
+
+  const q = query.trim().toLowerCase();
+  const patients = listPatients().filter(
+    (p) => !q || p.name.toLowerCase().includes(q) || p.fileNumber.includes(q)
+  );
+
+  const open = (fileNumber: string) => router.push(`/?patient=${fileNumber}`);
+
+  return (
+    <div className="mx-auto w-full max-w-4xl px-6 py-10">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight">Patients</h1>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+            <Input
+              className="w-full pl-9 sm:w-64"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search name or MRN"
+              value={query}
+            />
+          </div>
+          <Button
+            className="rounded-3xl"
+            onClick={() => {
+              setAddKey((k) => k + 1);
+              setAddOpen(true);
+            }}
+            type="button"
+          >
+            <Plus className="size-4" />
+            Add patient
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-card/30">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-border border-b text-left text-xs text-muted-foreground uppercase">
+              <th className="px-4 py-3 font-medium">Name</th>
+              <th className="px-4 py-3 font-medium">MRN</th>
+              <th className="px-4 py-3 font-medium">Age · Sex</th>
+              <th className="px-4 py-3 font-medium">Status</th>
+              <th className="px-4 py-3 font-medium">Last seen</th>
+              <th className="px-4 py-3 font-medium">Allergies</th>
+            </tr>
+          </thead>
+          <tbody>
+            {patients.length === 0 ? (
+              <tr>
+                <td
+                  className="px-4 py-10 text-center text-muted-foreground"
+                  colSpan={6}
+                >
+                  No patients found.
+                </td>
+              </tr>
+            ) : (
+              patients.map((p) => (
+                <tr
+                  className="cursor-pointer border-border/50 border-b transition-colors last:border-0 hover:bg-accent/50"
+                  key={p.fileNumber}
+                  onClick={() => open(p.fileNumber)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      open(p.fileNumber);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <td className="px-4 py-3 font-medium text-foreground">
+                    {p.name}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {p.fileNumber}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {p.age} · {p.sex}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Badge className="capitalize" variant={statusVariant[p.status]}>
+                      {p.status}
+                    </Badge>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {p.encounters[0]?.date ?? "—"}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {p.allergies.length || "—"}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <PatientFormDialog
+        key={addKey}
+        mode="create"
+        onCreated={(fileNumber) => open(fileNumber)}
+        onOpenChange={setAddOpen}
+        open={addOpen}
+      />
+    </div>
+  );
+}

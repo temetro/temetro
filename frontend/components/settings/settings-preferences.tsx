@@ -2,7 +2,6 @@
 
 import { ChevronDown, Plus } from "lucide-react";
 
-import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,59 +11,54 @@ import {
   SettingsCard,
   SettingsSection,
   ToggleRow,
-  whiteButton,
 } from "@/components/settings/settings-parts";
 
-const customerNotifications = [
+const patientNotifications = [
   {
-    title: "Order confirmation",
-    description: "Sent when a customer completes a one-time purchase",
+    title: "New lab result",
+    description: "Sent when a new lab result is available on a patient's chart",
   },
   {
-    title: "Subscription confirmation",
-    description: "Sent when a customer starts a new subscription",
+    title: "Record updated",
+    description: "Sent when a patient's record is updated by a member of the care team",
   },
   {
-    title: "Subscription cycled",
-    description: "Sent when a subscription automatically renews",
+    title: "Approval requested",
+    description: "Sent when a signed change is awaiting the patient's approval",
   },
   {
-    title: "Trial converted",
-    description: "Sent when a trial ends and the subscription becomes paid",
+    title: "Change approved",
+    description: "Sent when a patient approves a pending change to their record",
   },
   {
-    title: "Renewal reminder",
-    description: "Sent 7 days before a subscription with a long billing cycle renews",
+    title: "New message",
+    description: "Sent when a patient or another clinician sends a message",
   },
   {
-    title: "Trial conversion reminder",
-    description: "Sent before a trial ends and converts to a paid subscription",
-  },
-  {
-    title: "Subscription updated",
-    description: "Sent when a customer changes their subscription to a different product",
+    title: "Visit scheduled",
+    description: "Sent when an upcoming visit is added to a patient's record",
   },
 ];
 
-export function PreferencesPanel() {
+export function ProfilePanel() {
   return (
     <>
-      <SettingsSection title="Organization">
+      <SettingsSection title="Clinician profile">
         <SettingsCard className="space-y-6 p-5">
           <CopyField
-            description="Unique identifier for your organization"
-            label="Identifier"
+            description="Your unique clinician identifier, used when signing records"
+            label="Clinician ID"
             value="62a5278f-91c6-4912-b711-ee1c9c2f0a73"
           />
           <CopyField
-            description="Used for Customer Portal, Transaction Statements, etc."
-            label="Organization Slug"
-            value="khalid"
+            description="Used in your public profile and the patient portal"
+            label="Handle"
+            value="dr-khalid"
           />
 
           <div className="flex items-end gap-4">
             <div className="space-y-1.5">
-              <FieldLabel>Logo</FieldLabel>
+              <FieldLabel>Avatar</FieldLabel>
               <Avatar className="size-10 rounded-xl" size="lg">
                 <AvatarFallback className="rounded-xl bg-muted text-sm font-medium">
                   K
@@ -72,55 +66,55 @@ export function PreferencesPanel() {
               </Avatar>
             </div>
             <div className="flex-1 space-y-1.5">
-              <FieldLabel required>Organization Name</FieldLabel>
-              <Input defaultValue="khalid" />
+              <FieldLabel required>Display name</FieldLabel>
+              <Input defaultValue="Dr. Khalid" />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <FieldLabel>Country</FieldLabel>
+            <FieldLabel>Specialty</FieldLabel>
             <button
               className="flex h-9 w-full items-center justify-between rounded-3xl bg-input/50 px-3 text-sm text-muted-foreground transition-colors hover:bg-input/70"
               type="button"
             >
-              Select country
+              Select specialty
               <ChevronDown className="size-4" />
             </button>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <FieldLabel required>Website</FieldLabel>
-              <Input placeholder="https://acme.com" />
+              <FieldLabel>Clinic / practice</FieldLabel>
+              <Input placeholder="e.g. Main Hospital" />
             </div>
             <div className="space-y-1.5">
-              <FieldLabel required>Support Email</FieldLabel>
-              <Input placeholder="support@acme.com" />
+              <FieldLabel required>Contact email</FieldLabel>
+              <Input placeholder="clinician@example.org" />
             </div>
           </div>
 
           <div className="space-y-2.5">
             <div className="space-y-0.5">
-              <FieldLabel>Social Media</FieldLabel>
+              <FieldLabel>Professional links</FieldLabel>
               <p className="text-xs text-muted-foreground">
-                Your personal social media links are used for identity verification. They
-                will never be shown publicly.
+                Registry or institutional profiles used to verify your identity. They are
+                never shown to patients.
               </p>
             </div>
             <Button className="rounded-lg" size="sm" variant="outline">
               <Plus className="size-4" />
-              Add Social
+              Add link
             </Button>
           </div>
         </SettingsCard>
       </SettingsSection>
 
       <SettingsSection
-        description="Emails automatically sent to customers for purchases, renewals, and other subscription lifecycle events"
-        title="Customer notifications"
+        description="Emails sent to patients about their records, results, and pending approvals"
+        title="Patient notifications"
       >
         <div className="space-y-3">
-          {customerNotifications.map((item) => (
+          {patientNotifications.map((item) => (
             <ToggleRow
               defaultChecked
               description={item.description}
@@ -132,63 +126,49 @@ export function PreferencesPanel() {
       </SettingsSection>
 
       <SettingsSection
-        description="Emails sent to members of your organization for account and product activity"
+        description="Notifications sent to you about your patients and the care team"
         title="Account notifications"
       >
         <div className="space-y-3">
           <ToggleRow
             defaultChecked
-            description="Send a notification when new orders are created"
-            title="New Orders"
+            description="Notify me when a patient approves or rejects a pending change"
+            title="Pending approvals"
           />
           <ToggleRow
             defaultChecked
-            description="Send a notification when new subscriptions are created"
-            title="New Subscriptions"
+            description="Notify me when a patient shares a record with me"
+            title="Records shared with me"
           />
         </div>
       </SettingsSection>
 
       <SettingsSection
-        description="Manage alpha & beta features for your organization"
+        description="Manage alpha & beta features for your account"
         title="Features"
       >
         <div className="space-y-3">
           <ToggleRow
-            description="Show translated checkouts to your customers"
-            title="Localized Checkout"
+            description="Write records to the patient's own device instead of your database"
+            title="Patient-owned storage (beta)"
           />
           <ToggleRow
-            description="Enable seat-based pricing for subscription products. Requires the member model to be enabled."
-            title="Seat-Based Billing"
+            description="Require a signature on every change you make to a patient record"
+            title="Require signed records"
           />
         </div>
       </SettingsSection>
 
       <SettingsSection
-        description="Manage access tokens to authenticate with the temetro API"
-        title="Developers"
-      >
-        <SettingsCard className="flex flex-col items-start gap-4 p-6">
-          <p className="text-sm text-muted-foreground">
-            You don&apos;t have any active organization access tokens.
-          </p>
-          <Button className={cn("rounded-lg", whiteButton)} size="sm">
-            Create token
-          </Button>
-        </SettingsCard>
-      </SettingsSection>
-
-      <SettingsSection
-        description="Irreversible actions for this organization"
+        description="Irreversible actions for your account"
         title="Danger Zone"
       >
         <SettingsCard className="flex items-center justify-between gap-4 p-4">
           <div className="space-y-0.5">
-            <p className="text-sm font-medium">Delete Organization</p>
+            <p className="text-sm font-medium">Delete account</p>
             <p className="text-sm text-muted-foreground">
-              Permanently delete this organization and all associated data. This action
-              cannot be undone.
+              Permanently delete your temetro account and any locally stored signing
+              keys. This action cannot be undone.
             </p>
           </div>
           <Button className="rounded-lg bg-destructive text-white hover:bg-destructive/90">

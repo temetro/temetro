@@ -2,7 +2,8 @@
 
 import { nanoid } from "nanoid";
 import type { ChatStatus } from "ai";
-import { useCallback, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   Conversation,
@@ -105,6 +106,18 @@ export function ChatPanel() {
   }, []);
 
   const handleStop = useCallback(() => setStatus("ready"), []);
+
+  // Opening a patient from the Patients page lands here as `/?patient=<file#>`;
+  // run the lookup once on arrival.
+  const searchParams = useSearchParams();
+  const requestedPatient = searchParams.get("patient");
+  const handledPatientRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (requestedPatient && handledPatientRef.current !== requestedPatient) {
+      handledPatientRef.current = requestedPatient;
+      send(`/patient ${requestedPatient}`);
+    }
+  }, [requestedPatient, send]);
 
   const promptInput = (
     <ChatInput onStop={handleStop} onSubmit={send} status={status} />

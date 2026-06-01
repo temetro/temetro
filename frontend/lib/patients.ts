@@ -261,6 +261,11 @@ const PATIENTS: Record<string, Patient> = {
 
 export const SAMPLE_FILE_NUMBERS = Object.keys(PATIENTS);
 
+// Live list of every patient in the store (includes ones added this session).
+export function listPatients(): Patient[] {
+  return Object.values(PATIENTS);
+}
+
 export async function getPatient(fileNumber: string): Promise<Patient | null> {
   // Simulate retrieval latency so the loading (skeleton) state is visible.
   await new Promise((resolve) => setTimeout(resolve, 700));

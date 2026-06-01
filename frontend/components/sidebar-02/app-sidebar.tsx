@@ -15,6 +15,7 @@ import Image from "next/image";
 import type { Route } from "./nav-main";
 import DashboardNavigation from "@/components/sidebar-02/nav-main";
 import { NotificationsPopover } from "@/components/sidebar-02/nav-notifications";
+import { NavUser } from "@/components/sidebar-02/nav-user";
 
 const sampleNotifications = [
   {
@@ -51,7 +52,7 @@ const dashboardRoutes: Route[] = [
     id: "patients",
     title: "Patients",
     icon: <Users className="size-4" />,
-    link: "#",
+    link: "/patients",
   },
   {
     id: "settings",
@@ -109,12 +110,7 @@ export function DashboardSidebar() {
         <DashboardNavigation routes={dashboardRoutes} />
       </SidebarContent>
       <SidebarFooter className="px-2">
-        {!isCollapsed && (
-          <div className="flex items-baseline gap-2 px-2 py-1.5">
-            <span className="font-semibold text-foreground">temetro</span>
-            <span className="text-xs text-muted-foreground">open source</span>
-          </div>
-        )}
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   );

@@ -4,58 +4,52 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  CopyField,
   SettingsCard,
   SettingsSection,
   whiteButton,
 } from "@/components/settings/settings-parts";
 
-export function BillingPanel() {
+export function SigningPanel() {
   return (
     <>
       <SettingsCard className="flex flex-col gap-6 p-6 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <h3 className="text-xl font-semibold tracking-tight">Early Member</h3>
+            <h3 className="text-xl font-semibold tracking-tight">Signing key</h3>
             <Badge className="bg-emerald-500/15 text-emerald-400">Active</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            For our founding community of early members.
+            Every change you make to a patient record is signed with this key, so patients
+            can verify it came from you before approving it.
           </p>
-          <Button className={cn("rounded-lg", whiteButton)}>Change plan</Button>
+          <Button className={cn("rounded-lg", whiteButton)}>Rotate key</Button>
         </div>
         <div className="sm:text-right">
-          <p className="text-3xl font-semibold tracking-tight">Free</p>
-          <p className="text-sm text-muted-foreground">
-            4.00% + $0.40 per transaction
-          </p>
+          <p className="text-3xl font-semibold tracking-tight">Ed25519</p>
+          <p className="text-sm text-muted-foreground">Created May 28, 2026</p>
         </div>
       </SettingsCard>
 
       <SettingsSection
-        action={
-          <Button className="rounded-lg" variant="secondary">
-            Add payment method
-          </Button>
-        }
-        description="Cards used to pay for your temetro subscription"
-        title="Payment methods"
+        description="The public key patients use to verify your signatures"
+        title="Signing identity"
       >
-        <SettingsCard className="flex items-center justify-center p-12">
-          <p className="text-sm text-muted-foreground">No payment methods on file</p>
+        <SettingsCard className="p-5">
+          <CopyField
+            description="Share or publish this fingerprint so patients can trust your changes"
+            label="Public key fingerprint"
+            value="ed25519:9f86 d081 884c 7d65 9a2f eaa0 c55a d015"
+          />
         </SettingsCard>
       </SettingsSection>
 
       <SettingsSection
-        action={
-          <Button className="rounded-lg" variant="secondary">
-            Edit
-          </Button>
-        }
-        description="Used on invoices for your temetro subscription"
-        title="Billing address"
+        description="Changes you've signed that are waiting on the patient's approval"
+        title="Signed records"
       >
-        <SettingsCard className="p-5">
-          <p className="text-sm">khalid</p>
+        <SettingsCard className="flex items-center justify-center p-12">
+          <p className="text-sm text-muted-foreground">No pending signatures</p>
         </SettingsCard>
       </SettingsSection>
     </>
