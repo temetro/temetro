@@ -45,6 +45,14 @@ export type Encounter = {
   summary: string;
 };
 
+// A short series for a sparkline. `points` are most-recent-last, so the
+// latest reading is points.at(-1).
+export type Trend = {
+  label: string;
+  unit: string;
+  points: number[];
+};
+
 export type Patient = {
   fileNumber: string; // MRN / file number, e.g. "10293"
   name: string;
@@ -58,7 +66,9 @@ export type Patient = {
   medications: Medication[];
   problems: Problem[];
   vitals: Vitals;
+  vitalsTrend: Trend; // headline vital plotted as a sparkline
   labs: Lab[];
+  labTrend: Trend; // headline lab plotted as a sparkline
   encounters: Encounter[];
 };
 
@@ -95,12 +105,22 @@ const PATIENTS: Record<string, Patient> = {
       spo2: "97%",
       takenAt: "May 28, 2026",
     },
+    vitalsTrend: {
+      label: "Heart rate",
+      unit: "bpm",
+      points: [72, 75, 74, 79, 83, 80, 78],
+    },
     labs: [
       { name: "HbA1c", value: "8.2 %", flag: "high", takenAt: "May 20, 2026" },
       { name: "eGFR", value: "52 mL/min", flag: "low", takenAt: "May 20, 2026" },
       { name: "Potassium", value: "4.4 mmol/L", flag: "normal", takenAt: "May 20, 2026" },
       { name: "INR", value: "2.6", flag: "normal", takenAt: "May 20, 2026" },
     ],
+    labTrend: {
+      label: "HbA1c",
+      unit: "%",
+      points: [9.4, 9.1, 8.8, 8.6, 8.2],
+    },
     encounters: [
       {
         date: "May 28, 2026",
@@ -151,12 +171,22 @@ const PATIENTS: Record<string, Patient> = {
       spo2: "92%",
       takenAt: "May 31, 2026",
     },
+    vitalsTrend: {
+      label: "Heart rate",
+      unit: "bpm",
+      points: [88, 91, 96, 99, 97, 95, 94],
+    },
     labs: [
       { name: "WBC", value: "14.8 ×10⁹/L", flag: "high", takenAt: "May 31, 2026" },
       { name: "CRP", value: "112 mg/L", flag: "critical", takenAt: "May 31, 2026" },
       { name: "Lactate", value: "1.8 mmol/L", flag: "normal", takenAt: "May 31, 2026" },
       { name: "Hemoglobin", value: "11.9 g/dL", flag: "low", takenAt: "May 31, 2026" },
     ],
+    labTrend: {
+      label: "CRP",
+      unit: "mg/L",
+      points: [38, 64, 98, 126, 112],
+    },
     encounters: [
       {
         date: "May 30, 2026",
@@ -197,11 +227,21 @@ const PATIENTS: Record<string, Patient> = {
       spo2: "99%",
       takenAt: "May 26, 2026",
     },
+    vitalsTrend: {
+      label: "Heart rate",
+      unit: "bpm",
+      points: [78, 80, 79, 83, 85, 84, 82],
+    },
     labs: [
       { name: "TSH", value: "2.1 mIU/L", flag: "normal", takenAt: "May 19, 2026" },
       { name: "Hemoglobin", value: "11.2 g/dL", flag: "low", takenAt: "May 19, 2026" },
       { name: "Fasting glucose", value: "84 mg/dL", flag: "normal", takenAt: "May 19, 2026" },
     ],
+    labTrend: {
+      label: "Hemoglobin",
+      unit: "g/dL",
+      points: [12.4, 12.0, 11.7, 11.4, 11.2],
+    },
     encounters: [
       {
         date: "May 26, 2026",

@@ -192,10 +192,10 @@ export function ChatInput({ onSubmit, status, onStop }: ChatInputProps) {
         event.preventDefault();
         submit();
       }}
-      className="w-full overflow-hidden rounded-[28px] border border-border/60 bg-[oklch(0.172_0.006_277)] shadow-sm"
+      className="w-full overflow-hidden rounded-[28px] border border-border/60 bg-[oklch(0.195_0.006_277)] shadow-sm"
     >
       {/* Top (lighter) card: textarea + toolbar, with a slightly smaller bottom radius */}
-      <div className="rounded-b-[22px] bg-card">
+      <div className="rounded-b-[22px] bg-[oklch(0.218_0.006_277)]">
         <textarea
           aria-label="Message"
           className="field-sizing-content block max-h-48 min-h-16 w-full resize-none bg-transparent px-5 pt-5 pb-2 text-base text-foreground outline-none placeholder:text-muted-foreground"
