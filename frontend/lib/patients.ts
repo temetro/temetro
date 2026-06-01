@@ -266,3 +266,18 @@ export async function getPatient(fileNumber: string): Promise<Patient | null> {
   await new Promise((resolve) => setTimeout(resolve, 700));
   return PATIENTS[fileNumber.trim()] ?? null;
 }
+
+// Generate a unique 5-digit file number not already in the store.
+export function generateFileNumber(): string {
+  let candidate: string;
+  do {
+    candidate = String(10000 + Math.floor(Math.random() * 89999));
+  } while (candidate in PATIENTS);
+  return candidate;
+}
+
+// Add (or replace) a patient in the in-memory store. Session-only — no backend
+// yet, so this resets on reload. Swap point for a real "create patient" API.
+export function addPatient(patient: Patient): void {
+  PATIENTS[patient.fileNumber] = patient;
+}

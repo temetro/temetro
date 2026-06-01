@@ -11,6 +11,7 @@ import {
   Plus,
   Square,
   Stethoscope,
+  UserPlus,
   X,
 } from "lucide-react";
 import {
@@ -22,6 +23,7 @@ import {
   useState,
 } from "react";
 
+import { AddPatientDialog } from "@/components/chat/add-patient-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -133,6 +135,9 @@ export function ChatInput({ onSubmit, status, onStop }: ChatInputProps) {
   const [specialty, setSpecialty] = useState("internal-medicine");
   const [facility, setFacility] = useState("main-hospital");
   const [timeRange, setTimeRange] = useState("12m");
+  const [addOpen, setAddOpen] = useState(false);
+  // Bumped on each open so the dialog remounts with a fresh file number + form.
+  const [addKey, setAddKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isGenerating = status === "submitted" || status === "streaming";
@@ -187,6 +192,7 @@ export function ChatInput({ onSubmit, status, onStop }: ChatInputProps) {
   }, []);
 
   return (
+    <>
     <form
       onSubmit={(event) => {
         event.preventDefault();
@@ -323,7 +329,26 @@ export function ChatInput({ onSubmit, status, onStop }: ChatInputProps) {
           triggerClassName={contextPill}
           value={timeRange}
         />
+        <button
+          className={cn(contextPill, "ml-auto")}
+          onClick={() => {
+            setAddKey((k) => k + 1);
+            setAddOpen(true);
+          }}
+          type="button"
+        >
+          <UserPlus className="size-4" />
+          <span>Add patient</span>
+        </button>
       </div>
     </form>
+
+    <AddPatientDialog
+      key={addKey}
+      onCreated={(fileNumber) => onSubmit(`/patient ${fileNumber}`)}
+      onOpenChange={setAddOpen}
+      open={addOpen}
+    />
+    </>
   );
 }

@@ -85,7 +85,14 @@ function Row({ label, value }: { label: ReactNode; value: ReactNode }) {
   );
 }
 
+function Empty({ children }: { children: ReactNode }) {
+  return <p className="text-muted-foreground">{children}</p>;
+}
+
 function TrendBlock({ trend }: { trend: Trend }) {
+  if (trend.points.length === 0) {
+    return <Empty>No trend data yet.</Empty>;
+  }
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-2">
@@ -101,6 +108,9 @@ function TrendBlock({ trend }: { trend: Trend }) {
 }
 
 function TrendDetail({ trend }: { trend: Trend }) {
+  if (trend.points.length === 0) {
+    return <Empty>No trend data yet.</Empty>;
+  }
   const min = Math.min(...trend.points);
   const max = Math.max(...trend.points);
   return (
@@ -285,26 +295,30 @@ function LabsCard({ patient }: { patient: Patient }) {
     <ExpandableCard
       description={`As of ${patient.labs[0]?.takenAt ?? "—"}`}
       detail={
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2.5">
-            {patient.labs.map((lab) => (
-              <div
-                className="flex items-center justify-between gap-3"
-                key={lab.name}
-              >
-                <div className="flex flex-col">
-                  <span className="text-foreground">{lab.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {lab.takenAt}
-                  </span>
+        patient.labs.length === 0 ? (
+          <Empty>No labs on file.</Empty>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2.5">
+              {patient.labs.map((lab) => (
+                <div
+                  className="flex items-center justify-between gap-3"
+                  key={lab.name}
+                >
+                  <div className="flex flex-col">
+                    <span className="text-foreground">{lab.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {lab.takenAt}
+                    </span>
+                  </div>
+                  {labValue(lab.value, lab.flag)}
                 </div>
-                {labValue(lab.value, lab.flag)}
-              </div>
-            ))}
+              ))}
+            </div>
+            <Separator />
+            <TrendDetail trend={patient.labTrend} />
           </div>
-          <Separator />
-          <TrendDetail trend={patient.labTrend} />
-        </div>
+        )
       }
       title="Labs"
     >
@@ -313,34 +327,43 @@ function LabsCard({ patient }: { patient: Patient }) {
         <CardDescription>As of {patient.labs[0]?.takenAt ?? "—"}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2">
-          {patient.labs.map((lab) => (
-            <Row
-              key={lab.name}
-              label={lab.name}
-              value={labValue(lab.value, lab.flag)}
-            />
-          ))}
-        </div>
-        <Separator />
-        <TrendBlock trend={patient.labTrend} />
+        {patient.labs.length === 0 ? (
+          <Empty>No labs on file.</Empty>
+        ) : (
+          <>
+            <div className="flex flex-col gap-2">
+              {patient.labs.map((lab) => (
+                <Row
+                  key={lab.name}
+                  label={lab.name}
+                  value={labValue(lab.value, lab.flag)}
+                />
+              ))}
+            </div>
+            <Separator />
+            <TrendBlock trend={patient.labTrend} />
+          </>
+        )}
       </CardContent>
     </ExpandableCard>
   );
 }
 
 function MedicationsCard({ patient }: { patient: Patient }) {
-  const list = (
-    <div className="flex flex-col gap-2">
-      {patient.medications.map((med) => (
-        <Row
-          key={med.name}
-          label={med.name}
-          value={`${med.dose} · ${med.frequency}`}
-        />
-      ))}
-    </div>
-  );
+  const list =
+    patient.medications.length === 0 ? (
+      <Empty>No active medications.</Empty>
+    ) : (
+      <div className="flex flex-col gap-2">
+        {patient.medications.map((med) => (
+          <Row
+            key={med.name}
+            label={med.name}
+            value={`${med.dose} · ${med.frequency}`}
+          />
+        ))}
+      </div>
+    );
   return (
     <ExpandableCard
       description={`${patient.medications.length} active`}
@@ -357,17 +380,20 @@ function MedicationsCard({ patient }: { patient: Patient }) {
 }
 
 function ProblemsCard({ patient }: { patient: Patient }) {
-  const list = (
-    <div className="flex flex-col gap-2">
-      {patient.problems.map((problem) => (
-        <Row
-          key={problem.label}
-          label={problem.label}
-          value={`since ${problem.since}`}
-        />
-      ))}
-    </div>
-  );
+  const list =
+    patient.problems.length === 0 ? (
+      <Empty>No active problems.</Empty>
+    ) : (
+      <div className="flex flex-col gap-2">
+        {patient.problems.map((problem) => (
+          <Row
+            key={problem.label}
+            label={problem.label}
+            value={`since ${problem.since}`}
+          />
+        ))}
+      </div>
+    );
   return (
     <ExpandableCard
       description={`${patient.problems.length} active`}
@@ -437,6 +463,9 @@ function AllergiesCard({ patient }: { patient: Patient }) {
 }
 
 function VisitsList({ patient }: { patient: Patient }) {
+  if (patient.encounters.length === 0) {
+    return <Empty>No visits yet.</Empty>;
+  }
   return (
     <div className="flex flex-col gap-3">
       {patient.encounters.map((encounter) => (
