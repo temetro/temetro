@@ -11,21 +11,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 `temetro` — an **open-source** clinical "AI middleman" (see the project vision in the root
-`../CLAUDE.md`). This app is the clinician-facing chat UI. It is **UI-only** — no backend, no real
-model call — but it now drives a working patient-records flow over a **mock fixture**
-(`lib/patients.ts`, in-memory, session-only):
+`../CLAUDE.md`). This app is the clinician-facing chat UI. It is now **wired to the real
+`../backend/`** for authentication and patient data (no longer a standalone UI-only demo); the AI
+chat replies are **still mocked** (no LLM call yet).
 
 - The chat parses `/patient <file#>` (or a bare `/<file#>`) in `components/chat/chat-panel.tsx` and
   renders the record as a horizontal row of cards (`components/chat/patient-cards.tsx`), with small
   dependency-free trend sparklines (`components/chat/sparkline.tsx`). Each card opens a detail
   dialog; the Summary card has an **Edit record** button.
 - Patients can be **created and edited** via the shared `components/chat/patient-form-dialog.tsx`
-  (mode `create` | `edit`). The "Add patient" pill in `chat-input.tsx` opens it; saving writes to the
-  fixture (`addPatient`) and opens/updates the record in the chat.
+  (mode `create` | `edit`). The "Add patient" pill in `chat-input.tsx` opens it.
 - Non-command messages still get a mock assistant reply.
 
-The signing / patient-owned-storage / approval features described in the root vision are **not built
-yet** — the fixture is the swap point for a future API.
+### Auth & data (talks to `../backend`)
+
+- **`lib/patients.ts`** keeps the canonical `Patient` types but its data functions (`getPatient`,
+  `listPatients`, `createPatient`, `updatePatient`) now call the backend via **`lib/api-client.ts`**
+  (`fetch` with `credentials: "include"`; 401 → `/login`). The old in-memory fixture is gone.
+- **`lib/auth-client.ts`** — Better Auth React client (`useSession`, `signIn/up/out`,
+  `organization.*`, `useActiveOrganization`, `useListOrganizations`). Base URL from
+  `NEXT_PUBLIC_API_URL` (default `http://localhost:4000`); it appends `/api/auth`. **`lib/access.ts`**
+  mirrors the backend's RBAC roles for the org client.
+- **`app/(auth)/`** — designed auth pages (login, signup, verify-email, forgot/reset-password,
+  onboarding = create clinic, accept-invite), in their own chrome-less layout.
+- **Route protection:** this Next renames `middleware` → **`proxy.ts`** (root) — an optimistic
+  redirect to `/login` when no session cookie. The authoritative gate is client-side:
+  `components/auth/app-auth-guard.tsx` (wrapping `app/(app)/layout.tsx`) requires a session **and**
+  an active clinic, else redirects to `/login` / `/onboarding`.
+- **Clinics (organizations):** `components/sidebar-02/team-switcher.tsx` is now the `OrgSwitcher`;
+  `components/settings/settings-care-team.tsx` manages members + invitations.
+- `.env.local` / `.env.example` hold `NEXT_PUBLIC_API_URL`.
+
+The signing / patient-owned-storage / approval features from the root vision are **still not built**.
 
 ## Commands
 
@@ -72,9 +89,16 @@ stock Tailwind.
 
 ## Gotchas
 
-- `npm run build` currently **fails its typecheck** on a pre-existing error in
-  `components/ai-elements/attachments.tsx` (`openDelay` prop). `npm run dev` (Turbopack) is
-  unaffected because it only compiles the imported route and doesn't typecheck the whole tree.
+- **Route protection lives in `proxy.ts`, not `middleware.ts`** — this customized Next renamed the
+  convention (`export function proxy(request)` + `config.matcher`, Node runtime). See
+  `node_modules/next/dist/docs/01-app/.../proxy.md`.
+- `components/ai-elements/*` has **pre-existing type/lint errors** (Base UI drift) that used to fail
+  `next build`. `next.config.ts` now sets `output: "standalone"` plus
+  `typescript.ignoreBuildErrors` / `eslint.ignoreDuringBuilds` so production/Docker builds succeed —
+  **type-check app code with `npx tsc --noEmit`** (filter out `components/ai-elements/`), not via
+  `next build`. There's a `Dockerfile` for the standalone build.
+- **`lucide-react@1.17` dropped brand glyphs** (e.g. `Github`, `Discord`) — import them and you get
+  a build error. Use inline SVGs instead.
 - **`lucide-react@1.17` dropped brand glyphs** (e.g. `Github`, `Discord`) — import them and you get
   a build error. Use inline SVGs instead.
 - A sibling **`../landing-page/`** directory is a copy of this app with a marketing landing page

@@ -47,7 +47,10 @@ export default function SignupPage() {
       setSubmitting(false);
       return;
     }
-    router.push(`/verify-email?email=${encodeURIComponent(email.trim())}`);
+    // Email verification isn't enforced yet (see backend auth config), so the
+    // user is signed in on sign-up — go straight to clinic onboarding. A
+    // verification email is still sent for when verification is re-enabled.
+    router.push("/");
   };
 
   return (
