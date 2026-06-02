@@ -1,0 +1,107 @@
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { organization } from "better-auth/plugins";
+
+import { db } from "./db/index.js";
+import * as authSchema from "./db/schema/auth.js";
+import { env, isProd } from "./env.js";
+import { ac, roles } from "./lib/access.js";
+import { sendEmail } from "./lib/email.js";
+
+const WEEK = 60 * 60 * 24 * 7;
+const DAY = 60 * 60 * 24;
+
+export const auth = betterAuth({
+  appName: "temetro",
+  baseURL: env.BETTER_AUTH_URL,
+  secret: env.BETTER_AUTH_SECRET,
+  trustedOrigins: [env.FRONTEND_URL],
+
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema: authSchema,
+  }),
+
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: true,
+    minPasswordLength: 12,
+    maxPasswordLength: 256,
+    revokeSessionsOnPasswordReset: true,
+    sendResetPassword: async ({ user, url }) => {
+      await sendEmail({
+        to: user.email,
+        subject: "Reset your temetro password",
+        text: `Reset your password by opening this link:\n\n${url}\n\nIf you didn't request this, you can ignore this email.`,
+      });
+    },
+  },
+
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      await sendEmail({
+        to: user.email,
+        subject: "Verify your email for temetro",
+        text: `Welcome to temetro. Verify your email address by opening this link:\n\n${url}`,
+      });
+    },
+  },
+
+  plugins: [
+    organization({
+      ac,
+      roles,
+      creatorRole: "owner",
+      allowUserToCreateOrganization: async (user) => user.emailVerified === true,
+      membershipLimit: 200,
+      invitationExpiresIn: WEEK,
+      sendInvitationEmail: async (data) => {
+        const url = `${env.FRONTEND_URL}/accept-invite?id=${data.invitation.id}`;
+        await sendEmail({
+          to: data.email,
+          subject: `${data.inviter.user.name} invited you to join ${data.organization.name} on temetro`,
+          text: `${data.inviter.user.name} invited you to join the clinic "${data.organization.name}".\n\nAccept the invitation:\n\n${url}`,
+        });
+      },
+    }),
+  ],
+
+  rateLimit: {
+    enabled: true,
+    storage: "database",
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 60, max: 3 },
+      "/request-password-reset": { window: 60, max: 3 },
+    },
+  },
+
+  session: {
+    expiresIn: WEEK,
+    updateAge: DAY,
+    cookieCache: { enabled: true, maxAge: 300 },
+  },
+
+  advanced: {
+    useSecureCookies: isProd,
+    defaultCookieAttributes: { sameSite: "lax" },
+    ipAddress: { ipAddressHeaders: ["x-forwarded-for", "x-real-ip"] },
+  },
+
+  databaseHooks: {
+    session: {
+      create: {
+        after: async (session) => {
+          // Lightweight audit trail; swap console for a real sink in prod.
+          console.info(
+            `[audit] session.created user=${session.userId} ip=${session.ipAddress ?? "-"}`,
+          );
+        },
+      },
+    },
+  },
+});
+
+export type Auth = typeof auth;

@@ -1,0 +1,44 @@
+{
+  "name": "temetro-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "temetro backend — Express + Postgres API with Better Auth (email/password, organizations) and org-scoped patient records.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "auth:generate": "better-auth generate --config src/auth.ts --output src/db/schema/auth.ts -y",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:apply": "node dist/migrate.js",
+    "db:push": "drizzle-kit push"
+  },
+  "dependencies": {
+    "better-auth": "^1.6.13",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.2.1",
+    "nanoid": "^5.1.11",
+    "nodemailer": "^8.0.10",
+    "pg": "^8.21.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@better-auth/cli": "^1.4.21",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.9.1",
+    "@types/nodemailer": "^8.0.0",
+    "@types/pg": "^8.20.0",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
+}

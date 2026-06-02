@@ -1,0 +1,80 @@
+# Full-stack dev/run orchestration for temetro.
+#
+#   cp .env.example .env   # then set BETTER_AUTH_SECRET
+#   docker compose up      # db + backend + frontend
+#
+# Frontend  -> http://localhost:3000
+# Backend   -> http://localhost:4000
+# Postgres  -> localhost:5432
+#
+# The frontend service builds the sibling ../frontend app. Run just the API
+# with:  docker compose up db backend
+#
+# Optional DB browser (Adminer) lives behind a profile:
+#   docker compose --profile tools up adminer   # http://localhost:8080
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: temetro
+      POSTGRES_PASSWORD: temetro
+      POSTGRES_DB: temetro
+    ports:
+      # Host port is configurable to avoid clashing with an existing Postgres.
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - temetro_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U temetro -d temetro"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://temetro:temetro@db:5432/temetro
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in .env (openssl rand -base64 32)}
+      BETTER_AUTH_URL: http://localhost:4000
+      FRONTEND_URL: http://localhost:3000
+      PORT: "4000"
+      NODE_ENV: production
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-temetro <no-reply@temetro.local>}
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build:
+      context: ../frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+
+  adminer:
+    image: adminer:5
+    profiles: ["tools"]
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+
+volumes:
+  temetro_pgdata:
