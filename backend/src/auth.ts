@@ -4,7 +4,7 @@ import { organization } from "better-auth/plugins";
 
 import { db } from "./db/index.js";
 import * as authSchema from "./db/schema/auth.js";
-import { env, isProd } from "./env.js";
+import { env } from "./env.js";
 import { ac, roles } from "./lib/access.js";
 import { sendEmail } from "./lib/email.js";
 
@@ -85,7 +85,10 @@ export const auth = betterAuth({
   },
 
   advanced: {
-    useSecureCookies: isProd,
+    // Secure cookies only when actually served over HTTPS — otherwise the
+    // browser silently drops them over http://localhost and login "does
+    // nothing". This is correct regardless of NODE_ENV.
+    useSecureCookies: env.BETTER_AUTH_URL.startsWith("https://"),
     defaultCookieAttributes: { sameSite: "lax" },
     ipAddress: { ipAddressHeaders: ["x-forwarded-for", "x-real-ip"] },
   },

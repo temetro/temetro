@@ -23,7 +23,14 @@ const schema = z.object({
   SMTP_FROM: z.string().default("temetro <no-reply@temetro.local>"),
 });
 
-const parsed = schema.safeParse(process.env);
+// docker compose passes unset optionals as empty strings (e.g. `${SMTP_PORT:-}`).
+// Treat empty strings as "unset" so optionals/defaults apply instead of failing
+// coercion (e.g. Number("") === 0).
+const rawEnv = Object.fromEntries(
+  Object.entries(process.env).map(([k, v]) => [k, v === "" ? undefined : v]),
+);
+
+const parsed = schema.safeParse(rawEnv);
 
 if (!parsed.success) {
   const lines = parsed.error.issues
