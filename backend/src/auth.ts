@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
+import { eq } from "drizzle-orm";
 
 import { db } from "./db/index.js";
 import * as authSchema from "./db/schema/auth.js";
@@ -103,6 +104,20 @@ export const auth = betterAuth({
   databaseHooks: {
     session: {
       create: {
+        before: async (session) => {
+          // Default the active organization to the user's first clinic so
+          // returning members skip onboarding on sign-in.
+          const rows = await db
+            .select({ organizationId: authSchema.member.organizationId })
+            .from(authSchema.member)
+            .where(eq(authSchema.member.userId, session.userId))
+            .limit(1);
+          const organizationId = rows[0]?.organizationId;
+          if (organizationId) {
+            return { data: { ...session, activeOrganizationId: organizationId } };
+          }
+          return undefined;
+        },
         after: async (session) => {
           // Lightweight audit trail; swap console for a real sink in prod.
           console.info(
