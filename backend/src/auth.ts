@@ -24,7 +24,11 @@ export const auth = betterAuth({
 
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: true,
+    // TODO(verification): Email verification is intentionally NOT enforced for
+    // now so users can sign in immediately. Verification emails are still sent
+    // (sendOnSignUp below) and the /verify-email flow still works — flip this
+    // back to `true` to make verification mandatory before sign-in.
+    requireEmailVerification: false,
     minPasswordLength: 12,
     maxPasswordLength: 256,
     revokeSessionsOnPasswordReset: true,
