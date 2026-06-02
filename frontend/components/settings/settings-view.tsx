@@ -8,6 +8,7 @@ import {
   SettingsSection,
 } from "@/components/settings/settings-parts";
 import { SigningPanel } from "@/components/settings/settings-billing";
+import { CareTeamPanel } from "@/components/settings/settings-care-team";
 import { ProfilePanel } from "@/components/settings/settings-preferences";
 
 const TABS = [
@@ -71,12 +72,7 @@ export function SettingsView() {
           />
         )}
         {tab === "Signing" && <SigningPanel />}
-        {tab === "Care team" && (
-          <PlaceholderPanel
-            description="Clinicians with access to this workspace"
-            title="Care team"
-          />
-        )}
+        {tab === "Care team" && <CareTeamPanel />}
         {tab === "Developers" && (
           <PlaceholderPanel
             description="Access tokens for the temetro API"

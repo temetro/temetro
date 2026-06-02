@@ -70,7 +70,14 @@ export function ChatPanel() {
         },
       ]);
 
-      const patient = await getPatient(fileNumber);
+      let patient: Patient | null = null;
+      try {
+        patient = await getPatient(fileNumber);
+      } catch {
+        // Network / auth errors fall through as "not found"; a 401 will have
+        // already redirected to /login via the API client.
+        patient = null;
+      }
       setMessages((prev) =>
         prev.map((message) =>
           message.id === resultId &&

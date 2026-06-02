@@ -16,11 +16,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
-  addPatient,
   type AllergySeverity,
+  createPatient,
   generateFileNumber,
   type LabFlag,
   type Patient,
+  updatePatient,
 } from "@/lib/patients";
 
 type PatientFormDialogProps = {
@@ -127,6 +128,9 @@ export function PatientFormDialog({
 }: PatientFormDialogProps) {
   const isEdit = mode === "edit";
 
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const [fileNumber, setFileNumber] = useState(() =>
     isEdit && patient ? patient.fileNumber : generateFileNumber()
   );
@@ -163,9 +167,9 @@ export function PatientFormDialog({
       })) ?? []
   );
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!name.trim()) {
+    if (!name.trim() || submitting) {
       return;
     }
 
@@ -207,13 +211,25 @@ export function PatientFormDialog({
         })),
     };
 
-    addPatient(built);
-    if (isEdit) {
-      onSaved?.(built);
-    } else {
-      onCreated?.(fileNumber);
+    setSubmitting(true);
+    setError(null);
+    try {
+      const saved = isEdit
+        ? await updatePatient(built)
+        : await createPatient(built);
+      if (isEdit) {
+        onSaved?.(saved);
+      } else {
+        onCreated?.(saved.fileNumber);
+      }
+      onOpenChange(false);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not save the patient.",
+      );
+    } finally {
+      setSubmitting(false);
     }
-    onOpenChange(false);
   };
 
   return (
@@ -497,12 +513,15 @@ export function PatientFormDialog({
             />
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+            {error && (
+              <p className="text-sm text-destructive sm:mr-auto">{error}</p>
+            )}
             <DialogClose render={<Button type="button" variant="outline" />}>
               Cancel
             </DialogClose>
-            <Button disabled={!name.trim()} type="submit">
-              {isEdit ? "Save changes" : "Save patient"}
+            <Button disabled={!name.trim() || submitting} type="submit">
+              {submitting ? "Saving…" : isEdit ? "Save changes" : "Save patient"}
             </Button>
           </DialogFooter>
         </form>

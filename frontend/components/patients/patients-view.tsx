@@ -2,7 +2,7 @@
 
 import { Plus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -25,8 +25,35 @@ export function PatientsView() {
   // Bumped on open so the create dialog remounts with a fresh file # / form.
   const [addKey, setAddKey] = useState(0);
 
+  const [allPatients, setAllPatients] = useState<Patient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    listPatients()
+      .then((data) => {
+        if (!active) return;
+        setAllPatients(data);
+        setLoadError(null);
+      })
+      .catch((err) => {
+        if (!active) return;
+        setLoadError(
+          err instanceof Error ? err.message : "Failed to load patients."
+        );
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const q = query.trim().toLowerCase();
-  const patients = listPatients().filter(
+  const patients = allPatients.filter(
     (p) => !q || p.name.toLowerCase().includes(q) || p.fileNumber.includes(q)
   );
 
@@ -73,7 +100,22 @@ export function PatientsView() {
             </tr>
           </thead>
           <tbody>
-            {patients.length === 0 ? (
+            {loading ? (
+              <tr>
+                <td
+                  className="px-4 py-10 text-center text-muted-foreground"
+                  colSpan={6}
+                >
+                  Loading patients…
+                </td>
+              </tr>
+            ) : loadError ? (
+              <tr>
+                <td className="px-4 py-10 text-center text-destructive" colSpan={6}>
+                  {loadError}
+                </td>
+              </tr>
+            ) : patients.length === 0 ? (
               <tr>
                 <td
                   className="px-4 py-10 text-center text-muted-foreground"

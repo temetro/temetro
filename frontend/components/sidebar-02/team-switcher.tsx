@@ -1,12 +1,14 @@
 "use client";
 
+import { Building2, ChevronsUpDown, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -15,63 +17,84 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { ChevronsUpDown, Plus } from "lucide-react";
-import * as React from "react";
+import { authClient } from "@/lib/auth-client";
 
-type Team = {
-  name: string;
-  logo: React.ElementType;
-  plan: string;
-};
+// Switches the active clinic (organization). Scopes every subsequent patient
+// API call. Replaces the old static "team switcher".
+export function OrgSwitcher() {
+  const { isMobile, state } = useSidebar();
+  const isCollapsed = state === "collapsed";
+  const router = useRouter();
+  const { data: orgs } = authClient.useListOrganizations();
+  const { data: activeOrg } = authClient.useActiveOrganization();
 
-export function TeamSwitcher({ teams }: { teams: Team[] }) {
-  const { isMobile } = useSidebar();
-  const [activeTeam, setActiveTeam] = React.useState(teams[0]);
+  const setActive = async (organizationId: string) => {
+    if (organizationId === activeOrg?.id) return;
+    await authClient.organization.setActive({ organizationId });
+  };
 
-  if (!activeTeam) return null;
-
-  const Logo = activeTeam.logo;
+  const activeName = activeOrg?.name ?? "Select clinic";
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground" />}><div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-background text-foreground">
-                                  <Logo className="size-4" />
-                                </div><div className="grid flex-1 text-left text-sm leading-tight">
-                                  <span className="truncate font-semibold">
-                                    {activeTeam.name}
-                                  </span>
-                                  <span className="truncate text-xs">{activeTeam.plan}</span>
-                                </div><ChevronsUpDown className="ml-auto" /></DropdownMenuTrigger>
+          <DropdownMenuTrigger
+            render={
+              <SidebarMenuButton
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                size="lg"
+                tooltip={activeName}
+              />
+            }
+          >
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-background text-foreground">
+              <Building2 className="size-4" />
+            </div>
+            {!isCollapsed && (
+              <>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-semibold">{activeName}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    Clinic
+                  </span>
+                </div>
+                <ChevronsUpDown className="ml-auto size-4" />
+              </>
+            )}
+          </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg mb-4"
             align="start"
-            side={isMobile ? "bottom" : "right"}
+            className="min-w-56 rounded-lg"
+            side={isMobile ? "bottom" : isCollapsed ? "right" : "bottom"}
             sideOffset={4}
           >
             <DropdownMenuLabel className="text-xs text-muted-foreground">
-              Teams
+              Clinics
             </DropdownMenuLabel>
-            {teams.map((team, index) => (
+            {(orgs ?? []).map((org) => (
               <DropdownMenuItem
-                key={team.name}
-                onClick={() => setActiveTeam(team)}
                 className="gap-2 p-2"
+                key={org.id}
+                onClick={() => setActive(org.id)}
               >
                 <div className="flex size-6 items-center justify-center rounded-sm border">
-                  <team.logo className="size-4 shrink-0" />
+                  <Building2 className="size-4 shrink-0" />
                 </div>
-                {team.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                <span className="truncate">{org.name}</span>
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 p-2">
+            <DropdownMenuItem
+              className="gap-2 p-2"
+              onClick={() => router.push("/onboarding")}
+            >
               <div className="flex size-6 items-center justify-center rounded-md border bg-background">
                 <Plus className="size-4" />
               </div>
-              <div className="font-medium text-muted-foreground">Add team</div>
+              <div className="font-medium text-muted-foreground">
+                Create clinic
+              </div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

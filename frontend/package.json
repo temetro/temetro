@@ -19,6 +19,7 @@
     "@xyflow/react": "^12.10.2",
     "ai": "^6.0.193",
     "ansi-to-react": "^6.2.6",
+    "better-auth": "^1.6.13",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

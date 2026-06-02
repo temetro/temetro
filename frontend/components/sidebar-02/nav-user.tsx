@@ -2,6 +2,7 @@
 
 import { ChevronsUpDown, LogOut, Settings as SettingsIcon, Sun } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -19,11 +20,20 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { authClient } from "@/lib/auth-client";
 
-// Placeholder identity — there is no auth backend yet.
-const user = { name: "Dr. Khalid", role: "Clinician", initials: "K" };
 // Open-source repo (placeholder).
 const REPO_URL = "https://github.com/temetro/temetro";
+
+function initialsFromName(name: string): string {
+  const letters = name
+    .split(/\s+/)
+    .map((w) => w[0])
+    .filter(Boolean)
+    .join("")
+    .slice(0, 2);
+  return (letters || "?").toUpperCase();
+}
 
 function GitHubIcon({ className }: { className?: string }) {
   return (
@@ -41,6 +51,17 @@ function GitHubIcon({ className }: { className?: string }) {
 export function NavUser() {
   const { isMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed";
+  const router = useRouter();
+  const { data } = authClient.useSession();
+
+  const name = data?.user?.name ?? "Clinician";
+  const email = data?.user?.email ?? "";
+  const initials = initialsFromName(name);
+
+  const signOut = async () => {
+    await authClient.signOut();
+    router.push("/login");
+  };
 
   return (
     <SidebarMenu>
@@ -51,19 +72,19 @@ export function NavUser() {
               <SidebarMenuButton
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 size="lg"
-                tooltip={user.name}
+                tooltip={name}
               />
             }
           >
             <Avatar className="size-8">
-              <AvatarFallback>{user.initials}</AvatarFallback>
+              <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             {!isCollapsed && (
               <>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate font-medium">{name}</span>
                   <span className="truncate text-xs text-muted-foreground">
-                    {user.role}
+                    {email}
                   </span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4" />
@@ -78,12 +99,12 @@ export function NavUser() {
           >
             <DropdownMenuLabel className="flex items-center gap-2 py-2 text-foreground">
               <Avatar className="size-8">
-                <AvatarFallback>{user.initials}</AvatarFallback>
+                <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
+                <span className="truncate font-medium">{name}</span>
                 <span className="truncate text-xs text-muted-foreground">
-                  {user.role}
+                  {email}
                 </span>
               </div>
             </DropdownMenuLabel>
@@ -104,7 +125,7 @@ export function NavUser() {
               <DropdownMenuShortcut>Dark</DropdownMenuShortcut>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive">
+            <DropdownMenuItem onClick={signOut} variant="destructive">
               <LogOut />
               Log out
             </DropdownMenuItem>
