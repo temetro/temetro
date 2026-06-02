@@ -58,7 +58,10 @@ export const auth = betterAuth({
       ac,
       roles,
       creatorRole: "owner",
-      allowUserToCreateOrganization: async (user) => user.emailVerified === true,
+      // Verification isn't enforced right now (see emailAndPassword above), so
+      // any signed-in user may create a clinic. Re-tie this to
+      // `user.emailVerified === true` when verification is re-enabled.
+      allowUserToCreateOrganization: true,
       membershipLimit: 200,
       invitationExpiresIn: WEEK,
       sendInvitationEmail: async (data) => {
