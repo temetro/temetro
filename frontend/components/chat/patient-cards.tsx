@@ -14,9 +14,10 @@ import {
 } from "@/components/ui/card";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
+  DialogPanel,
+  DialogPopup,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -180,13 +181,15 @@ function ExpandableCard({
       >
         {children}
       </DialogTrigger>
-      <DialogContent className="max-h-[80dvh] gap-4 overflow-y-auto sm:max-w-lg">
+      <DialogPopup className="max-h-[80dvh] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
-        {detail}
-      </DialogContent>
+        <DialogPanel className="min-h-0 flex-1 overflow-y-auto">
+          {detail}
+        </DialogPanel>
+      </DialogPopup>
     </Dialog>
   );
 }

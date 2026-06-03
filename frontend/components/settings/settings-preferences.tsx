@@ -171,9 +171,7 @@ export function ProfilePanel() {
               keys. This action cannot be undone.
             </p>
           </div>
-          <Button className="rounded-lg bg-destructive text-white hover:bg-destructive/90">
-            Delete
-          </Button>
+          <Button variant="destructive">Delete</Button>
         </SettingsCard>
       </SettingsSection>
     </>

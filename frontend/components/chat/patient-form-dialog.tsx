@@ -7,10 +7,11 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogPanel,
+  DialogPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -234,7 +235,7 @@ export function PatientFormDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="flex max-h-[85dvh] flex-col gap-4 overflow-hidden sm:max-w-lg">
+      <DialogPopup className="max-h-[85dvh] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit record" : "Add patient"}</DialogTitle>
           <DialogDescription>
@@ -244,11 +245,11 @@ export function PatientFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          className="flex min-h-0 flex-1 flex-col gap-4"
-          onSubmit={handleSubmit}
-        >
-          <div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto">
+        <form className="contents" onSubmit={handleSubmit}>
+          <DialogPanel
+            scrollFade={false}
+            className="no-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto"
+          >
             <Field label="File number">
               <div className="flex items-center gap-2">
                 <Input readOnly value={fileNumber} />
@@ -511,7 +512,7 @@ export function PatientFormDialog({
               )}
               rows={visits}
             />
-          </div>
+          </DialogPanel>
 
           <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center">
             {error && (
@@ -525,7 +526,7 @@ export function PatientFormDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
+      </DialogPopup>
     </Dialog>
   );
 }

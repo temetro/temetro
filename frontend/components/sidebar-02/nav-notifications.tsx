@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Menu,
+  MenuGroup,
   MenuGroupLabel,
   MenuItem,
   MenuPopup,
@@ -31,7 +32,9 @@ export function NotificationsPopover({
     <Menu>
       <MenuTrigger render={<Button variant="ghost" size="icon" className="rounded-full" aria-label="Open notifications" />}><BellIcon className="size-5" /></MenuTrigger>
       <MenuPopup side="right" className="w-80 my-6">
-        <MenuGroupLabel>{t("nav.notifications")}</MenuGroupLabel>
+        <MenuGroup>
+          <MenuGroupLabel>{t("nav.notifications")}</MenuGroupLabel>
+        </MenuGroup>
         <MenuSeparator />
         {notifications.map(({ id, avatar, fallback, text, time }) => (
           <MenuItem key={id} className="flex items-start gap-3">

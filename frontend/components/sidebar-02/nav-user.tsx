@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Menu,
+  MenuGroup,
   MenuGroupLabel,
   MenuItem,
   MenuPopup,
@@ -97,17 +98,19 @@ export function NavUser() {
             side={isMobile ? "bottom" : isCollapsed ? "right" : "top"}
             sideOffset={8}
           >
-            <MenuGroupLabel className="flex items-center gap-2 py-2 text-foreground">
-              <Avatar className="size-8">
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{name}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {email}
-                </span>
-              </div>
-            </MenuGroupLabel>
+            <MenuGroup>
+              <MenuGroupLabel className="flex items-center gap-2 py-2 text-foreground">
+                <Avatar className="size-8">
+                  <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+                <div className="grid flex-1 text-left text-sm leading-tight">
+                  <span className="truncate font-medium">{name}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {email}
+                  </span>
+                </div>
+              </MenuGroupLabel>
+            </MenuGroup>
             <MenuSeparator />
             <MenuItem render={<Link href="/settings" />}>
               <SettingsIcon />

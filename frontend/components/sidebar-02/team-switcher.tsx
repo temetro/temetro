@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import {
   Menu,
+  MenuGroup,
   MenuGroupLabel,
   MenuItem,
   MenuPopup,
@@ -69,21 +70,23 @@ export function OrgSwitcher() {
             side={isMobile ? "bottom" : isCollapsed ? "right" : "bottom"}
             sideOffset={4}
           >
-            <MenuGroupLabel className="text-xs text-muted-foreground">
-              Clinics
-            </MenuGroupLabel>
-            {(orgs ?? []).map((org) => (
-              <MenuItem
-                className="gap-2 p-2"
-                key={org.id}
-                onClick={() => setActive(org.id)}
-              >
-                <div className="flex size-6 items-center justify-center rounded-sm border">
-                  <Building2 className="size-4 shrink-0" />
-                </div>
-                <span className="truncate">{org.name}</span>
-              </MenuItem>
-            ))}
+            <MenuGroup>
+              <MenuGroupLabel className="text-xs text-muted-foreground">
+                Clinics
+              </MenuGroupLabel>
+              {(orgs ?? []).map((org) => (
+                <MenuItem
+                  className="gap-2 p-2"
+                  key={org.id}
+                  onClick={() => setActive(org.id)}
+                >
+                  <div className="flex size-6 items-center justify-center rounded-sm border">
+                    <Building2 className="size-4 shrink-0" />
+                  </div>
+                  <span className="truncate">{org.name}</span>
+                </MenuItem>
+              ))}
+            </MenuGroup>
             <MenuSeparator />
             <MenuItem
               className="gap-2 p-2"

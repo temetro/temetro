@@ -78,8 +78,8 @@ export function LoginForm({
                   value={email}
                 />
               </Field>
-              <Field>
-                <div className="flex items-center">
+              <Field className="w-full">
+                <div className="flex w-full items-center">
                   <FieldLabel htmlFor="password">
                     {t("auth.login.passwordLabel")}
                   </FieldLabel>
@@ -99,13 +99,18 @@ export function LoginForm({
                   value={password}
                 />
               </Field>
-              <Field>
-                <Button disabled={submitting} type="submit">
+              <Field className="w-full">
+                <Button className="w-full" disabled={submitting} type="submit">
                   {submitting ? t("auth.login.submitting") : t("auth.login.submit")}
                 </Button>
-                <FieldDescription className="text-center">
+                <FieldDescription className="w-full text-center">
                   {t("auth.login.noAccount")}{" "}
-                  <Link href="/signup">{t("auth.login.signUpLink")}</Link>
+                  <Link
+                    className="font-medium text-foreground underline underline-offset-4"
+                    href="/signup"
+                  >
+                    {t("auth.login.signUpLink")}
+                  </Link>
                 </FieldDescription>
               </Field>
             </div>

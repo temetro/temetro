@@ -108,8 +108,8 @@ export function SignupForm({
                   value={email}
                 />
               </Field>
-              <Field>
-                <Field className="grid grid-cols-2 gap-4">
+              <Field className="w-full">
+                <Field className="grid w-full grid-cols-2 gap-4">
                   <Field>
                     <FieldLabel htmlFor="password">
                       {t("auth.signup.passwordLabel")}
@@ -141,15 +141,20 @@ export function SignupForm({
                   {t("auth.signup.passwordHint", { count: MIN_PASSWORD })}
                 </FieldDescription>
               </Field>
-              <Field>
-                <Button disabled={submitting} type="submit">
+              <Field className="w-full">
+                <Button className="w-full" disabled={submitting} type="submit">
                   {submitting
                     ? t("auth.signup.submitting")
                     : t("auth.signup.submit")}
                 </Button>
-                <FieldDescription className="text-center">
+                <FieldDescription className="w-full text-center">
                   {t("auth.signup.haveAccount")}{" "}
-                  <Link href="/login">{t("auth.signup.signInLink")}</Link>
+                  <Link
+                    className="font-medium text-foreground underline underline-offset-4"
+                    href="/login"
+                  >
+                    {t("auth.signup.signInLink")}
+                  </Link>
                 </FieldDescription>
               </Field>
             </div>
