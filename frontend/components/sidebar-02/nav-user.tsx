@@ -1,8 +1,15 @@
 "use client";
 
-import { ChevronsUpDown, LogOut, Settings as SettingsIcon, Sun } from "lucide-react";
+import {
+  ChevronsUpDown,
+  LogOut,
+  Moon,
+  Settings as SettingsIcon,
+  Sun,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -53,6 +60,8 @@ export function NavUser() {
   const { isMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const router = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const { data } = authClient.useSession();
 
   const name = data?.user?.name ?? "Clinician";
@@ -122,10 +131,13 @@ export function NavUser() {
               <GitHubIcon className="size-4" />
               Docs &amp; GitHub
             </MenuItem>
-            <MenuItem>
-              <Sun />
+            <MenuItem
+              closeOnClick={false}
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+            >
+              {isDark ? <Moon /> : <Sun />}
               Theme
-              <MenuShortcut>Dark</MenuShortcut>
+              <MenuShortcut>{isDark ? "Dark" : "Light"}</MenuShortcut>
             </MenuItem>
             <MenuSeparator />
             <MenuItem onClick={signOut} variant="destructive">
