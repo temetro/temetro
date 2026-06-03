@@ -1,9 +1,15 @@
 "use client";
 
-import { Plus, RefreshCw, X } from "lucide-react";
+import { CalendarIcon, Plus, RefreshCw, X } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverPopup,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Dialog,
   DialogClose,
@@ -112,12 +118,75 @@ function initialsFromName(name: string): string {
     .toUpperCase();
 }
 
-const today = () =>
-  new Date().toLocaleDateString("en-US", {
+const formatDate = (date: Date) =>
+  date.toLocaleDateString("en-US", {
     month: "short",
     day: "2-digit",
     year: "numeric",
   });
+
+const today = () => formatDate(new Date());
+
+// Patient dates are stored as formatted strings (e.g. "Jun 02, 2026"); parse one
+// back to a Date so the calendar can highlight the current selection.
+function parseDate(value: string): Date | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+// Calendar-backed date field that reads/writes the same formatted string the rest
+// of the form uses.
+function DatePicker({
+  value,
+  onChange,
+  ariaLabel,
+  placeholder = "Pick a date",
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  ariaLabel: string;
+  placeholder?: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover onOpenChange={setOpen} open={open}>
+      <PopoverTrigger
+        render={
+          <Button
+            aria-label={ariaLabel}
+            className={cn(
+              "justify-start font-normal",
+              !value && "text-muted-foreground",
+              className
+            )}
+            type="button"
+            variant="outline"
+          />
+        }
+      >
+        <CalendarIcon className="size-4" />
+        <span className="truncate">{value || placeholder}</span>
+      </PopoverTrigger>
+      <PopoverPopup className="w-auto p-0">
+        <Calendar
+          mode="single"
+          onSelect={(date) => {
+            onChange(date ? formatDate(date) : "");
+            setOpen(false);
+          }}
+          selected={parseDate(value)}
+        />
+      </PopoverPopup>
+    </Popover>
+  );
+}
 
 export function PatientFormDialog({
   open,
@@ -429,10 +498,10 @@ export function PatientFormDialog({
                     placeholder="Diagnosis"
                     value={row.label}
                   />
-                  <Input
-                    aria-label="Since"
-                    className="w-28 shrink-0"
-                    onChange={(event) => set({ since: event.target.value })}
+                  <DatePicker
+                    ariaLabel="Since"
+                    className="w-40 shrink-0"
+                    onChange={(since) => set({ since })}
                     placeholder="Since"
                     value={row.since}
                   />
@@ -488,10 +557,10 @@ export function PatientFormDialog({
                       placeholder="Type"
                       value={row.type}
                     />
-                    <Input
-                      aria-label="Visit date"
-                      className="w-32 shrink-0"
-                      onChange={(event) => set({ date: event.target.value })}
+                    <DatePicker
+                      ariaLabel="Visit date"
+                      className="w-40 shrink-0"
+                      onChange={(date) => set({ date })}
                       placeholder="Date"
                       value={row.date}
                     />
