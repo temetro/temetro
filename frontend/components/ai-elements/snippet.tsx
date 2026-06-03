@@ -1,9 +1,9 @@
 "use client";
 
+import { Button as InputGroupButton } from "@/components/ui/button";
 import {
   InputGroup,
   InputGroupAddon,
-  InputGroupButton,
   InputGroupInput,
   InputGroupText,
 } from "@/components/ui/input-group";

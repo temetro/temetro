@@ -59,7 +59,7 @@ export function ProfilePanel() {
           <div className="flex items-end gap-4">
             <div className="space-y-1.5">
               <FieldLabel>Avatar</FieldLabel>
-              <Avatar className="size-10 rounded-xl" size="lg">
+              <Avatar className="size-10 rounded-xl">
                 <AvatarFallback className="rounded-xl bg-muted text-sm font-medium">
                   K
                 </AvatarFallback>

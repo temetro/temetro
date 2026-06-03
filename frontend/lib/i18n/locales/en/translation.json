@@ -1,0 +1,65 @@
+{
+  "common": {
+    "appName": "temetro",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signUp": "Sign up"
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your clinician account",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@clinic.org",
+      "passwordLabel": "Password",
+      "forgotPassword": "Forgot your password?",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "noAccount": "Don't have an account?",
+      "signUpLink": "Sign up",
+      "error": "Could not sign in. Check your email and password and try again."
+    },
+    "signup": {
+      "title": "Create your account",
+      "subtitle": "Start using temetro in your clinic",
+      "nameLabel": "Full name",
+      "namePlaceholder": "Dr. Jane Okafor",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@clinic.org",
+      "passwordLabel": "Password",
+      "confirmPasswordLabel": "Confirm password",
+      "passwordHint": "Must be at least {{count}} characters long.",
+      "passwordTooShort": "Password must be at least {{count}} characters.",
+      "passwordMismatch": "Passwords do not match.",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "haveAccount": "Already have an account?",
+      "signInLink": "Sign in",
+      "error": "Could not create your account."
+    }
+  },
+  "nav": {
+    "newChat": "New chat",
+    "patients": "Patients",
+    "settings": "Settings",
+    "notifications": "Notifications",
+    "viewAllNotifications": "View all notifications"
+  },
+  "settings": {
+    "tabs": {
+      "profile": "Profile",
+      "records": "Records",
+      "signing": "Signing",
+      "careTeam": "Care team",
+      "developers": "Developers"
+    },
+    "empty": "Nothing here yet.",
+    "records": {
+      "description": "How patient records are sourced, stored, and displayed"
+    },
+    "developers": {
+      "description": "Access tokens for the temetro API"
+    }
+  }
+}

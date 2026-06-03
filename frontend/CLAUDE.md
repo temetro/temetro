@@ -64,28 +64,46 @@ trailer. See the root `../CLAUDE.md` for the project-wide per-folder commit poli
 
 - **Stack:** Next.js 16.2.6 (App Router) · React 19 · TypeScript · Tailwind CSS **v4**. Path alias
   `@/*` → repo root (`tsconfig.json`). `cn()` (clsx + tailwind-merge) lives in `lib/utils.ts`.
-- **`app/`** — App Router. `app/page.tsx` is the product chat page (sidebar + chat panel);
-  `app/layout.tsx` **forces dark mode** by putting `dark` on `<html>` and loads the fonts.
-- **`components/ui/`** — shadcn components, but built on **Base UI (`@base-ui/react`), not Radix.**
-  APIs differ: composition uses the `render` prop and `useRender`/`mergeProps`, not `asChild`.
-  Match existing files when adding/editing primitives. Config in `components.json` (style
-  `base-luma`, baseColor `neutral`).
+- **`app/`** — App Router. `app/(app)/page.tsx` is the product chat page (sidebar + chat panel);
+  `app/layout.tsx` loads the fonts and wraps children in `ThemeProvider` (next-themes) +
+  `I18nProvider` (see Theming and i18n below).
+- **`components/ui/`** — **COSS components** (built on **Base UI `@base-ui/react`, not Radix**),
+  installed via the shadcn CLI from the `@coss/*` registry. APIs follow Base UI: composition uses
+  the `render` prop and `useRender`/`mergeProps`, **not `asChild`**, and popups use canonical COSS
+  names (`DialogPopup`/`DialogPanel`, `MenuPopup`, `SelectPopup`, `TooltipPopup`, `PreviewCard`,
+  `Group`) — COSS also ships back-compat aliases (`DialogContent`, `CardContent`, `SelectContent`,
+  `TooltipContent`, …). Add/update primitives with `npx shadcn@latest add @coss/<name>`.
+  `carousel.tsx` is the one **non-COSS** primitive kept (no COSS equivalent). Config in
+  `components.json` (baseColor `neutral`).
 - **`components/ai-elements/`** — a large AI-chat primitive library (`PromptInput`, `Conversation`,
   `Message`, `Suggestion`, etc.) typed against **AI SDK v6** (`ai` package: `UIMessage`,
   `ChatStatus`, `FileUIPart`). Note: `@ai-sdk/react` (`useChat`) is **not installed** — chat state
   is managed with local React state.
 - **`components/sidebar-02/`** — the dashboard sidebar (`SidebarProvider` / `Sidebar` /
   `SidebarInset` from `components/ui/sidebar.tsx`). `app-sidebar.tsx` holds the nav config (New chat
-  · Patients · Settings) + notifications; `team-switcher.tsx` exists but is no longer used.
+  · Patients · Settings) + notifications; `team-switcher.tsx` is the `OrgSwitcher` (clinic switch).
 - **`components/chat/`** — the product chat UI. `chat-panel.tsx` owns message state + empty/active
   layouts; `chat-input.tsx` is a bespoke (non–ai-elements) input matching a specific design.
 
 ## Theming
 
-Tailwind v4 with `@theme inline` and **oklch CSS variables** in `app/globals.css` (a
-Linear-inspired dark palette; `--primary` is indigo `#5e6ad2`). The app is dark-only. The radius
-scale (`rounded-2xl` … `rounded-4xl`) is derived from `--radius`, so those utilities are larger than
-stock Tailwind.
+Tailwind v4 with `@theme inline` in `app/globals.css`, using **COSS's default neutral tokens**
+(`@coss/colors-neutral`; values reference Tailwind palette vars like `--color-neutral-*` plus
+`--alpha()`/`color-mix()`). Both **light (`:root`) and dark (`.dark`)** palettes are defined;
+`next-themes` (`components/theme-provider.tsx`) toggles them with **`defaultTheme="dark"`** +
+`enableSystem`, so the app still defaults to dark. Fonts follow the COSS variable contract
+(`--font-sans`, `--font-heading` = Inter; `--font-mono` = Geist Mono). The radius scale
+(`rounded-2xl` … `rounded-4xl`) is derived from `--radius`, so those utilities are larger than stock
+Tailwind.
+
+## i18n
+
+`i18next` + `react-i18next` (config in `lib/i18n/config.ts`, English resources in
+`lib/i18n/locales/en/translation.json`). `components/i18n-provider.tsx` wraps the app in
+`app/layout.tsx`. Use `const { t } = useTranslation()` + nested keys (e.g. `t("auth.login.title")`)
+in **client** components. To add a language, drop a `locales/<lng>/translation.json` and register it
+in `resources`/`supportedLngs` in `config.ts`. Auth forms, sidebar nav, and settings tabs are
+converted as the reference pattern; other strings can be migrated incrementally.
 
 ## Gotchas
 

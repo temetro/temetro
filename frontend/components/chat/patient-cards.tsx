@@ -62,6 +62,11 @@ const sexLabel: Record<Patient["sex"], string> = { F: "Female", M: "Male" };
 const rowCard =
   "w-80 shrink-0 cursor-pointer text-left outline-none transition hover:ring-foreground/20 focus-visible:ring-2 focus-visible:ring-ring";
 
+// COSS Card has no `size` variant; recreate the old compact ("sm") density by
+// tightening the inner section padding from p-6 → p-4 via data-slot selectors.
+const compactCard =
+  "[&_[data-slot=card-header]]:p-4 [&_[data-slot=card-panel]]:px-4 [&_[data-slot=card-panel]]:pb-4";
+
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
     <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -171,7 +176,7 @@ function ExpandableCard({
     <Dialog>
       <DialogTrigger
         nativeButton={false}
-        render={<Card className={rowCard} size="sm" />}
+        render={<Card className={cn(rowCard, compactCard)} />}
       >
         {children}
       </DialogTrigger>
@@ -529,7 +534,7 @@ function VisitsCard({ patient }: { patient: Patient }) {
 function LoadingCards() {
   return (
     <>
-      <Card className="w-80 shrink-0" size="sm">
+      <Card className={cn("w-80 shrink-0", compactCard)}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <Skeleton className="size-10 rounded-full" />
@@ -546,7 +551,7 @@ function LoadingCards() {
         </CardContent>
       </Card>
       {[0, 1, 2, 3, 4, 5].map((card) => (
-        <Card className="w-80 shrink-0" key={card} size="sm">
+        <Card className={cn("w-80 shrink-0", compactCard)} key={card}>
           <CardHeader>
             <Skeleton className="h-4 w-28" />
           </CardHeader>
@@ -574,7 +579,7 @@ export function PatientResult({
 
   if (status === "not-found") {
     return (
-      <Card size="sm">
+      <Card className={compactCard}>
         <CardContent>
           <p className="text-muted-foreground">
             No patient found for file #{fileNumber}.

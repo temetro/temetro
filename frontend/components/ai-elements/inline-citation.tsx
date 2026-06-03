@@ -8,10 +8,10 @@ import {
   CarouselItem,
 } from "@/components/ui/carousel";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+  PreviewCard as HoverCard,
+  PreviewCardPopup as HoverCardContent,
+  PreviewCardTrigger as HoverCardTrigger,
+} from "@/components/ui/preview-card";
 import { cn } from "@/lib/utils";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import type { ComponentProps } from "react";

@@ -10,20 +10,20 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Menu as DropdownMenu,
+  MenuPopup as DropdownMenuContent,
+  MenuItem as DropdownMenuItem,
+  MenuTrigger as DropdownMenuTrigger,
+} from "@/components/ui/menu";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+  PreviewCard as HoverCard,
+  PreviewCardPopup as HoverCardContent,
+  PreviewCardTrigger as HoverCardTrigger,
+} from "@/components/ui/preview-card";
+import { Button as InputGroupButton } from "@/components/ui/button";
 import {
   InputGroup,
   InputGroupAddon,
-  InputGroupButton,
   InputGroupTextarea,
 } from "@/components/ui/input-group";
 import {

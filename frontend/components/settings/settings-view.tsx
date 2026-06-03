@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
 import {
@@ -12,14 +13,14 @@ import { CareTeamPanel } from "@/components/settings/settings-care-team";
 import { ProfilePanel } from "@/components/settings/settings-preferences";
 
 const TABS = [
-  "Profile",
-  "Records",
-  "Signing",
-  "Care team",
-  "Developers",
+  { id: "profile", labelKey: "settings.tabs.profile" },
+  { id: "records", labelKey: "settings.tabs.records" },
+  { id: "signing", labelKey: "settings.tabs.signing" },
+  { id: "careTeam", labelKey: "settings.tabs.careTeam" },
+  { id: "developers", labelKey: "settings.tabs.developers" },
 ] as const;
 
-type Tab = (typeof TABS)[number];
+type Tab = (typeof TABS)[number]["id"];
 
 function PlaceholderPanel({
   title,
@@ -28,55 +29,59 @@ function PlaceholderPanel({
   title: string;
   description: string;
 }) {
+  const { t } = useTranslation();
   return (
     <SettingsSection description={description} title={title}>
       <SettingsCard className="flex items-center justify-center p-12">
-        <p className="text-sm text-muted-foreground">Nothing here yet.</p>
+        <p className="text-sm text-muted-foreground">{t("settings.empty")}</p>
       </SettingsCard>
     </SettingsSection>
   );
 }
 
 export function SettingsView() {
-  const [tab, setTab] = useState<Tab>("Profile");
+  const { t } = useTranslation();
+  const [tab, setTab] = useState<Tab>("profile");
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-10">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">{tab}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t(`settings.tabs.${tab}`)}
+        </h1>
         <nav className="flex flex-wrap items-center gap-1">
           {TABS.map((item) => (
             <button
               className={cn(
                 "rounded-lg px-3 py-1.5 text-sm transition-colors",
-                tab === item
+                tab === item.id
                   ? "bg-muted text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               )}
-              key={item}
-              onClick={() => setTab(item)}
+              key={item.id}
+              onClick={() => setTab(item.id)}
               type="button"
             >
-              {item}
+              {t(item.labelKey)}
             </button>
           ))}
         </nav>
       </div>
 
       <div className="mt-10 space-y-12">
-        {tab === "Profile" && <ProfilePanel />}
-        {tab === "Records" && (
+        {tab === "profile" && <ProfilePanel />}
+        {tab === "records" && (
           <PlaceholderPanel
-            description="How patient records are sourced, stored, and displayed"
-            title="Records"
+            description={t("settings.records.description")}
+            title={t("settings.tabs.records")}
           />
         )}
-        {tab === "Signing" && <SigningPanel />}
-        {tab === "Care team" && <CareTeamPanel />}
-        {tab === "Developers" && (
+        {tab === "signing" && <SigningPanel />}
+        {tab === "careTeam" && <CareTeamPanel />}
+        {tab === "developers" && (
           <PlaceholderPanel
-            description="Access tokens for the temetro API"
-            title="Developers"
+            description={t("settings.developers.description")}
+            title={t("settings.tabs.developers")}
           />
         )}
       </div>

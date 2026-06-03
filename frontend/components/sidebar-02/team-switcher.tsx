@@ -4,13 +4,13 @@ import { Building2, ChevronsUpDown, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Menu,
+  MenuGroupLabel,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -38,8 +38,8 @@ export function OrgSwitcher() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger
+        <Menu>
+          <MenuTrigger
             render={
               <SidebarMenuButton
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
@@ -62,18 +62,18 @@ export function OrgSwitcher() {
                 <ChevronsUpDown className="ml-auto size-4" />
               </>
             )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
+          </MenuTrigger>
+          <MenuPopup
             align="start"
             className="min-w-56 rounded-lg"
             side={isMobile ? "bottom" : isCollapsed ? "right" : "bottom"}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
+            <MenuGroupLabel className="text-xs text-muted-foreground">
               Clinics
-            </DropdownMenuLabel>
+            </MenuGroupLabel>
             {(orgs ?? []).map((org) => (
-              <DropdownMenuItem
+              <MenuItem
                 className="gap-2 p-2"
                 key={org.id}
                 onClick={() => setActive(org.id)}
@@ -82,10 +82,10 @@ export function OrgSwitcher() {
                   <Building2 className="size-4 shrink-0" />
                 </div>
                 <span className="truncate">{org.name}</span>
-              </DropdownMenuItem>
+              </MenuItem>
             ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
+            <MenuSeparator />
+            <MenuItem
               className="gap-2 p-2"
               onClick={() => router.push("/onboarding")}
             >
@@ -95,9 +95,9 @@ export function OrgSwitcher() {
               <div className="font-medium text-muted-foreground">
                 Create clinic
               </div>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </MenuItem>
+          </MenuPopup>
+        </Menu>
       </SidebarMenuItem>
     </SidebarMenu>
   );

@@ -6,14 +6,14 @@ import { useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Menu,
+  MenuGroupLabel,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuShortcut,
+  MenuTrigger,
+} from "@/components/ui/menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -66,8 +66,8 @@ export function NavUser() {
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger
+        <Menu>
+          <MenuTrigger
             render={
               <SidebarMenuButton
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
@@ -90,14 +90,14 @@ export function NavUser() {
                 <ChevronsUpDown className="ml-auto size-4" />
               </>
             )}
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
+          </MenuTrigger>
+          <MenuPopup
             align="start"
             className="min-w-56"
             side={isMobile ? "bottom" : isCollapsed ? "right" : "top"}
             sideOffset={8}
           >
-            <DropdownMenuLabel className="flex items-center gap-2 py-2 text-foreground">
+            <MenuGroupLabel className="flex items-center gap-2 py-2 text-foreground">
               <Avatar className="size-8">
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
@@ -107,30 +107,30 @@ export function NavUser() {
                   {email}
                 </span>
               </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem render={<Link href="/settings" />}>
+            </MenuGroupLabel>
+            <MenuSeparator />
+            <MenuItem render={<Link href="/settings" />}>
               <SettingsIcon />
               Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem
+            </MenuItem>
+            <MenuItem
               render={<a href={REPO_URL} rel="noreferrer" target="_blank" />}
             >
               <GitHubIcon className="size-4" />
               Docs &amp; GitHub
-            </DropdownMenuItem>
-            <DropdownMenuItem>
+            </MenuItem>
+            <MenuItem>
               <Sun />
               Theme
-              <DropdownMenuShortcut>Dark</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut} variant="destructive">
+              <MenuShortcut>Dark</MenuShortcut>
+            </MenuItem>
+            <MenuSeparator />
+            <MenuItem onClick={signOut} variant="destructive">
               <LogOut />
               Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </MenuItem>
+          </MenuPopup>
+        </Menu>
       </SidebarMenuItem>
     </SidebarMenu>
   );

@@ -2,13 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Menu as DropdownMenu,
+  MenuPopup as DropdownMenuContent,
+  MenuItem as DropdownMenuItem,
+  MenuGroupLabel as DropdownMenuLabel,
+  MenuSeparator as DropdownMenuSeparator,
+  MenuTrigger as DropdownMenuTrigger,
+} from "@/components/ui/menu";
 import { cn } from "@/lib/utils";
 import {
   ChevronDownIcon,

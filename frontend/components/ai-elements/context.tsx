@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
+  PreviewCard as HoverCard,
+  PreviewCardPopup as HoverCardContent,
+  PreviewCardTrigger as HoverCardTrigger,
+} from "@/components/ui/preview-card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { LanguageModelUsage } from "ai";

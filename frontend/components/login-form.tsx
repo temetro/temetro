@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,12 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -26,6 +22,7 @@ export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const { t } = useTranslation();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,10 +42,7 @@ export function LoginForm({
     });
 
     if (err) {
-      setError(
-        err.message ??
-          "Could not sign in. Check your email and password and try again."
-      );
+      setError(err.message ?? t("auth.login.error"));
       setSubmitting(false);
       return;
     }
@@ -59,24 +53,26 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle>Welcome back</CardTitle>
-          <CardDescription>Sign in to your clinician account</CardDescription>
+          <CardTitle>{t("auth.login.title")}</CardTitle>
+          <CardDescription>{t("auth.login.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit}>
-            <FieldGroup>
+            <div className="flex flex-col gap-6">
               {error && (
                 <p className="rounded-2xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {error}
                 </p>
               )}
               <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <FieldLabel htmlFor="email">
+                  {t("auth.login.emailLabel")}
+                </FieldLabel>
                 <Input
                   autoComplete="email"
                   id="email"
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@clinic.org"
+                  placeholder={t("auth.login.emailPlaceholder")}
                   required
                   type="email"
                   value={email}
@@ -84,12 +80,14 @@ export function LoginForm({
               </Field>
               <Field>
                 <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
+                  <FieldLabel htmlFor="password">
+                    {t("auth.login.passwordLabel")}
+                  </FieldLabel>
                   <Link
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                     href="/forgot-password"
                   >
-                    Forgot your password?
+                    {t("auth.login.forgotPassword")}
                   </Link>
                 </div>
                 <Input
@@ -103,14 +101,14 @@ export function LoginForm({
               </Field>
               <Field>
                 <Button disabled={submitting} type="submit">
-                  {submitting ? "Signing in…" : "Sign in"}
+                  {submitting ? t("auth.login.submitting") : t("auth.login.submit")}
                 </Button>
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account?{" "}
-                  <Link href="/signup">Sign up</Link>
+                  {t("auth.login.noAccount")}{" "}
+                  <Link href="/signup">{t("auth.login.signUpLink")}</Link>
                 </FieldDescription>
               </Field>
-            </FieldGroup>
+            </div>
           </form>
         </CardContent>
       </Card>

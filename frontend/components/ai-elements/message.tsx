@@ -1,13 +1,10 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  ButtonGroup,
-  ButtonGroupText,
-} from "@/components/ui/button-group";
+import { Group, GroupText } from "@/components/ui/group";
 import {
   Tooltip,
-  TooltipContent,
+  TooltipPopup,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
@@ -101,10 +98,10 @@ export const MessageAction = ({
     return (
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger>{button}</TooltipTrigger>
-          <TooltipContent>
+          <TooltipTrigger render={button} />
+          <TooltipPopup>
             <p>{tooltip}</p>
-          </TooltipContent>
+          </TooltipPopup>
         </Tooltip>
       </TooltipProvider>
     );
@@ -227,7 +224,7 @@ export const MessageBranchContent = ({
   ));
 };
 
-export type MessageBranchSelectorProps = ComponentProps<typeof ButtonGroup>;
+export type MessageBranchSelectorProps = ComponentProps<typeof Group>;
 
 export const MessageBranchSelector = ({
   className,
@@ -241,7 +238,7 @@ export const MessageBranchSelector = ({
   }
 
   return (
-    <ButtonGroup
+    <Group
       className={cn(
         "[&>*:not(:first-child)]:rounded-l-md [&>*:not(:last-child)]:rounded-r-md",
         className
@@ -307,7 +304,7 @@ export const MessageBranchPage = ({
   const { currentBranch, totalBranches } = useMessageBranch();
 
   return (
-    <ButtonGroupText
+    <GroupText
       className={cn(
         "border-none bg-transparent text-muted-foreground shadow-none",
         className
@@ -315,7 +312,7 @@ export const MessageBranchPage = ({
       {...props}
     >
       {currentBranch + 1} of {totalBranches}
-    </ButtonGroupText>
+    </GroupText>
   );
 };
 

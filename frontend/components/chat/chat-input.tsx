@@ -25,12 +25,12 @@ import {
 
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Menu,
+  MenuPopup,
+  MenuRadioGroup,
+  MenuRadioItem,
+  MenuTrigger,
+} from "@/components/ui/menu";
 import { cn } from "@/lib/utils";
 
 type ChatInputProps = {
@@ -101,8 +101,8 @@ function SelectPill({
   const selected = options.find((option) => option.value === value);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
+    <Menu>
+      <MenuTrigger
         render={
           <button aria-label={ariaLabel} className={triggerClassName} type="button" />
         }
@@ -113,17 +113,17 @@ function SelectPill({
         ) : null}
         <span className="truncate">{selected?.label}</span>
         <ChevronDown className={chevronClassName} />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align={align}>
-        <DropdownMenuRadioGroup onValueChange={onValueChange} value={value}>
+      </MenuTrigger>
+      <MenuPopup align={align}>
+        <MenuRadioGroup onValueChange={onValueChange} value={value}>
           {options.map((option) => (
-            <DropdownMenuRadioItem key={option.value} value={option.value}>
+            <MenuRadioItem key={option.value} value={option.value}>
               {option.label}
-            </DropdownMenuRadioItem>
+            </MenuRadioItem>
           ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </MenuRadioGroup>
+      </MenuPopup>
+    </Menu>
   );
 }
 

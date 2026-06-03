@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,12 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -28,6 +24,7 @@ export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const { t } = useTranslation();
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -42,11 +39,11 @@ export function SignupForm({
     setError(null);
 
     if (password.length < MIN_PASSWORD) {
-      setError(`Password must be at least ${MIN_PASSWORD} characters.`);
+      setError(t("auth.signup.passwordTooShort", { count: MIN_PASSWORD }));
       return;
     }
     if (password !== confirm) {
-      setError("Passwords do not match.");
+      setError(t("auth.signup.passwordMismatch"));
       return;
     }
 
@@ -59,7 +56,7 @@ export function SignupForm({
     });
 
     if (err) {
-      setError(err.message ?? "Could not create your account.");
+      setError(err.message ?? t("auth.signup.error"));
       setSubmitting(false);
       return;
     }
@@ -72,38 +69,40 @@ export function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Create your account</CardTitle>
-          <CardDescription>
-            Start using temetro in your clinic
-          </CardDescription>
+          <CardTitle className="text-xl">{t("auth.signup.title")}</CardTitle>
+          <CardDescription>{t("auth.signup.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit}>
-            <FieldGroup>
+            <div className="flex flex-col gap-6">
               {error && (
                 <p className="rounded-2xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
                   {error}
                 </p>
               )}
               <Field>
-                <FieldLabel htmlFor="name">Full name</FieldLabel>
+                <FieldLabel htmlFor="name">
+                  {t("auth.signup.nameLabel")}
+                </FieldLabel>
                 <Input
                   autoComplete="name"
                   id="name"
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Dr. Jane Okafor"
+                  placeholder={t("auth.signup.namePlaceholder")}
                   required
                   type="text"
                   value={name}
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <FieldLabel htmlFor="email">
+                  {t("auth.signup.emailLabel")}
+                </FieldLabel>
                 <Input
                   autoComplete="email"
                   id="email"
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@clinic.org"
+                  placeholder={t("auth.signup.emailPlaceholder")}
                   required
                   type="email"
                   value={email}
@@ -112,7 +111,9 @@ export function SignupForm({
               <Field>
                 <Field className="grid grid-cols-2 gap-4">
                   <Field>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                    <FieldLabel htmlFor="password">
+                      {t("auth.signup.passwordLabel")}
+                    </FieldLabel>
                     <Input
                       autoComplete="new-password"
                       id="password"
@@ -124,7 +125,7 @@ export function SignupForm({
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="confirm-password">
-                      Confirm password
+                      {t("auth.signup.confirmPasswordLabel")}
                     </FieldLabel>
                     <Input
                       autoComplete="new-password"
@@ -137,18 +138,21 @@ export function SignupForm({
                   </Field>
                 </Field>
                 <FieldDescription>
-                  Must be at least {MIN_PASSWORD} characters long.
+                  {t("auth.signup.passwordHint", { count: MIN_PASSWORD })}
                 </FieldDescription>
               </Field>
               <Field>
                 <Button disabled={submitting} type="submit">
-                  {submitting ? "Creating account…" : "Create account"}
+                  {submitting
+                    ? t("auth.signup.submitting")
+                    : t("auth.signup.submit")}
                 </Button>
                 <FieldDescription className="text-center">
-                  Already have an account? <Link href="/login">Sign in</Link>
+                  {t("auth.signup.haveAccount")}{" "}
+                  <Link href="/login">{t("auth.signup.signInLink")}</Link>
                 </FieldDescription>
               </Field>
-            </FieldGroup>
+            </div>
           </form>
         </CardContent>
       </Card>
