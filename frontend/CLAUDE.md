@@ -91,10 +91,16 @@ Tailwind v4 with `@theme inline` in `app/globals.css`, using **COSS's default ne
 (`@coss/colors-neutral`; values reference Tailwind palette vars like `--color-neutral-*` plus
 `--alpha()`/`color-mix()`). Both **light (`:root`) and dark (`.dark`)** palettes are defined;
 `next-themes` (`components/theme-provider.tsx`) toggles them with **`defaultTheme="dark"`** +
-`enableSystem`, so the app still defaults to dark. Fonts follow the COSS variable contract
-(`--font-sans`, `--font-heading` = Inter; `--font-mono` = Geist Mono). The radius scale
-(`rounded-2xl` … `rounded-4xl`) is derived from `--radius`, so those utilities are larger than stock
-Tailwind.
+`enableSystem`, so the app still defaults to dark. The **theme toggle** is the _Theme_ item in the
+sidebar-footer user menu (`components/sidebar-02/nav-user.tsx`, via `useTheme()`). Fonts follow the
+COSS variable contract (`--font-sans`, `--font-heading` = Inter; `--font-mono` = Geist Mono). The
+radius scale (`rounded-2xl` … `rounded-4xl`) is derived from `--radius`, so those utilities are
+larger than stock Tailwind.
+
+**Always use semantic tokens** (`bg-muted`, `bg-input`, `border-border`, `text-muted-foreground`,
+…), never hardcoded `oklch`/hex colors — the latter break the light theme. Dark surface tokens are
+subtle alphas (`--muted`/`--secondary`/`--accent` ≈ white/4%, `--input` ≈ white/8%, `--border` ≈
+white/6%), so layered surfaces stay close in lightness.
 
 ## i18n
 
@@ -117,8 +123,29 @@ converted as the reference pattern; other strings can be migrated incrementally.
   `next build`. There's a `Dockerfile` for the standalone build.
 - **`lucide-react@1.17` dropped brand glyphs** (e.g. `Github`, `Discord`) — import them and you get
   a build error. Use inline SVGs instead.
-- **`lucide-react@1.17` dropped brand glyphs** (e.g. `Github`, `Discord`) — import them and you get
-  a build error. Use inline SVGs instead.
 - A sibling **`../landing-page/`** directory is a copy of this app with a marketing landing page
   (`components/landing/`); it is a separate project, not part of this git repo.
 - Multiple lockfiles in the tree produce a harmless Turbopack "inferred workspace root" warning.
+
+### COSS composition gotchas (hit during the shadcn→COSS migration)
+
+- **`MenuGroupLabel` must live inside `<MenuGroup>` (or `<MenuRadioGroup>`)** — there is no standalone
+  `MenuLabel`. Using it bare throws `MenuGroupContext is missing` at runtime.
+- **`DialogPopup`/`SheetPopup` have no inner padding** — padding comes from
+  `DialogHeader`/`DialogPanel`/`DialogFooter`. For a form dialog: keep the header outside the form,
+  wrap **panel + footer** in `<form className="contents">`, and put the body in `DialogPanel`
+  (see `components/chat/patient-form-dialog.tsx`). Content placed directly in the popup is flush.
+- **`Card` has no `size` prop** and **`Avatar` has no `size` prop**. For compact cards, override the
+  section padding via data-slot selectors (`compactCard` in `patient-cards.tsx`); for avatars use a
+  `size-*` class.
+- **Solid destructive buttons:** use `variant="destructive"`, not the default variant + a `bg-*`
+  override — the default variant keeps `border-primary`, which is near-white in dark mode.
+- **COSS `Field` is `items-start`** (children don't stretch). Add `w-full` to buttons/rows meant to
+  fill the field. There is **no `FieldGroup`** (use a flex column) and **no `InputGroupButton`**
+  (use `Button`).
+- COSS keeps back-compat aliases (`DialogContent`, `CardContent` → `CardPanel`, `SelectContent`,
+  `TooltipContent`, `PopoverContent`, `SheetContent`), so old imports still resolve — but prefer the
+  canonical `*Popup`/`*Panel` names in new/edited code.
+- The vendored `ai-elements/*` were repointed to COSS (live `conversation`/`message` fully migrated;
+  dormant files via aliased imports). Their remaining `tsc` errors are **pre-existing Base UI drift**,
+  not regressions — they stay behind `ignoreBuildErrors`.
