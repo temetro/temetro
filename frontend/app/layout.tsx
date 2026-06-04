@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   title: "temetro — AI assistant for clinicians",
   description:
     "Retrieve patient information by simply asking. The open-source AI assistant for clinicians.",
+  icons: { icon: "/temetro-logo.png", apple: "/temetro-logo.png" },
 };
 
 export default function RootLayout({

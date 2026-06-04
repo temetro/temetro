@@ -1,10 +1,10 @@
 "use client";
 
 import { Plus, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
+import { PatientDetailSheet } from "@/components/patients/patient-detail-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,11 +19,14 @@ const statusVariant: Record<Patient["status"], BadgeVariant> = {
 };
 
 export function PatientsView() {
-  const router = useRouter();
   const [query, setQuery] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   // Bumped on open so the create dialog remounts with a fresh file # / form.
   const [addKey, setAddKey] = useState(0);
+
+  // The patient whose record is shown in the side Sheet.
+  const [selected, setSelected] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const [allPatients, setAllPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +60,18 @@ export function PatientsView() {
     (p) => !q || p.name.toLowerCase().includes(q) || p.fileNumber.includes(q)
   );
 
-  const open = (fileNumber: string) => router.push(`/?patient=${fileNumber}`);
+  const open = (fileNumber: string) => {
+    setSelected(fileNumber);
+    setSheetOpen(true);
+  };
+
+  const refresh = () => {
+    void listPatients()
+      .then(setAllPatients)
+      .catch(() => {
+        /* keep the current list on a refresh error */
+      });
+  };
 
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-10">
@@ -169,9 +183,22 @@ export function PatientsView() {
       <PatientFormDialog
         key={addKey}
         mode="create"
-        onCreated={(fileNumber) => open(fileNumber)}
+        onCreated={(fileNumber) => {
+          refresh();
+          open(fileNumber);
+        }}
         onOpenChange={setAddOpen}
         open={addOpen}
+      />
+
+      <PatientDetailSheet
+        fileNumber={selected}
+        onOpenChange={(o) => {
+          setSheetOpen(o);
+          // Reflect any edits made in the Sheet back into the table.
+          if (!o) refresh();
+        }}
+        open={sheetOpen}
       />
     </div>
   );

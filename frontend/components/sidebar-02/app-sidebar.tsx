@@ -9,11 +9,12 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { navItems } from "@/lib/nav";
 import { motion } from "framer-motion";
-import { Plus, Settings, Users } from "lucide-react";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import type { Route } from "./nav-main";
+import { SidebarCommandButton } from "@/components/command-palette";
 import DashboardNavigation from "@/components/sidebar-02/nav-main";
 import { NotificationsPopover } from "@/components/sidebar-02/nav-notifications";
 import { NavUser } from "@/components/sidebar-02/nav-user";
@@ -48,26 +49,12 @@ export function DashboardSidebar() {
   const { t } = useTranslation();
   const isCollapsed = state === "collapsed";
 
-  const dashboardRoutes: Route[] = [
-    {
-      id: "new-chat",
-      title: t("nav.newChat"),
-      icon: <Plus className="size-4" />,
-      link: "/",
-    },
-    {
-      id: "patients",
-      title: t("nav.patients"),
-      icon: <Users className="size-4" />,
-      link: "/patients",
-    },
-    {
-      id: "settings",
-      title: t("nav.settings"),
-      icon: <Settings className="size-4" />,
-      link: "/settings",
-    },
-  ];
+  const dashboardRoutes: Route[] = navItems.map((item) => ({
+    id: item.id,
+    title: t(item.labelKey),
+    icon: <item.icon className="size-4" />,
+    link: item.link,
+  }));
 
   return (
     <Sidebar variant="inset" collapsible="icon">
@@ -110,10 +97,11 @@ export function DashboardSidebar() {
         </motion.div>
       </SidebarHeader>
       <SidebarContent className="gap-4 px-2 py-4">
-        <OrgSwitcher />
         <DashboardNavigation routes={dashboardRoutes} />
       </SidebarContent>
-      <SidebarFooter className="px-2">
+      <SidebarFooter className="gap-2 px-2">
+        <SidebarCommandButton />
+        <OrgSwitcher />
         <NavUser />
       </SidebarFooter>
     </Sidebar>

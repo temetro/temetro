@@ -35,6 +35,9 @@ type PatientResultProps = {
   fileNumber: string;
   patient?: Patient;
   onPatientUpdated?: (patient: Patient) => void;
+  // "row" = horizontal scroll (chat); "column" = full-width vertical stack
+  // (the Patients detail Sheet).
+  layout?: "row" | "column";
 };
 
 const severityVariant: Record<AllergySeverity, BadgeVariant> = {
@@ -575,6 +578,7 @@ export function PatientResult({
   fileNumber,
   patient,
   onPatientUpdated,
+  layout = "row",
 }: PatientResultProps) {
   const [editOpen, setEditOpen] = useState(false);
   // Bumped on open so the editor remounts with the latest patient data.
@@ -593,7 +597,14 @@ export function PatientResult({
   }
 
   return (
-    <div className="no-scrollbar flex w-full items-stretch gap-4 overflow-x-auto p-2">
+    <div
+      className={cn(
+        "flex w-full gap-4 p-2",
+        layout === "column"
+          ? "flex-col [&_[data-slot=card]]:w-full"
+          : "no-scrollbar items-stretch overflow-x-auto",
+      )}
+    >
       {status === "loading" || !patient ? (
         <LoadingCards />
       ) : (

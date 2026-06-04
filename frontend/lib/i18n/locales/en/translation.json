@@ -47,9 +47,17 @@
   "nav": {
     "newChat": "New chat",
     "patients": "Patients",
+    "analysis": "Analysis",
     "settings": "Settings",
     "notifications": "Notifications",
-    "viewAllNotifications": "View all notifications"
+    "viewAllNotifications": "View all notifications",
+    "quickNav": "Quick nav",
+    "commandGroup": "Go to",
+    "commandPlaceholder": "Search pages…",
+    "commandEmpty": "No results.",
+    "commandNavigate": "Navigate",
+    "commandOpen": "Open",
+    "commandClose": "Close"
   },
   "settings": {
     "tabs": {
