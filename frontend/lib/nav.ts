@@ -1,6 +1,7 @@
 import {
   BarChart3,
   type LucideIcon,
+  NotebookPen,
   Plus,
   Settings,
   Users,
@@ -26,5 +27,6 @@ export const navItems: NavItem[] = [
     icon: BarChart3,
     link: "/analysis",
   },
+  { id: "notes", labelKey: "nav.notes", icon: NotebookPen, link: "/notes" },
   { id: "settings", labelKey: "nav.settings", icon: Settings, link: "/settings" },
 ];
