@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  CalendarClock,
   type LucideIcon,
   NotebookPen,
   Plus,
@@ -7,12 +8,22 @@ import {
   Users,
 } from "lucide-react";
 
+export type NavSubItem = {
+  id: string;
+  // i18n key resolved with t() at render time.
+  labelKey: string;
+  icon?: LucideIcon;
+  link: string;
+};
+
 export type NavItem = {
   id: string;
   // i18n key resolved with t() at render time.
   labelKey: string;
   icon: LucideIcon;
   link: string;
+  // Optional sub-pages revealed under this item in the sidebar.
+  subs?: NavSubItem[];
 };
 
 // Single source of truth for the primary navigation. Consumed by the sidebar
@@ -20,7 +31,21 @@ export type NavItem = {
 // (components/command-palette.tsx) so the two never drift.
 export const navItems: NavItem[] = [
   { id: "new-chat", labelKey: "nav.newChat", icon: Plus, link: "/" },
-  { id: "patients", labelKey: "nav.patients", icon: Users, link: "/patients" },
+  {
+    id: "patients",
+    labelKey: "nav.patients",
+    icon: Users,
+    link: "/patients",
+    subs: [
+      { id: "patients-list", labelKey: "nav.patients", link: "/patients" },
+      {
+        id: "appointments",
+        labelKey: "nav.appointments",
+        icon: CalendarClock,
+        link: "/appointments",
+      },
+    ],
+  },
   {
     id: "analysis",
     labelKey: "nav.analysis",

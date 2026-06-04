@@ -5,9 +5,15 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarSeparator,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipPopup,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { navItems } from "@/lib/nav";
 import { motion } from "framer-motion";
@@ -54,6 +60,11 @@ export function DashboardSidebar() {
     title: t(item.labelKey),
     icon: <item.icon className="size-4" />,
     link: item.link,
+    subs: item.subs?.map((sub) => ({
+      title: t(sub.labelKey),
+      link: sub.link,
+      icon: sub.icon ? <sub.icon className="size-4" /> : undefined,
+    })),
   }));
 
   return (
@@ -66,21 +77,27 @@ export function DashboardSidebar() {
             : "flex-row items-center justify-between"
         )}
       >
-        <a href="#" className="flex items-center gap-2">
-          <Image
-            src="/temetro-logo.png"
-            alt="temetro"
-            width={32}
-            height={32}
-            className="size-8 shrink-0"
-            priority
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <a
+                aria-label="temetro"
+                className="flex items-center justify-center"
+                href="#"
+              >
+                <Image
+                  alt="temetro"
+                  className="size-9 shrink-0"
+                  height={36}
+                  priority
+                  src="/temetro-logo.png"
+                  width={36}
+                />
+              </a>
+            }
           />
-          {!isCollapsed && (
-            <span className="font-semibold text-black dark:text-white">
-              temetro
-            </span>
-          )}
-        </a>
+          <TooltipPopup side="right">temetro</TooltipPopup>
+        </Tooltip>
 
         <motion.div
           key={isCollapsed ? "header-collapsed" : "header-expanded"}
@@ -99,10 +116,23 @@ export function DashboardSidebar() {
       <SidebarContent className="gap-4 px-2 py-4">
         <DashboardNavigation routes={dashboardRoutes} />
       </SidebarContent>
-      <SidebarFooter className="gap-2 px-2">
-        <SidebarCommandButton />
-        <OrgSwitcher />
-        <NavUser />
+      <SidebarFooter className="p-2">
+        <div
+          className={cn(
+            "flex flex-col gap-1 rounded-xl border border-sidebar-border bg-sidebar-accent/30 p-1",
+            isCollapsed && "border-0 bg-transparent p-0"
+          )}
+        >
+          <SidebarCommandButton />
+          <SidebarSeparator
+            className={cn("mx-0 my-0.5", isCollapsed && "hidden")}
+          />
+          <OrgSwitcher />
+          <SidebarSeparator
+            className={cn("mx-0 my-0.5", isCollapsed && "hidden")}
+          />
+          <NavUser />
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

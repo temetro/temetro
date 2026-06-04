@@ -13,16 +13,16 @@ import { cn } from "@/lib/utils";
 // temetro logo + wordmark, centered.
 export function AuthBrand() {
   return (
-    <div className="flex items-center justify-center gap-2.5">
+    <div className="flex items-center justify-center gap-3">
       <Image
         alt="temetro"
-        className="size-8"
-        height={32}
+        className="size-11"
+        height={44}
         priority
         src="/temetro-logo.png"
-        width={32}
+        width={44}
       />
-      <span className="text-lg font-semibold tracking-tight">temetro</span>
+      <span className="text-2xl font-semibold tracking-tight">temetro</span>
     </div>
   );
 }

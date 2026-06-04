@@ -75,12 +75,24 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
       {
         value: "pages",
         label: t("nav.commandGroup"),
-        items: navItems.map((item) => ({
-          id: item.id,
-          label: t(item.labelKey),
-          link: item.link,
-          Icon: item.icon,
-        })),
+        // Flatten sub-pages so e.g. "Appointments & Schedule" is reachable.
+        items: navItems.flatMap((item) =>
+          item.subs?.length
+            ? item.subs.map((sub) => ({
+                id: sub.id,
+                label: t(sub.labelKey),
+                link: sub.link,
+                Icon: sub.icon ?? item.icon,
+              }))
+            : [
+                {
+                  id: item.id,
+                  label: t(item.labelKey),
+                  link: item.link,
+                  Icon: item.icon,
+                },
+              ],
+        ),
       },
     ],
     [t],

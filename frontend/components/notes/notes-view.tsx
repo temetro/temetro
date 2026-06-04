@@ -1,10 +1,18 @@
 "use client";
 
-import { FileText, Plus } from "lucide-react";
+import { NotebookPen, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { NotesEditor } from "@/components/notes/notes-editor";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import {
   createNote,
   deleteNote,
@@ -25,6 +33,7 @@ const newDraft = (): Note => ({
 
 export function NotesView() {
   const [notes, setNotes] = useState<Note[]>([]);
+  // No auto-selection: with nothing chosen the right pane shows the Empty state.
   const [selected, setSelected] = useState<Note | null>(null);
   const [draftKey, setDraftKey] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -34,9 +43,7 @@ export function NotesView() {
     let active = true;
     listNotes()
       .then((data) => {
-        if (!active) return;
-        setNotes(data);
-        setSelected((current) => current ?? data[0] ?? null);
+        if (active) setNotes(data);
       })
       .catch((err) => {
         if (active) {
@@ -84,7 +91,7 @@ export function NotesView() {
       await deleteNote(id);
       const list = await listNotes();
       setNotes(list);
-      setSelected(list[0] ?? null);
+      setSelected(null);
       notify.success("Note deleted");
     } catch (err) {
       notify.error(
@@ -95,16 +102,22 @@ export function NotesView() {
   };
 
   return (
-    <div className="mx-auto flex h-full w-full max-w-5xl gap-6 px-6 py-8">
-      <aside className="flex w-60 shrink-0 flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h1 className="font-semibold text-lg tracking-tight">Notes</h1>
-          <Button onClick={startNew} size="sm" type="button">
+    <div className="flex h-full w-full">
+      {/* Left: note list */}
+      <aside className="flex w-72 shrink-0 flex-col border-border border-r">
+        <div className="flex items-center justify-between gap-2 border-border border-b px-4 py-3">
+          <h1 className="font-semibold text-base tracking-tight">Notes</h1>
+          <Button
+            aria-label="New note"
+            onClick={startNew}
+            size="icon-sm"
+            type="button"
+            variant="secondary"
+          >
             <Plus className="size-4" />
-            New
           </Button>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
           {loading ? (
             <p className="px-2 py-1.5 text-muted-foreground text-sm">Loading…</p>
           ) : notes.length === 0 ? (
@@ -115,7 +128,7 @@ export function NotesView() {
             notes.map((n) => (
               <button
                 className={cn(
-                  "flex w-full flex-col items-start gap-0.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent",
+                  "flex w-full flex-col items-start gap-0.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent",
                   selected?.id === n.id && "bg-accent",
                 )}
                 key={n.id}
@@ -134,20 +147,37 @@ export function NotesView() {
         </div>
       </aside>
 
-      <div className="min-w-0 flex-1">
+      {/* Right: editor or empty state */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {selected ? (
-          <NotesEditor
-            key={selected.id || `draft-${draftKey}`}
-            note={selected}
-            onDelete={selected.id ? () => remove(selected.id) : undefined}
-            onSave={save}
-            saving={saving}
-          />
-        ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-            <FileText className="size-8" />
-            <p className="text-sm">Select a note or create a new one.</p>
+          <div className="flex h-full flex-col p-6">
+            <NotesEditor
+              key={selected.id || `draft-${draftKey}`}
+              note={selected}
+              onDelete={selected.id ? () => remove(selected.id) : undefined}
+              onSave={save}
+              saving={saving}
+            />
           </div>
+        ) : (
+          <Empty className="flex-1">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <NotebookPen />
+              </EmptyMedia>
+              <EmptyTitle>No note selected</EmptyTitle>
+              <EmptyDescription>
+                Select a note from the list, or create a new one to start
+                writing.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button onClick={startNew} type="button">
+                <Plus className="size-4" />
+                New note
+              </Button>
+            </EmptyContent>
+          </Empty>
         )}
       </div>
     </div>

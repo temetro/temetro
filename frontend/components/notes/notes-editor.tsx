@@ -91,8 +91,9 @@ export function NotesEditor({
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class:
-          "prose prose-sm dark:prose-invert max-w-none min-h-full focus:outline-none",
+        // `note-content` styles headings/lists/etc. (see globals.css); padding +
+        // min-h-full make the whole card a click target, text anchored top-left.
+        class: "note-content min-h-full p-4 focus:outline-none",
       },
     },
     onTransaction: bump,
@@ -132,7 +133,7 @@ export function NotesEditor({
         </Button>
       </div>
 
-      <Toolbar className="flex-wrap">
+      <Toolbar className="w-fit max-w-full self-start overflow-x-auto">
         <ToolbarGroup>
           <FormatButton
             active={editor.isActive("bold")}
@@ -213,13 +214,9 @@ export function NotesEditor({
         </ToolbarGroup>
       </Toolbar>
 
-      <button
-        className="min-h-0 flex-1 cursor-text overflow-y-auto rounded-xl border bg-card p-4 text-left"
-        onClick={() => editor.chain().focus().run()}
-        type="button"
-      >
-        <EditorContent editor={editor} />
-      </button>
+      <div className="min-h-0 flex-1 cursor-text overflow-y-auto rounded-xl border bg-card">
+        <EditorContent className="h-full" editor={editor} />
+      </div>
     </div>
   );
 }
