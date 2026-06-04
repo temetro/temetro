@@ -5,6 +5,7 @@ import express from "express";
 import { auth } from "./auth.js";
 import { env } from "./env.js";
 import { errorHandler, notFound } from "./middleware/error.js";
+import { notesRouter } from "./routes/notes.js";
 import { patientsRouter } from "./routes/patients.js";
 
 const app = express();
@@ -43,6 +44,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api/patients", patientsRouter);
+app.use("/api/notes", notesRouter);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -51,4 +53,5 @@ app.listen(env.PORT, () => {
   console.log(`temetro backend listening on ${env.BETTER_AUTH_URL}`);
   console.log(`  • auth:     /api/auth/*  (frontend origin: ${env.FRONTEND_URL})`);
   console.log(`  • patients: /api/patients`);
+  console.log(`  • notes:    /api/notes`);
 });
