@@ -3,7 +3,10 @@
 import { CalendarClock, Clock, Plus, Stethoscope, Users } from "lucide-react";
 import { type ReactNode, useState } from "react";
 
-import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
+import {
+  AddAppointmentDialog,
+  type NewAppointment,
+} from "@/components/appointments/add-appointment-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -202,8 +205,16 @@ function Section({
 
 export function AppointmentsView() {
   const [addOpen, setAddOpen] = useState(false);
-  // Bumped on open so the create dialog remounts with a fresh file # / form.
-  const [addKey, setAddKey] = useState(0);
+  const [schedule, setSchedule] = useState<Appointment[]>(today);
+
+  // Insert a new (mock) appointment into today's schedule, kept time-sorted.
+  const addAppointment = (appt: NewAppointment) => {
+    setSchedule((prev) =>
+      [...prev, { ...appt, status: "confirmed" as const }].sort((a, b) =>
+        a.time.localeCompare(b.time),
+      ),
+    );
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-10">
@@ -218,10 +229,7 @@ export function AppointmentsView() {
         </div>
         <Button
           className="rounded-3xl"
-          onClick={() => {
-            setAddKey((k) => k + 1);
-            setAddOpen(true);
-          }}
+          onClick={() => setAddOpen(true)}
           type="button"
         >
           <Plus className="size-4" />
@@ -236,7 +244,7 @@ export function AppointmentsView() {
       </div>
 
       <Section description="Wednesday, June 5" title="Today">
-        <ScheduleList items={today} />
+        <ScheduleList items={schedule} />
       </Section>
 
       {upcoming.map((group) => (
@@ -245,10 +253,8 @@ export function AppointmentsView() {
         </Section>
       ))}
 
-      <PatientFormDialog
-        key={addKey}
-        mode="create"
-        onCreated={() => setAddOpen(false)}
+      <AddAppointmentDialog
+        onAdd={addAppointment}
         onOpenChange={setAddOpen}
         open={addOpen}
       />

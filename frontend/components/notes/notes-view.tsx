@@ -102,9 +102,9 @@ export function NotesView() {
   };
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full w-full gap-4 p-4">
       {/* Left: note list */}
-      <aside className="flex w-72 shrink-0 flex-col border-border border-r">
+      <aside className="flex w-72 shrink-0 flex-col overflow-hidden rounded-2xl border bg-card/30">
         <div className="flex items-center justify-between gap-2 border-border border-b px-4 py-3">
           <h1 className="font-semibold text-base tracking-tight">Notes</h1>
           <Button
@@ -150,34 +150,34 @@ export function NotesView() {
       {/* Right: editor or empty state */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {selected ? (
-          <div className="flex h-full flex-col p-6">
-            <NotesEditor
-              key={selected.id || `draft-${draftKey}`}
-              note={selected}
-              onDelete={selected.id ? () => remove(selected.id) : undefined}
-              onSave={save}
-              saving={saving}
-            />
-          </div>
+          <NotesEditor
+            key={selected.id || `draft-${draftKey}`}
+            note={selected}
+            onDelete={selected.id ? () => remove(selected.id) : undefined}
+            onSave={save}
+            saving={saving}
+          />
         ) : (
-          <Empty className="flex-1">
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <NotebookPen />
-              </EmptyMedia>
-              <EmptyTitle>No note selected</EmptyTitle>
-              <EmptyDescription>
-                Select a note from the list, or create a new one to start
-                writing.
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button onClick={startNew} type="button">
-                <Plus className="size-4" />
-                New note
-              </Button>
-            </EmptyContent>
-          </Empty>
+          <div className="flex flex-1 items-center justify-center rounded-2xl border bg-card/30">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <NotebookPen />
+                </EmptyMedia>
+                <EmptyTitle>No note selected</EmptyTitle>
+                <EmptyDescription>
+                  Select a note from the list, or create a new one to start
+                  writing.
+                </EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent>
+                <Button onClick={startNew} type="button">
+                  <Plus className="size-4" />
+                  New note
+                </Button>
+              </EmptyContent>
+            </Empty>
+          </div>
         )}
       </div>
     </div>

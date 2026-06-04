@@ -108,7 +108,7 @@ export function NotesEditor({
     });
 
   return (
-    <div className="flex h-full flex-col gap-3">
+    <div className="flex h-full flex-col gap-4">
       <div className="flex items-center gap-2">
         <Input
           className="font-medium text-base"
@@ -214,7 +214,7 @@ export function NotesEditor({
         </ToolbarGroup>
       </Toolbar>
 
-      <div className="min-h-0 flex-1 cursor-text overflow-y-auto rounded-xl border bg-card">
+      <div className="min-h-0 flex-1 cursor-text overflow-y-auto rounded-2xl border bg-card/30">
         <EditorContent className="h-full" editor={editor} />
       </div>
     </div>

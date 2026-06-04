@@ -182,7 +182,7 @@ export function NavUser() {
             {/* Command palette: hint + shortcut, sits below Theme. */}
             <MenuItem onClick={openCommand}>
               <Search />
-              Quick nav
+              Search
               <KbdGroup className="ms-auto">
                 <Kbd>⌘</Kbd>
                 <Kbd>K</Kbd>
@@ -195,7 +195,7 @@ export function NavUser() {
                 <Building2 />
                 <span className="truncate">{activeName}</span>
               </MenuSubTrigger>
-              <MenuSubPopup className="min-w-64">
+              <MenuSubPopup className="min-w-64" sideOffset={8}>
                 <div className="px-2 py-1.5">
                   <p className="truncate font-medium text-foreground text-sm">
                     {activeOrg?.name ?? "No clinic selected"}
