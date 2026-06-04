@@ -30,6 +30,7 @@ import {
   type Patient,
   updatePatient,
 } from "@/lib/patients";
+import { notify } from "@/lib/toast";
 
 type PatientFormDialogProps = {
   open: boolean;
@@ -289,14 +290,17 @@ export function PatientFormDialog({
         : await createPatient(built);
       if (isEdit) {
         onSaved?.(saved);
+        notify.success("Record updated", `${saved.name}'s chart was saved.`);
       } else {
         onCreated?.(saved.fileNumber);
+        notify.success("Patient added", `${saved.name} (${saved.fileNumber}).`);
       }
       onOpenChange(false);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Could not save the patient.",
-      );
+      const message =
+        err instanceof Error ? err.message : "Could not save the patient.";
+      setError(message);
+      notify.error("Couldn't save patient", message);
     } finally {
       setSubmitting(false);
     }

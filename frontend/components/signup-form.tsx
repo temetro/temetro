@@ -16,6 +16,7 @@ import {
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
+import { notify } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 const MIN_PASSWORD = 12;
@@ -56,12 +57,15 @@ export function SignupForm({
     });
 
     if (err) {
-      setError(err.message ?? t("auth.signup.error"));
+      const message = err.message ?? t("auth.signup.error");
+      setError(message);
+      notify.error(t("auth.signup.errorTitle"), message);
       setSubmitting(false);
       return;
     }
     // Verification isn't enforced yet — the user is signed in, so go to
     // clinic onboarding.
+    notify.success(t("auth.signup.created"), t("auth.signup.createdHint"));
     router.push("/");
   };
 

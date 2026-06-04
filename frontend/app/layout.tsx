@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 import { I18nProvider } from "@/components/i18n-provider";
+import { ToastProvider } from "@/components/ui/toast";
 
 // COSS font-variable contract: --font-sans, --font-heading, --font-mono.
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -48,7 +49,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <I18nProvider>{children}</I18nProvider>
+          <ToastProvider>
+            <I18nProvider>{children}</I18nProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

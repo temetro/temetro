@@ -7,6 +7,7 @@ import { AuthShell, Field, FormAlert } from "@/components/auth/auth-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
+import { notify } from "@/lib/toast";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -27,9 +28,12 @@ export default function ForgotPasswordPage() {
 
     setSubmitting(false);
     if (err) {
-      setError(err.message ?? "Could not send the reset email.");
+      const message = err.message ?? "Could not send the reset email.";
+      setError(message);
+      notify.error("Couldn't send reset link", message);
       return;
     }
+    notify.success("Reset link sent", "Check your inbox for the link.");
     setSent(true);
   };
 

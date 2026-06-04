@@ -29,6 +29,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
+import { notify } from "@/lib/toast";
 
 // Open-source repo (placeholder).
 const REPO_URL = "https://github.com/temetro/temetro";
@@ -69,7 +70,12 @@ export function NavUser() {
   const initials = initialsFromName(name);
 
   const signOut = async () => {
-    await authClient.signOut();
+    const { error } = await authClient.signOut();
+    if (error) {
+      notify.error("Sign out failed", error.message ?? "Please try again.");
+      return;
+    }
+    notify.success("Signed out");
     router.push("/login");
   };
 

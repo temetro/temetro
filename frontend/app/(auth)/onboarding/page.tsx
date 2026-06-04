@@ -7,6 +7,7 @@ import { AuthShell, Field, FormAlert } from "@/components/auth/auth-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
+import { notify } from "@/lib/toast";
 
 function slugify(value: string): string {
   return value
@@ -45,12 +46,15 @@ export default function OnboardingPage() {
     );
 
     if (createErr || !org) {
-      setError(createErr?.message ?? "Could not create the clinic.");
+      const message = createErr?.message ?? "Could not create the clinic.";
+      setError(message);
+      notify.error("Couldn't create clinic", message);
       setSubmitting(false);
       return;
     }
 
     await authClient.organization.setActive({ organizationId: org.id });
+    notify.success("Clinic created", `${org.name} is ready.`);
     router.push("/");
   };
 

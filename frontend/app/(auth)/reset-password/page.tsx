@@ -8,6 +8,7 @@ import { AuthShell, Field, FormAlert } from "@/components/auth/auth-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
+import { notify } from "@/lib/toast";
 
 const MIN_PASSWORD = 12;
 
@@ -46,9 +47,12 @@ function ResetPasswordInner() {
     });
     setSubmitting(false);
     if (err) {
-      setError(err.message ?? "Could not reset your password.");
+      const message = err.message ?? "Could not reset your password.";
+      setError(message);
+      notify.error("Couldn't reset password", message);
       return;
     }
+    notify.success("Password updated", "Redirecting you to sign in…");
     setDone(true);
     setTimeout(() => router.push("/login"), 1500);
   };

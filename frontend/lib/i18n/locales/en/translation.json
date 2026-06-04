@@ -18,7 +18,9 @@
       "submitting": "Signing in…",
       "noAccount": "Don't have an account?",
       "signUpLink": "Sign up",
-      "error": "Could not sign in. Check your email and password and try again."
+      "error": "Could not sign in. Check your email and password and try again.",
+      "errorTitle": "Sign in failed",
+      "welcomeBack": "Welcome back"
     },
     "signup": {
       "title": "Create your account",
@@ -36,7 +38,10 @@
       "submitting": "Creating account…",
       "haveAccount": "Already have an account?",
       "signInLink": "Sign in",
-      "error": "Could not create your account."
+      "error": "Could not create your account.",
+      "errorTitle": "Sign up failed",
+      "created": "Account created",
+      "createdHint": "Set up your clinic to get started."
     }
   },
   "nav": {

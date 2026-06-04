@@ -16,6 +16,7 @@ import {
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
+import { notify } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 export function LoginForm({
@@ -42,10 +43,13 @@ export function LoginForm({
     });
 
     if (err) {
-      setError(err.message ?? t("auth.login.error"));
+      const message = err.message ?? t("auth.login.error");
+      setError(message);
+      notify.error(t("auth.login.errorTitle"), message);
       setSubmitting(false);
       return;
     }
+    notify.success(t("auth.login.welcomeBack"));
     router.push("/");
   };
 
