@@ -1,10 +1,12 @@
 "use client";
 
-import { CalendarClock, Clock, Stethoscope, Users } from "lucide-react";
-import type { ReactNode } from "react";
+import { CalendarClock, Clock, Plus, Stethoscope, Users } from "lucide-react";
+import { type ReactNode, useState } from "react";
 
+import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 // All figures here are mock/placeholder data — there is no scheduling backend.
@@ -199,15 +201,32 @@ function Section({
 }
 
 export function AppointmentsView() {
+  const [addOpen, setAddOpen] = useState(false);
+  // Bumped on open so the create dialog remounts with a fresh file # / form.
+  const [addKey, setAddKey] = useState(0);
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-10">
-      <div>
-        <h1 className="font-semibold text-2xl tracking-tight">
-          Appointments &amp; Schedule
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          Today&apos;s clinic schedule and what&apos;s coming up. Sample data.
-        </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="font-semibold text-2xl tracking-tight">
+            Appointments &amp; Schedule
+          </h1>
+          <p className="text-muted-foreground text-sm">
+            Today&apos;s clinic schedule and what&apos;s coming up. Sample data.
+          </p>
+        </div>
+        <Button
+          className="rounded-3xl"
+          onClick={() => {
+            setAddKey((k) => k + 1);
+            setAddOpen(true);
+          }}
+          type="button"
+        >
+          <Plus className="size-4" />
+          Add
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -225,6 +244,14 @@ export function AppointmentsView() {
           <ScheduleList items={group.items} />
         </Section>
       ))}
+
+      <PatientFormDialog
+        key={addKey}
+        mode="create"
+        onCreated={() => setAddOpen(false)}
+        onOpenChange={setAddOpen}
+        open={addOpen}
+      />
     </div>
   );
 }

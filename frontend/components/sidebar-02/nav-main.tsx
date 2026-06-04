@@ -89,11 +89,10 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
                 {route.subs?.map((subRoute) => (
                   <SidebarMenuSubItem key={`${route.id}-${subRoute.link}`}>
                     <SidebarMenuSubButton
-                      className="text-muted-foreground"
+                      className="text-muted-foreground hover:bg-transparent hover:text-foreground active:bg-transparent data-[active=true]:bg-transparent data-[active=true]:font-medium data-[active=true]:text-foreground"
                       isActive={isActive(subRoute.link)}
                       render={<Link href={subRoute.link} prefetch={true} />}
                     >
-                      {subRoute.icon}
                       <span className="truncate">{subRoute.title}</span>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>

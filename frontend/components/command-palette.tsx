@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  CornerDownLeftIcon,
-  Search,
-} from "lucide-react";
+import { ArrowDownIcon, ArrowUpIcon, CornerDownLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   createContext,
@@ -32,7 +27,6 @@ import {
   CommandPanel,
 } from "@/components/ui/command";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { useSidebar } from "@/components/ui/sidebar";
 import { navItems } from "@/lib/nav";
 
 type CommandPaletteContextValue = { open: () => void };
@@ -169,30 +163,5 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
         </CommandDialogPopup>
       </CommandDialog>
     </CommandPaletteContext.Provider>
-  );
-}
-
-// Sidebar-footer affordance: shows the ⌘K hint and opens the palette on click.
-// Hidden when the sidebar is collapsed to its icon rail.
-export function SidebarCommandButton() {
-  const { open } = useCommandPalette();
-  const { state } = useSidebar();
-  const { t } = useTranslation();
-
-  if (state === "collapsed") return null;
-
-  return (
-    <button
-      className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-sidebar-muted hover:text-foreground"
-      onClick={open}
-      type="button"
-    >
-      <Search className="size-4" />
-      <span>{t("nav.quickNav")}</span>
-      <KbdGroup className="ml-auto">
-        <Kbd>⌘</Kbd>
-        <Kbd>K</Kbd>
-      </KbdGroup>
-    </button>
   );
 }

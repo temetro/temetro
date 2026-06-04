@@ -5,7 +5,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarSeparator,
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -20,11 +19,9 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import type { Route } from "./nav-main";
-import { SidebarCommandButton } from "@/components/command-palette";
 import DashboardNavigation from "@/components/sidebar-02/nav-main";
 import { NotificationsPopover } from "@/components/sidebar-02/nav-notifications";
 import { NavUser } from "@/components/sidebar-02/nav-user";
-import { OrgSwitcher } from "@/components/sidebar-02/team-switcher";
 
 const sampleNotifications = [
   {
@@ -117,22 +114,7 @@ export function DashboardSidebar() {
         <DashboardNavigation routes={dashboardRoutes} />
       </SidebarContent>
       <SidebarFooter className="p-2">
-        <div
-          className={cn(
-            "flex flex-col gap-1 rounded-xl border border-sidebar-border bg-sidebar-accent/30 p-1",
-            isCollapsed && "border-0 bg-transparent p-0"
-          )}
-        >
-          <SidebarCommandButton />
-          <SidebarSeparator
-            className={cn("mx-0 my-0.5", isCollapsed && "hidden")}
-          />
-          <OrgSwitcher />
-          <SidebarSeparator
-            className={cn("mx-0 my-0.5", isCollapsed && "hidden")}
-          />
-          <NavUser />
-        </div>
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   );
