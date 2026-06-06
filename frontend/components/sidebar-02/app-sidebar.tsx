@@ -84,11 +84,11 @@ export function DashboardSidebar() {
               >
                 <Image
                   alt="temetro"
-                  className="size-9 shrink-0"
-                  height={36}
+                  className="size-10 shrink-0"
+                  height={40}
                   priority
                   src="/temetro-logo.png"
-                  width={36}
+                  width={40}
                 />
               </a>
             }

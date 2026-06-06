@@ -1,12 +1,20 @@
 "use client";
 
-import { CalendarClock, Clock, Plus, Stethoscope, Users } from "lucide-react";
+import {
+  CalendarClock,
+  CalendarDays,
+  Clock,
+  Plus,
+  Stethoscope,
+  Users,
+} from "lucide-react";
 import { type ReactNode, useState } from "react";
 
 import {
   AddAppointmentDialog,
   type NewAppointment,
 } from "@/components/appointments/add-appointment-dialog";
+import { CalendarDialog } from "@/components/appointments/calendar-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +25,7 @@ import { Card } from "@/components/ui/card";
 
 type ApptStatus = "confirmed" | "checked-in" | "completed" | "cancelled";
 
-type Appointment = {
+export type Appointment = {
   time: string;
   name: string;
   initials: string;
@@ -171,7 +179,7 @@ function ApptRow({ appt }: { appt: Appointment }) {
   );
 }
 
-function ScheduleList({ items }: { items: Appointment[] }) {
+export function ScheduleList({ items }: { items: Appointment[] }) {
   return (
     <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
       {items.map((appt) => (
@@ -205,6 +213,7 @@ function Section({
 
 export function AppointmentsView() {
   const [addOpen, setAddOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [schedule, setSchedule] = useState<Appointment[]>(today);
 
   // Insert a new (mock) appointment into today's schedule, kept time-sorted.
@@ -227,14 +236,25 @@ export function AppointmentsView() {
             Today&apos;s clinic schedule and what&apos;s coming up. Sample data.
           </p>
         </div>
-        <Button
-          className="rounded-3xl"
-          onClick={() => setAddOpen(true)}
-          type="button"
-        >
-          <Plus className="size-4" />
-          Add
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            className="rounded-3xl"
+            onClick={() => setCalendarOpen(true)}
+            type="button"
+            variant="outline"
+          >
+            <CalendarDays className="size-4" />
+            Calendar
+          </Button>
+          <Button
+            className="rounded-3xl"
+            onClick={() => setAddOpen(true)}
+            type="button"
+          >
+            <Plus className="size-4" />
+            Add
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -257,6 +277,12 @@ export function AppointmentsView() {
         onAdd={addAppointment}
         onOpenChange={setAddOpen}
         open={addOpen}
+      />
+
+      <CalendarDialog
+        onOpenChange={setCalendarOpen}
+        open={calendarOpen}
+        schedule={schedule}
       />
     </div>
   );

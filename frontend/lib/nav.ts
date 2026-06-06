@@ -2,7 +2,9 @@ import {
   BarChart3,
   CalendarClock,
   type LucideIcon,
+  Mail,
   NotebookPen,
+  Pill,
   Plus,
   Settings,
   Users,
@@ -44,6 +46,12 @@ export const navItems: NavItem[] = [
         icon: CalendarClock,
         link: "/appointments",
       },
+      {
+        id: "prescriptions",
+        labelKey: "nav.prescriptions",
+        icon: Pill,
+        link: "/prescriptions",
+      },
     ],
   },
   {
@@ -53,5 +61,6 @@ export const navItems: NavItem[] = [
     link: "/analysis",
   },
   { id: "notes", labelKey: "nav.notes", icon: NotebookPen, link: "/notes" },
+  { id: "messages", labelKey: "nav.messages", icon: Mail, link: "/messages" },
   { id: "settings", labelKey: "nav.settings", icon: Settings, link: "/settings" },
 ];

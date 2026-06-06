@@ -19,6 +19,7 @@ import {
 import { type ReactNode, useReducer, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import {
   Toolbar,
@@ -77,6 +78,7 @@ export function NotesEditor({
   onDelete?: () => void;
 }) {
   const [title, setTitle] = useState(note.title);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   // Force a re-render on every editor transaction so the toolbar reflects the
   // current formatting/undo state.
   const [, bump] = useReducer((n: number) => n + 1, 0);
@@ -119,7 +121,7 @@ export function NotesEditor({
         {onDelete && (
           <Button
             aria-label="Delete note"
-            onClick={onDelete}
+            onClick={() => setConfirmOpen(true)}
             size="icon"
             type="button"
             variant="ghost"
@@ -217,6 +219,17 @@ export function NotesEditor({
       <div className="min-h-0 flex-1 cursor-text overflow-y-auto rounded-2xl border bg-card/30">
         <EditorContent className="h-full" editor={editor} />
       </div>
+
+      {onDelete && (
+        <ConfirmDialog
+          confirmLabel="Delete note"
+          description={`"${title.trim() || "Untitled note"}" will be permanently deleted. This can't be undone.`}
+          onConfirm={onDelete}
+          onOpenChange={setConfirmOpen}
+          open={confirmOpen}
+          title="Delete this note?"
+        />
+      )}
     </div>
   );
 }
