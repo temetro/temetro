@@ -7,6 +7,7 @@ import {
   AddPrescriptionDialog,
   type NewPrescription,
 } from "@/components/prescriptions/add-prescription-dialog";
+import { PrescriptionDetailSheet } from "@/components/prescriptions/prescription-detail-sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,9 +16,9 @@ import { Card } from "@/components/ui/card";
 // All figures here are mock/placeholder data — there is no prescriptions backend.
 // They illustrate the Prescriptions layout.
 
-type RxStatus = "active" | "completed" | "expired";
+export type RxStatus = "active" | "completed" | "expired";
 
-type Prescription = {
+export type Prescription = {
   fileNumber: string;
   name: string;
   initials: string;
@@ -27,6 +28,8 @@ type Prescription = {
   prescriber: string;
   date: string;
   status: RxStatus;
+  duration?: string;
+  notes?: string;
 };
 
 const statusVariant: Record<
@@ -132,9 +135,20 @@ function Kpi({
   );
 }
 
-function RxRow({ rx }: { rx: Prescription }) {
+function RxRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
+    <div
+      className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/50"
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
       <Avatar className="size-8">
         <AvatarFallback>{rx.initials}</AvatarFallback>
       </Avatar>
@@ -183,6 +197,13 @@ function Section({
 export function PrescriptionsView() {
   const [addOpen, setAddOpen] = useState(false);
   const [list, setList] = useState<Prescription[]>(initial);
+  const [selected, setSelected] = useState<Prescription | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const openRx = (rx: Prescription) => {
+    setSelected(rx);
+    setSheetOpen(true);
+  };
 
   // Insert a new (mock) prescription at the top of the list, marked active.
   const addPrescription = (rx: NewPrescription) => {
@@ -194,6 +215,8 @@ export function PrescriptionsView() {
         medication: rx.medication,
         dose: rx.dose,
         frequency: rx.frequency,
+        duration: rx.duration || undefined,
+        notes: rx.notes || undefined,
         prescriber: "Dr. Okafor",
         date: new Date().toLocaleDateString("en-US", {
           month: "short",
@@ -234,7 +257,11 @@ export function PrescriptionsView() {
       <Section description="Most recent first" title="Recent prescriptions">
         <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
           {list.map((rx) => (
-            <RxRow key={rx.fileNumber + rx.medication + rx.date} rx={rx} />
+            <RxRow
+              key={rx.fileNumber + rx.medication + rx.date}
+              onOpen={() => openRx(rx)}
+              rx={rx}
+            />
           ))}
         </div>
       </Section>
@@ -243,6 +270,12 @@ export function PrescriptionsView() {
         onAdd={addPrescription}
         onOpenChange={setAddOpen}
         open={addOpen}
+      />
+
+      <PrescriptionDetailSheet
+        onOpenChange={setSheetOpen}
+        open={sheetOpen}
+        rx={selected}
       />
     </div>
   );

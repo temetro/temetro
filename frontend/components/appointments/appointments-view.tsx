@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Clock,
   Plus,
+  Search,
   Stethoscope,
   Users,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 // All figures here are mock/placeholder data — there is no scheduling backend.
 // They illustrate the Appointments & Schedule layout.
@@ -261,6 +263,7 @@ export function AppointmentsView() {
   const [addOpen, setAddOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>(seed);
+  const [query, setQuery] = useState("");
 
   // Insert a new (mock) appointment at the date/time chosen in the dialog.
   const addAppointment = (appt: NewAppointment) => {
@@ -294,6 +297,25 @@ export function AppointmentsView() {
     }));
   }, [appointments]);
 
+  const search = query.trim().toLowerCase();
+
+  // While searching, match name/type/provider across every date and group the
+  // hits by date (soonest first) so each section keeps its day header.
+  const results = useMemo(() => {
+    if (!search) return [];
+    const hits = appointments.filter(
+      (a) =>
+        a.name.toLowerCase().includes(search) ||
+        a.type.toLowerCase().includes(search) ||
+        a.provider.toLowerCase().includes(search),
+    );
+    const keys = [...new Set(hits.map((a) => a.date))].sort();
+    return keys.map((key) => ({
+      key,
+      items: hits.filter((a) => a.date === key).sort(byTime),
+    }));
+  }, [appointments, search]);
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -306,6 +328,15 @@ export function AppointmentsView() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+            <Input
+              className="w-full pl-9 sm:w-64"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search patient, type, provider"
+              value={query}
+            />
+          </div>
           <Button
             className="rounded-3xl"
             onClick={() => setCalendarOpen(true)}
@@ -326,27 +357,43 @@ export function AppointmentsView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {kpis.map((k) => (
-          <Kpi key={k.label} {...k} />
-        ))}
-      </div>
-
-      <Section description={formatDayKey(TODAY)} title="Today">
-        {todayItems.length > 0 ? (
-          <ScheduleList items={todayItems} />
+      {search ? (
+        results.length > 0 ? (
+          results.map((group) => (
+            <Section key={group.key} title={formatDayKey(group.key)}>
+              <ScheduleList items={group.items} />
+            </Section>
+          ))
         ) : (
           <p className="rounded-2xl border border-dashed bg-card/20 px-4 py-8 text-center text-muted-foreground text-sm">
-            Nothing scheduled today.
+            No matching appointments.
           </p>
-        )}
-      </Section>
+        )
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+            {kpis.map((k) => (
+              <Kpi key={k.label} {...k} />
+            ))}
+          </div>
 
-      {upcoming.map((group) => (
-        <Section key={group.key} title={formatDayKey(group.key)}>
-          <ScheduleList items={group.items} />
-        </Section>
-      ))}
+          <Section description={formatDayKey(TODAY)} title="Today">
+            {todayItems.length > 0 ? (
+              <ScheduleList items={todayItems} />
+            ) : (
+              <p className="rounded-2xl border border-dashed bg-card/20 px-4 py-8 text-center text-muted-foreground text-sm">
+                Nothing scheduled today.
+              </p>
+            )}
+          </Section>
+
+          {upcoming.map((group) => (
+            <Section key={group.key} title={formatDayKey(group.key)}>
+              <ScheduleList items={group.items} />
+            </Section>
+          ))}
+        </>
+      )}
 
       <AddAppointmentDialog
         onAdd={addAppointment}

@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, ListTodo, Plus } from "lucide-react";
+import { Check, Plus } from "lucide-react";
 import { type FormEvent, type ReactNode, useMemo, useState } from "react";
 
+import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,23 +16,17 @@ import {
   DialogPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { notify } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 // All tasks here are mock/placeholder data — there is no tasks backend. They
 // illustrate a care-team to-do board.
 
-type Priority = "high" | "medium" | "low";
+export type Priority = "high" | "medium" | "low";
 
-type Task = {
+export type Task = {
   id: string;
   title: string;
   assignee: string;
@@ -109,7 +104,7 @@ function CheckButton({
       aria-label={done ? "Mark as not done" : "Mark as done"}
       aria-pressed={done}
       className={cn(
-        "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors",
+        "flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors",
         done
           ? "border-primary bg-primary text-primary-foreground"
           : "border-input hover:border-ring",
@@ -144,12 +139,14 @@ function AddTaskDialog({
   onAdd: (task: Omit<Task, "id" | "done">) => void;
 }) {
   const [title, setTitle] = useState("");
+  const [notes, setNotes] = useState("");
   const [assignee, setAssignee] = useState("");
   const [due, setDue] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
 
   const reset = () => {
     setTitle("");
+    setNotes("");
     setAssignee("");
     setDue("");
     setPriority("medium");
@@ -158,11 +155,12 @@ function AddTaskDialog({
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!title.trim()) {
-      notify.error("Add a title", "Describe the task first.");
+      notify.error("Add a subject", "Describe the task first.");
       return;
     }
     onAdd({
       title: title.trim(),
+      notes: notes.trim() || undefined,
       assignee: assignee.trim() || "Unassigned",
       due: due.trim() || "No due date",
       priority,
@@ -180,7 +178,7 @@ function AddTaskDialog({
       }}
       open={open}
     >
-      <DialogPopup className="sm:max-w-md">
+      <DialogPopup className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>New task</DialogTitle>
           <DialogDescription>
@@ -190,12 +188,20 @@ function AddTaskDialog({
 
         <form className="contents" onSubmit={submit}>
           <DialogPanel className="flex flex-col gap-4">
-            <Field label="Title">
+            <Field label="Subject">
               <Input
                 autoFocus
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Review lab results"
                 value={title}
+              />
+            </Field>
+            <Field label="Details — what needs to be done">
+              <Textarea
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Describe what needs to happen, any context, links…"
+                rows={4}
+                value={notes}
               />
             </Field>
             <div className="grid grid-cols-2 gap-3">
@@ -242,6 +248,7 @@ function AddTaskDialog({
 export function TasksView() {
   const [tasks, setTasks] = useState<Task[]>(seed);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const [addOpen, setAddOpen] = useState(false);
 
@@ -258,6 +265,11 @@ export function TasksView() {
       prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
     );
 
+  const openTask = (id: string) => {
+    setSelectedId(id);
+    setSheetOpen(true);
+  };
+
   const addTask = (task: Omit<Task, "id" | "done">) =>
     setTasks((prev) => [
       { ...task, id: `t-${Date.now()}`, done: false },
@@ -265,149 +277,83 @@ export function TasksView() {
     ]);
 
   return (
-    <div className="flex h-full w-full gap-4 p-4">
-      {/* Left: task list */}
-      <aside className="flex w-80 shrink-0 flex-col overflow-hidden rounded-2xl border bg-card/30">
-        <div className="flex items-center justify-between gap-2 border-border border-b px-4 py-3">
-          <h1 className="font-semibold text-base tracking-tight">Tasks</h1>
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="font-semibold text-2xl tracking-tight">Tasks</h1>
+          <p className="text-muted-foreground text-sm">
+            Care-team to-dos. Click a task to see its details. Sample data.
+          </p>
+        </div>
+        <Button
+          className="rounded-3xl"
+          onClick={() => setAddOpen(true)}
+          type="button"
+        >
+          <Plus className="size-4" />
+          New task
+        </Button>
+      </div>
+
+      <div className="flex w-full items-center gap-1 rounded-2xl border bg-card/30 p-1 sm:w-fit">
+        {(["all", "open", "done"] as Filter[]).map((f) => (
           <Button
-            aria-label="New task"
-            onClick={() => setAddOpen(true)}
-            size="icon-sm"
+            className="flex-1 capitalize sm:flex-none"
+            key={f}
+            onClick={() => setFilter(f)}
+            size="sm"
             type="button"
-            variant="secondary"
+            variant={filter === f ? "secondary" : "ghost"}
           >
-            <Plus className="size-4" />
+            {f}
           </Button>
-        </div>
+        ))}
+      </div>
 
-        <div className="flex items-center gap-1 border-border border-b px-2 py-2">
-          {(["all", "open", "done"] as Filter[]).map((f) => (
-            <Button
-              className="flex-1 capitalize"
-              key={f}
-              onClick={() => setFilter(f)}
-              size="sm"
-              type="button"
-              variant={filter === f ? "secondary" : "ghost"}
-            >
-              {f}
-            </Button>
-          ))}
-        </div>
-
-        <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
-          {visible.length === 0 ? (
-            <p className="px-2 py-1.5 text-muted-foreground text-sm">
-              No tasks here.
-            </p>
-          ) : (
-            visible.map((t) => (
-              <div
-                className={cn(
-                  "flex items-start gap-2 rounded-lg px-2 py-2 transition-colors hover:bg-accent/50",
-                  selected?.id === t.id && "bg-accent",
-                )}
-                key={t.id}
+      <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
+        {visible.length === 0 ? (
+          <p className="px-4 py-10 text-center text-muted-foreground text-sm">
+            No tasks here.
+          </p>
+        ) : (
+          visible.map((t) => (
+            <div className="flex items-center gap-3 px-4 py-3" key={t.id}>
+              <CheckButton done={t.done} onClick={() => toggle(t.id)} />
+              <button
+                className="flex min-w-0 flex-1 flex-col text-left"
+                onClick={() => openTask(t.id)}
+                type="button"
               >
-                <CheckButton done={t.done} onClick={() => toggle(t.id)} />
-                <button
-                  className="flex min-w-0 flex-1 flex-col text-left"
-                  onClick={() => setSelectedId(t.id)}
-                  type="button"
+                <span
+                  className={cn(
+                    "truncate text-sm",
+                    t.done
+                      ? "text-muted-foreground line-through"
+                      : "font-medium text-foreground",
+                  )}
                 >
-                  <span
-                    className={cn(
-                      "truncate text-sm",
-                      t.done
-                        ? "text-muted-foreground line-through"
-                        : "font-medium text-foreground",
-                    )}
-                  >
-                    {t.title}
-                  </span>
-                  <span className="truncate text-muted-foreground text-xs">
-                    {t.assignee} · {t.due}
-                  </span>
-                </button>
-                <Badge className="shrink-0" variant={priorityVariant[t.priority]}>
-                  {priorityLabel[t.priority]}
-                </Badge>
-              </div>
-            ))
-          )}
-        </div>
-      </aside>
-
-      {/* Right: task detail or empty state */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {selected ? (
-          <div className="flex h-full flex-col gap-4 overflow-y-auto rounded-2xl border bg-card/30 p-6">
-            <div className="flex items-start justify-between gap-3">
-              <h2
-                className={cn(
-                  "font-semibold text-foreground text-xl tracking-tight",
-                  selected.done && "text-muted-foreground line-through",
-                )}
-              >
-                {selected.title}
-              </h2>
-              <Badge variant={priorityVariant[selected.priority]}>
-                {priorityLabel[selected.priority]}
+                  {t.title}
+                </span>
+                <span className="truncate text-muted-foreground text-xs">
+                  {t.assignee} · {t.due}
+                </span>
+              </button>
+              <Badge className="shrink-0" variant={priorityVariant[t.priority]}>
+                {priorityLabel[t.priority]}
               </Badge>
             </div>
-
-            <dl className="grid grid-cols-[6rem_1fr] gap-x-3 gap-y-2 text-sm">
-              <dt className="text-muted-foreground">Status</dt>
-              <dd className="text-foreground">
-                {selected.done ? "Completed" : "Open"}
-              </dd>
-              <dt className="text-muted-foreground">Assignee</dt>
-              <dd className="text-foreground">{selected.assignee}</dd>
-              <dt className="text-muted-foreground">Due</dt>
-              <dd className="text-foreground">{selected.due}</dd>
-              {selected.patient && (
-                <>
-                  <dt className="text-muted-foreground">Patient</dt>
-                  <dd className="text-foreground">{selected.patient}</dd>
-                </>
-              )}
-            </dl>
-
-            {selected.notes && (
-              <p className="text-foreground text-sm leading-relaxed">
-                {selected.notes}
-              </p>
-            )}
-
-            <div>
-              <Button
-                onClick={() => toggle(selected.id)}
-                type="button"
-                variant={selected.done ? "outline" : "default"}
-              >
-                {selected.done ? "Reopen task" : "Mark complete"}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-1 items-center justify-center rounded-2xl border bg-card/30">
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <ListTodo />
-                </EmptyMedia>
-                <EmptyTitle>No task selected</EmptyTitle>
-                <EmptyDescription>
-                  Select a task to see its details, or create a new one.
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          </div>
+          ))
         )}
       </div>
 
       <AddTaskDialog onAdd={addTask} onOpenChange={setAddOpen} open={addOpen} />
+
+      <TaskDetailSheet
+        onOpenChange={setSheetOpen}
+        onToggle={toggle}
+        open={sheetOpen}
+        task={selected}
+      />
     </div>
   );
 }

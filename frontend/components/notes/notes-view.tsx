@@ -3,7 +3,7 @@
 import { NotebookPen, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import { NotesEditor } from "@/components/notes/notes-editor";
+import { NoteDetailSheet } from "@/components/notes/note-detail-sheet";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -21,7 +21,6 @@ import {
   updateNote,
 } from "@/lib/notes";
 import { notify } from "@/lib/toast";
-import { cn } from "@/lib/utils";
 
 const newDraft = (): Note => ({
   id: "",
@@ -33,8 +32,9 @@ const newDraft = (): Note => ({
 
 export function NotesView() {
   const [notes, setNotes] = useState<Note[]>([]);
-  // No auto-selection: with nothing chosen the right pane shows the Empty state.
+  // The note shown in the editor Sheet; null when the Sheet is closed.
   const [selected, setSelected] = useState<Note | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [draftKey, setDraftKey] = useState(0);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -64,6 +64,12 @@ export function NotesView() {
   const startNew = () => {
     setSelected(newDraft());
     setDraftKey((k) => k + 1);
+    setSheetOpen(true);
+  };
+
+  const openNote = (note: Note) => {
+    setSelected(note);
+    setSheetOpen(true);
   };
 
   const save = async (data: { title: string; content: string }) => {
@@ -92,6 +98,7 @@ export function NotesView() {
       const list = await listNotes();
       setNotes(list);
       setSelected(null);
+      setSheetOpen(false);
       notify.success("Note deleted");
     } catch (err) {
       notify.error(
@@ -102,84 +109,76 @@ export function NotesView() {
   };
 
   return (
-    <div className="flex h-full w-full gap-4 p-4">
-      {/* Left: note list */}
-      <aside className="flex w-72 shrink-0 flex-col overflow-hidden rounded-2xl border bg-card/30">
-        <div className="flex items-center justify-between gap-2 border-border border-b px-4 py-3">
-          <h1 className="font-semibold text-base tracking-tight">Notes</h1>
-          <Button
-            aria-label="New note"
-            onClick={startNew}
-            size="icon-sm"
-            type="button"
-            variant="secondary"
-          >
-            <Plus className="size-4" />
-          </Button>
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="font-semibold text-2xl tracking-tight">Notes</h1>
+          <p className="text-muted-foreground text-sm">
+            Clinical notes. Click a note to open it.
+          </p>
         </div>
-        <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
-          {loading ? (
-            <p className="px-2 py-1.5 text-muted-foreground text-sm">Loading…</p>
-          ) : notes.length === 0 ? (
-            <p className="px-2 py-1.5 text-muted-foreground text-sm">
-              No notes yet.
-            </p>
-          ) : (
-            notes.map((n) => (
-              <button
-                className={cn(
-                  "flex w-full flex-col items-start gap-0.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent",
-                  selected?.id === n.id && "bg-accent",
-                )}
-                key={n.id}
-                onClick={() => setSelected(n)}
-                type="button"
-              >
-                <span className="w-full truncate font-medium text-foreground text-sm">
-                  {n.title || "Untitled note"}
-                </span>
-                <span className="text-muted-foreground text-xs">
-                  {new Date(n.updatedAt).toLocaleDateString()}
-                </span>
-              </button>
-            ))
-          )}
-        </div>
-      </aside>
-
-      {/* Right: editor or empty state */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {selected ? (
-          <NotesEditor
-            key={selected.id || `draft-${draftKey}`}
-            note={selected}
-            onDelete={selected.id ? () => remove(selected.id) : undefined}
-            onSave={save}
-            saving={saving}
-          />
-        ) : (
-          <div className="flex flex-1 items-center justify-center rounded-2xl border bg-card/30">
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <NotebookPen />
-                </EmptyMedia>
-                <EmptyTitle>No note selected</EmptyTitle>
-                <EmptyDescription>
-                  Select a note from the list, or create a new one to start
-                  writing.
-                </EmptyDescription>
-              </EmptyHeader>
-              <EmptyContent>
-                <Button onClick={startNew} type="button">
-                  <Plus className="size-4" />
-                  New note
-                </Button>
-              </EmptyContent>
-            </Empty>
-          </div>
-        )}
+        <Button className="rounded-3xl" onClick={startNew} type="button">
+          <Plus className="size-4" />
+          New note
+        </Button>
       </div>
+
+      {loading ? (
+        <div className="rounded-2xl border bg-card/30 px-4 py-10 text-center text-muted-foreground text-sm">
+          Loading…
+        </div>
+      ) : notes.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center rounded-2xl border bg-card/30 py-16">
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <NotebookPen />
+              </EmptyMedia>
+              <EmptyTitle>No notes yet</EmptyTitle>
+              <EmptyDescription>
+                Create a note to start writing.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button onClick={startNew} type="button">
+                <Plus className="size-4" />
+                New note
+              </Button>
+            </EmptyContent>
+          </Empty>
+        </div>
+      ) : (
+        <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
+          {notes.map((n) => (
+            <button
+              className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left transition-colors hover:bg-accent/50"
+              key={n.id}
+              onClick={() => openNote(n)}
+              type="button"
+            >
+              <span className="w-full truncate font-medium text-foreground text-sm">
+                {n.title || "Untitled note"}
+              </span>
+              <span className="text-muted-foreground text-xs">
+                Updated {new Date(n.updatedAt).toLocaleDateString()}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <NoteDetailSheet
+        editorKey={selected?.id || `draft-${draftKey}`}
+        note={selected}
+        onDelete={selected?.id ? () => remove(selected.id) : undefined}
+        onOpenChange={(o) => {
+          setSheetOpen(o);
+          if (!o) setSelected(null);
+        }}
+        onSave={save}
+        open={sheetOpen}
+        saving={saving}
+      />
     </div>
   );
 }

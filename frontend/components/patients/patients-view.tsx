@@ -83,6 +83,13 @@ export function PatientsView() {
             <Input
               className="w-full pl-9 sm:w-64"
               onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                // Enter opens the top match's record, like picking it from the table.
+                if (event.key === "Enter" && patients.length > 0) {
+                  event.preventDefault();
+                  open(patients[0].fileNumber);
+                }
+              }}
               placeholder="Search name or MRN"
               value={query}
             />

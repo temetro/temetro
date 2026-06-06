@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { listPatients, type Patient } from "@/lib/patients";
 import { notify } from "@/lib/toast";
 
@@ -27,6 +28,7 @@ export type NewPrescription = {
   dose: string;
   frequency: string;
   duration: string;
+  notes: string;
 };
 
 const FREQUENCIES = [
@@ -36,6 +38,20 @@ const FREQUENCIES = [
   "Every 8 hours",
   "As needed",
 ];
+
+// Preset courses for the Duration dropdown; "Other" reveals a free-text input.
+const DURATIONS = [
+  "3 days",
+  "5 days",
+  "7 days",
+  "10 days",
+  "14 days",
+  "1 month",
+  "3 months",
+  "Ongoing",
+  "Other",
+];
+const OTHER_DURATION = "Other";
 
 const controlClass =
   "h-9 w-full rounded-3xl border border-transparent bg-input/50 px-3 text-sm text-foreground outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30";
@@ -112,7 +128,9 @@ export function AddPrescriptionDialog({
   const [medication, setMedication] = useState("");
   const [dose, setDose] = useState("");
   const [frequency, setFrequency] = useState(FREQUENCIES[0]);
-  const [duration, setDuration] = useState("");
+  const [durationChoice, setDurationChoice] = useState(DURATIONS[0]);
+  const [durationCustom, setDurationCustom] = useState("");
+  const [notes, setNotes] = useState("");
 
   // Load patients lazily when the dialog opens (for the quick search).
   useEffect(() => {
@@ -151,7 +169,9 @@ export function AddPrescriptionDialog({
     setMedication("");
     setDose("");
     setFrequency(FREQUENCIES[0]);
-    setDuration("");
+    setDurationChoice(DURATIONS[0]);
+    setDurationCustom("");
+    setNotes("");
   };
 
   const submit = (event: FormEvent) => {
@@ -164,6 +184,12 @@ export function AddPrescriptionDialog({
       notify.error("Add a medication", "Enter the medication name.");
       return;
     }
+    const duration =
+      durationChoice === OTHER_DURATION ? durationCustom.trim() : durationChoice;
+    if (durationChoice === OTHER_DURATION && !duration) {
+      notify.error("Add a duration", "Enter the custom duration.");
+      return;
+    }
     onAdd({
       fileNumber: selected.fileNumber,
       name: selected.name,
@@ -171,7 +197,8 @@ export function AddPrescriptionDialog({
       medication: medication.trim(),
       dose: dose.trim(),
       frequency,
-      duration: duration.trim(),
+      duration,
+      notes: notes.trim(),
     });
     notify.success("Prescription added", `${medication.trim()} for ${selected.name}`);
     reset();
@@ -295,10 +322,33 @@ export function AddPrescriptionDialog({
             </div>
 
             <Field label="Duration">
-              <Input
-                onChange={(event) => setDuration(event.target.value)}
-                placeholder="e.g. 7 days"
-                value={duration}
+              <select
+                className={controlClass}
+                onChange={(event) => setDurationChoice(event.target.value)}
+                value={durationChoice}
+              >
+                {DURATIONS.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+              {durationChoice === OTHER_DURATION && (
+                <Input
+                  autoFocus
+                  onChange={(event) => setDurationCustom(event.target.value)}
+                  placeholder="e.g. 21 days"
+                  value={durationCustom}
+                />
+              )}
+            </Field>
+
+            <Field label="Notes">
+              <Textarea
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Instructions, e.g. take with food in the morning"
+                rows={3}
+                value={notes}
               />
             </Field>
 
