@@ -1,93 +1,228 @@
 "use client";
 
-import { useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
 
 import {
   type Appointment,
   ScheduleList,
+  TODAY,
 } from "@/components/appointments/appointments-view";
-import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogDescription,
   DialogHeader,
   DialogPanel,
   DialogPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
-// The mock schedule all belongs to this day (matches "Wednesday, June 5" in the
-// Appointments view). Month is zero-based, so 5 = June.
-const SCHEDULE_DATE = new Date(2026, 5, 5);
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-const sameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
+// Local-date ISO key, e.g. "2026-06-05" (avoids UTC drift from toISOString).
+const keyOf = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
 
-const fullDate = (d: Date) =>
-  d.toLocaleDateString("en-US", {
+const parseKey = (key: string) => new Date(`${key}T00:00:00`);
+
+const formatDayKey = (key: string) =>
+  parseKey(key).toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
 
-// A month-grid calendar (à la Google Calendar) shown in a dialog. The day that
-// owns the mock schedule is ringed; selecting it lists those appointments, while
-// any other day shows an empty note. Mock-only — there's no per-date backend.
+const byTime = (a: Appointment, b: Appointment) => a.time.localeCompare(b.time);
+
+// Event chip color by status, using semantic tokens.
+const chipClass: Record<Appointment["status"], string> = {
+  confirmed: "bg-secondary text-secondary-foreground",
+  "checked-in": "bg-success/15 text-success",
+  completed: "bg-muted text-muted-foreground",
+  cancelled: "bg-destructive/15 text-destructive line-through",
+};
+
+// A Google-Calendar-style month grid in a dialog: a 6×7 grid of day cells with
+// color-coded event chips; navigate months and click a day to list its
+// appointments. Mock-only — there's no per-date scheduling backend.
 export function CalendarDialog({
   open,
   onOpenChange,
-  schedule,
+  appointments,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  schedule: Appointment[];
+  appointments: Appointment[];
 }) {
-  const [selected, setSelected] = useState<Date>(SCHEDULE_DATE);
+  // First-of-month for the displayed month; defaults to TODAY's month.
+  const [viewMonth, setViewMonth] = useState<Date>(() => {
+    const t = parseKey(TODAY);
+    return new Date(t.getFullYear(), t.getMonth(), 1);
+  });
+  const [selectedKey, setSelectedKey] = useState<string>(TODAY);
 
-  const dayItems = sameDay(selected, SCHEDULE_DATE) ? schedule : [];
+  const byDate = useMemo(() => {
+    const map = new Map<string, Appointment[]>();
+    for (const a of appointments) {
+      const list = map.get(a.date) ?? [];
+      list.push(a);
+      map.set(a.date, list);
+    }
+    return map;
+  }, [appointments]);
+
+  // 42 cells (6 weeks) starting from the Sunday on/before the 1st.
+  const cells = useMemo(() => {
+    const first = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
+    const start = new Date(
+      first.getFullYear(),
+      first.getMonth(),
+      1 - first.getDay(),
+    );
+    return Array.from(
+      { length: 42 },
+      (_, i) =>
+        new Date(start.getFullYear(), start.getMonth(), start.getDate() + i),
+    );
+  }, [viewMonth]);
+
+  const monthLabel = viewMonth.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const selectedItems = (byDate.get(selectedKey) ?? []).slice().sort(byTime);
+
+  const shiftMonth = (delta: number) =>
+    setViewMonth(
+      (m) => new Date(m.getFullYear(), m.getMonth() + delta, 1),
+    );
+
+  const goToday = () => {
+    const t = parseKey(TODAY);
+    setViewMonth(new Date(t.getFullYear(), t.getMonth(), 1));
+    setSelectedKey(TODAY);
+  };
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogPopup className="sm:max-w-2xl">
+      <DialogPopup className="sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Calendar</DialogTitle>
-          <DialogDescription>
-            Browse the schedule by date. Sample data.
-          </DialogDescription>
+          <div className="flex items-center justify-between gap-3 pe-8">
+            <DialogTitle>{monthLabel}</DialogTitle>
+            <div className="flex items-center gap-1">
+              <Button
+                onClick={goToday}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                Today
+              </Button>
+              <Button
+                aria-label="Previous month"
+                onClick={() => shiftMonth(-1)}
+                size="icon-sm"
+                type="button"
+                variant="ghost"
+              >
+                <ChevronLeft />
+              </Button>
+              <Button
+                aria-label="Next month"
+                onClick={() => shiftMonth(1)}
+                size="icon-sm"
+                type="button"
+                variant="ghost"
+              >
+                <ChevronRight />
+              </Button>
+            </div>
+          </div>
         </DialogHeader>
 
-        <DialogPanel className="flex flex-col gap-5 sm:flex-row sm:gap-6">
-          <div className="flex justify-center sm:block">
-            <Calendar
-              className="rounded-2xl border bg-card/30 p-3"
-              defaultMonth={SCHEDULE_DATE}
-              mode="single"
-              modifiers={{ scheduled: SCHEDULE_DATE }}
-              modifiersClassNames={{
-                scheduled: "[&_button]:ring-2 [&_button]:ring-primary",
-              }}
-              onSelect={(d) => d && setSelected(d)}
-              selected={selected}
-            />
+        <DialogPanel className="flex flex-col gap-4">
+          <div>
+            <div className="grid grid-cols-7 gap-1 pb-1">
+              {WEEKDAYS.map((d) => (
+                <div
+                  className="px-1 text-center font-medium text-muted-foreground text-xs"
+                  key={d}
+                >
+                  {d}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {cells.map((date) => {
+                const key = keyOf(date);
+                const inMonth = date.getMonth() === viewMonth.getMonth();
+                const isToday = key === TODAY;
+                const isSelected = key === selectedKey;
+                const items = (byDate.get(key) ?? []).slice().sort(byTime);
+                return (
+                  <button
+                    className={cn(
+                      "flex min-h-22 flex-col gap-1 rounded-lg border p-1.5 text-left align-top transition-colors hover:bg-accent/50",
+                      inMonth
+                        ? "bg-card/30"
+                        : "bg-transparent text-muted-foreground/40",
+                      isSelected && "ring-2 ring-primary",
+                    )}
+                    key={key}
+                    onClick={() => setSelectedKey(key)}
+                    type="button"
+                  >
+                    <span
+                      className={cn(
+                        "flex size-6 items-center justify-center rounded-full text-xs",
+                        isToday && "bg-primary font-semibold text-primary-foreground",
+                      )}
+                    >
+                      {date.getDate()}
+                    </span>
+                    <div className="flex flex-col gap-0.5 overflow-hidden">
+                      {items.slice(0, 3).map((a) => (
+                        <span
+                          className={cn(
+                            "truncate rounded px-1 py-0.5 text-[10px] leading-tight",
+                            chipClass[a.status],
+                          )}
+                          key={a.time + a.name}
+                        >
+                          {a.time} {a.name}
+                        </span>
+                      ))}
+                      {items.length > 3 && (
+                        <span className="px-1 text-[10px] text-muted-foreground">
+                          +{items.length - 3} more
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
+          <div className="flex flex-col gap-2">
             <div>
               <h3 className="font-medium text-foreground text-sm">
-                {fullDate(selected)}
+                {formatDayKey(selectedKey)}
               </h3>
               <p className="text-muted-foreground text-xs">
-                {dayItems.length === 1
+                {selectedItems.length === 1
                   ? "1 appointment"
-                  : `${dayItems.length} appointments`}
+                  : `${selectedItems.length} appointments`}
               </p>
             </div>
-            {dayItems.length > 0 ? (
-              <ScheduleList items={dayItems} />
+            {selectedItems.length > 0 ? (
+              <ScheduleList items={selectedItems} />
             ) : (
-              <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed bg-card/20 px-4 py-10 text-center text-muted-foreground text-sm">
+              <div className="rounded-2xl border border-dashed bg-card/20 px-4 py-8 text-center text-muted-foreground text-sm">
                 No appointments on this day.
               </div>
             )}

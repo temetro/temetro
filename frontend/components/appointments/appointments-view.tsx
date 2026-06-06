@@ -8,7 +8,7 @@ import {
   Stethoscope,
   Users,
 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 
 import {
   AddAppointmentDialog,
@@ -23,9 +23,14 @@ import { Card } from "@/components/ui/card";
 // All figures here are mock/placeholder data — there is no scheduling backend.
 // They illustrate the Appointments & Schedule layout.
 
+// Anchor "today" to a fixed date so the mock copy ("Wednesday, June 5") lines up
+// across the page, the calendar dialog, and the add dialog. ISO YYYY-MM-DD.
+export const TODAY = "2026-06-05";
+
 type ApptStatus = "confirmed" | "checked-in" | "completed" | "cancelled";
 
 export type Appointment = {
+  date: string; // ISO YYYY-MM-DD
   time: string;
   name: string;
   initials: string;
@@ -58,8 +63,10 @@ const kpis = [
   { label: "Utilization", value: "87%", icon: Stethoscope },
 ];
 
-const today: Appointment[] = [
+// Mock schedule spread across June 2026 so the month calendar looks populated.
+const seed: Appointment[] = [
   {
+    date: TODAY,
     time: "09:00",
     name: "Amina Yusuf",
     initials: "AY",
@@ -68,6 +75,7 @@ const today: Appointment[] = [
     status: "completed",
   },
   {
+    date: TODAY,
     time: "09:30",
     name: "Daniel Mensah",
     initials: "DM",
@@ -76,6 +84,7 @@ const today: Appointment[] = [
     status: "checked-in",
   },
   {
+    date: TODAY,
     time: "10:15",
     name: "Leila Haddad",
     initials: "LH",
@@ -84,6 +93,7 @@ const today: Appointment[] = [
     status: "confirmed",
   },
   {
+    date: TODAY,
     time: "11:00",
     name: "Carlos Rivera",
     initials: "CR",
@@ -92,6 +102,7 @@ const today: Appointment[] = [
     status: "confirmed",
   },
   {
+    date: TODAY,
     time: "13:30",
     name: "Priya Nair",
     initials: "PN",
@@ -100,6 +111,7 @@ const today: Appointment[] = [
     status: "cancelled",
   },
   {
+    date: TODAY,
     time: "14:45",
     name: "Tom Becker",
     initials: "TB",
@@ -107,31 +119,65 @@ const today: Appointment[] = [
     provider: "Dr. Okafor",
     status: "confirmed",
   },
-];
-
-const upcoming: { day: string; items: Appointment[] }[] = [
   {
-    day: "Tomorrow",
-    items: [
-      {
-        time: "08:45",
-        name: "Grace Lin",
-        initials: "GL",
-        type: "Follow-up",
-        provider: "Dr. Stein",
-        status: "confirmed",
-      },
-      {
-        time: "10:00",
-        name: "Omar Farouk",
-        initials: "OF",
-        type: "New patient",
-        provider: "Dr. Okafor",
-        status: "confirmed",
-      },
-    ],
+    date: "2026-06-06",
+    time: "08:45",
+    name: "Grace Lin",
+    initials: "GL",
+    type: "Follow-up",
+    provider: "Dr. Stein",
+    status: "confirmed",
+  },
+  {
+    date: "2026-06-06",
+    time: "10:00",
+    name: "Omar Farouk",
+    initials: "OF",
+    type: "New patient",
+    provider: "Dr. Okafor",
+    status: "confirmed",
+  },
+  {
+    date: "2026-06-09",
+    time: "11:30",
+    name: "Sofia Marin",
+    initials: "SM",
+    type: "Consultation",
+    provider: "Dr. Stein",
+    status: "confirmed",
+  },
+  {
+    date: "2026-06-12",
+    time: "15:00",
+    name: "Henry Adeyemi",
+    initials: "HA",
+    type: "Lab review",
+    provider: "Dr. Okafor",
+    status: "confirmed",
+  },
+  {
+    date: "2026-06-18",
+    time: "09:15",
+    name: "Nadia Petrova",
+    initials: "NP",
+    type: "Follow-up",
+    provider: "Dr. Stein",
+    status: "confirmed",
   },
 ];
+
+// "2026-06-05" -> "Wednesday, June 5"
+function formatDayKey(key: string): string {
+  return new Date(`${key}T00:00:00`).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function byTime(a: Appointment, b: Appointment) {
+  return a.time.localeCompare(b.time);
+}
 
 function Kpi({
   label,
@@ -214,16 +260,39 @@ function Section({
 export function AppointmentsView() {
   const [addOpen, setAddOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [schedule, setSchedule] = useState<Appointment[]>(today);
+  const [appointments, setAppointments] = useState<Appointment[]>(seed);
 
-  // Insert a new (mock) appointment into today's schedule, kept time-sorted.
+  // Insert a new (mock) appointment at the date/time chosen in the dialog.
   const addAppointment = (appt: NewAppointment) => {
-    setSchedule((prev) =>
-      [...prev, { ...appt, status: "confirmed" as const }].sort((a, b) =>
-        a.time.localeCompare(b.time),
-      ),
-    );
+    setAppointments((prev) => [
+      ...prev,
+      {
+        date: appt.date,
+        time: appt.time,
+        name: appt.name,
+        initials: appt.initials,
+        type: appt.type,
+        provider: appt.provider,
+        status: "confirmed" as const,
+      },
+    ]);
   };
+
+  const todayItems = useMemo(
+    () => appointments.filter((a) => a.date === TODAY).sort(byTime),
+    [appointments],
+  );
+
+  // Group future dates (after TODAY) into day sections, soonest first.
+  const upcoming = useMemo(() => {
+    const keys = [
+      ...new Set(appointments.map((a) => a.date).filter((d) => d > TODAY)),
+    ].sort();
+    return keys.map((key) => ({
+      key,
+      items: appointments.filter((a) => a.date === key).sort(byTime),
+    }));
+  }, [appointments]);
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-10">
@@ -263,12 +332,18 @@ export function AppointmentsView() {
         ))}
       </div>
 
-      <Section description="Wednesday, June 5" title="Today">
-        <ScheduleList items={schedule} />
+      <Section description={formatDayKey(TODAY)} title="Today">
+        {todayItems.length > 0 ? (
+          <ScheduleList items={todayItems} />
+        ) : (
+          <p className="rounded-2xl border border-dashed bg-card/20 px-4 py-8 text-center text-muted-foreground text-sm">
+            Nothing scheduled today.
+          </p>
+        )}
       </Section>
 
       {upcoming.map((group) => (
-        <Section key={group.day} title={group.day}>
+        <Section key={group.key} title={formatDayKey(group.key)}>
           <ScheduleList items={group.items} />
         </Section>
       ))}
@@ -280,9 +355,9 @@ export function AppointmentsView() {
       />
 
       <CalendarDialog
+        appointments={appointments}
         onOpenChange={setCalendarOpen}
         open={calendarOpen}
-        schedule={schedule}
       />
     </div>
   );

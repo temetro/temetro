@@ -52,6 +52,8 @@
     "analysis": "Analysis",
     "notes": "Notes",
     "messages": "Messages",
+    "tasks": "Tasks",
+    "activity": "Activity",
     "settings": "Settings",
     "notifications": "Notifications",
     "viewAllNotifications": "View all notifications",

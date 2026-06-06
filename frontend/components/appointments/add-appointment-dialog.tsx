@@ -1,9 +1,11 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { CalendarDays, Search } from "lucide-react";
 import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 
+import { TODAY } from "@/components/appointments/appointments-view";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogClose,
@@ -15,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { listPatients, type Patient } from "@/lib/patients";
 import { notify } from "@/lib/toast";
 
@@ -22,10 +25,17 @@ export type NewAppointment = {
   fileNumber: string;
   name: string;
   initials: string;
+  date: string; // ISO YYYY-MM-DD
   time: string;
   type: string;
   provider: string;
 };
+
+// Local-date ISO key (avoids UTC drift from toISOString).
+const keyOf = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
 
 const TYPES = [
   "Follow-up",
@@ -62,6 +72,8 @@ export function AddAppointmentDialog({
   const [patients, setPatients] = useState<Patient[]>([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Patient | null>(null);
+  const [date, setDate] = useState<Date>(() => new Date(`${TODAY}T00:00:00`));
+  const [dateOpen, setDateOpen] = useState(false);
   const [time, setTime] = useState("09:00");
   const [type, setType] = useState(TYPES[0]);
   const [provider, setProvider] = useState("");
@@ -96,6 +108,8 @@ export function AddAppointmentDialog({
   const reset = () => {
     setQuery("");
     setSelected(null);
+    setDate(new Date(`${TODAY}T00:00:00`));
+    setDateOpen(false);
     setTime("09:00");
     setType(TYPES[0]);
     setProvider("");
@@ -111,6 +125,7 @@ export function AddAppointmentDialog({
       fileNumber: selected.fileNumber,
       name: selected.name,
       initials: selected.initials,
+      date: keyOf(date),
       time,
       type,
       provider: provider.trim() || selected.pcp,
@@ -206,6 +221,39 @@ export function AddAppointmentDialog({
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <span className="text-muted-foreground text-xs">Date</span>
+                <Popover onOpenChange={setDateOpen} open={dateOpen}>
+                  <PopoverTrigger
+                    render={
+                      <Button
+                        className="w-full justify-start font-normal"
+                        type="button"
+                        variant="outline"
+                      >
+                        <CalendarDays className="size-4" />
+                        {date.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </Button>
+                    }
+                  />
+                  <PopoverPopup>
+                    <Calendar
+                      mode="single"
+                      onSelect={(d) => {
+                        if (d) {
+                          setDate(d);
+                          setDateOpen(false);
+                        }
+                      }}
+                      selected={date}
+                    />
+                  </PopoverPopup>
+                </Popover>
+              </div>
               <Field label="Time">
                 <Input
                   onChange={(event) => setTime(event.target.value)}
@@ -213,6 +261,9 @@ export function AddAppointmentDialog({
                   value={time}
                 />
               </Field>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <Field label="Type">
                 <select
                   className={controlClass}
@@ -226,15 +277,14 @@ export function AddAppointmentDialog({
                   ))}
                 </select>
               </Field>
+              <Field label="Provider">
+                <Input
+                  onChange={(event) => setProvider(event.target.value)}
+                  placeholder="e.g. Dr. Okafor"
+                  value={provider}
+                />
+              </Field>
             </div>
-
-            <Field label="Provider">
-              <Input
-                onChange={(event) => setProvider(event.target.value)}
-                placeholder="e.g. Dr. Okafor"
-                value={provider}
-              />
-            </Field>
           </DialogPanel>
 
           <DialogFooter>

@@ -1,8 +1,9 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { AlertTriangle, Search } from "lucide-react";
 import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,6 +39,50 @@ const FREQUENCIES = [
 
 const controlClass =
   "h-9 w-full rounded-3xl border border-transparent bg-input/50 px-3 text-sm text-foreground outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30";
+
+// Mock pharmacology: pairs of drug keywords known to interact. Checked against
+// the patient's current medications. Not clinical advice — illustrative only.
+const INTERACTIONS: [string, string][] = [
+  ["warfarin", "aspirin"],
+  ["warfarin", "ibuprofen"],
+  ["lisinopril", "potassium"],
+  ["lisinopril", "spironolactone"],
+  ["simvastatin", "clarithromycin"],
+  ["metformin", "contrast"],
+  ["amoxicillin", "methotrexate"],
+];
+
+const has = (haystack: string, needle: string) =>
+  haystack.toLowerCase().includes(needle.toLowerCase());
+
+// Find interaction/allergy conflicts between a new medication and the patient's
+// existing record. Returns human-readable warning lines.
+function findConflicts(medication: string, patient: Patient): string[] {
+  const med = medication.trim();
+  if (med.length < 3) return [];
+  const conflicts: string[] = [];
+
+  for (const allergy of patient.allergies) {
+    if (has(med, allergy.substance) || has(allergy.substance, med)) {
+      conflicts.push(
+        `Allergy: patient is allergic to ${allergy.substance} (${allergy.reaction}).`,
+      );
+    }
+  }
+
+  for (const current of patient.medications) {
+    for (const [a, b] of INTERACTIONS) {
+      const hit =
+        (has(med, a) && has(current.name, b)) ||
+        (has(med, b) && has(current.name, a));
+      if (hit) {
+        conflicts.push(`May interact with ${current.name} (current medication).`);
+      }
+    }
+  }
+
+  return [...new Set(conflicts)];
+}
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -94,6 +139,11 @@ export function AddPrescriptionDialog({
       )
       .slice(0, 6);
   }, [patients, query]);
+
+  const conflicts = useMemo(
+    () => (selected ? findConflicts(medication, selected) : []),
+    [medication, selected],
+  );
 
   const reset = () => {
     setQuery("");
@@ -251,6 +301,20 @@ export function AddPrescriptionDialog({
                 value={duration}
               />
             </Field>
+
+            {conflicts.length > 0 && (
+              <Alert variant="warning">
+                <AlertTriangle />
+                <AlertTitle>Possible interaction</AlertTitle>
+                <AlertDescription>
+                  <ul className="list-disc ps-4">
+                    {conflicts.map((c) => (
+                      <li key={c}>{c}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
           </DialogPanel>
 
           <DialogFooter>
