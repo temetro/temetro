@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { Badge } from "@/components/ui/badge";
@@ -46,22 +47,18 @@ const priorityVariant: Record<Priority, "destructive" | "secondary" | "outline">
     low: "outline",
   };
 
-const priorityLabel: Record<Priority, string> = {
-  high: "High",
-  medium: "Medium",
-  low: "Low",
-};
-
 function CheckButton({
   done,
   onClick,
+  label,
 }: {
   done: boolean;
   onClick: () => void;
+  label: string;
 }) {
   return (
     <button
-      aria-label={done ? "Mark as not done" : "Mark as done"}
+      aria-label={label}
       aria-pressed={done}
       className={cn(
         "flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors",
@@ -98,6 +95,7 @@ function AddTaskDialog({
   onOpenChange: (open: boolean) => void;
   onAdd: (task: TaskInput) => void;
 }) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [assignee, setAssignee] = useState("");
@@ -115,7 +113,10 @@ function AddTaskDialog({
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!title.trim()) {
-      notify.error("Add a subject", "Describe the task first.");
+      notify.error(
+        t("tasks.toast.needSubjectTitle"),
+        t("tasks.toast.needSubjectBody"),
+      );
       return;
     }
     onAdd({
@@ -125,7 +126,7 @@ function AddTaskDialog({
       due: due.trim() || "No due date",
       priority,
     });
-    notify.success("Task added", title.trim());
+    notify.success(t("tasks.toast.addedTitle"), title.trim());
     reset();
     onOpenChange(false);
   };
@@ -140,64 +141,62 @@ function AddTaskDialog({
     >
       <DialogPopup className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New task</DialogTitle>
-          <DialogDescription>
-            Assign a follow-up to the care team.
-          </DialogDescription>
+          <DialogTitle>{t("tasks.dialog.title")}</DialogTitle>
+          <DialogDescription>{t("tasks.dialog.description")}</DialogDescription>
         </DialogHeader>
 
         <form className="contents" onSubmit={submit}>
           <DialogPanel className="flex flex-col gap-4">
-            <Field label="Subject">
+            <Field label={t("tasks.dialog.subject")}>
               <Input
                 autoFocus
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Review lab results"
+                placeholder={t("tasks.dialog.subjectPlaceholder")}
                 value={title}
               />
             </Field>
-            <Field label="Details — what needs to be done">
+            <Field label={t("tasks.dialog.details")}>
               <Textarea
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Describe what needs to happen, any context, links…"
+                placeholder={t("tasks.dialog.detailsPlaceholder")}
                 rows={4}
                 value={notes}
               />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Assignee">
+              <Field label={t("tasks.dialog.assignee")}>
                 <Input
                   onChange={(e) => setAssignee(e.target.value)}
-                  placeholder="e.g. Dr. Okafor"
+                  placeholder={t("tasks.dialog.assigneePlaceholder")}
                   value={assignee}
                 />
               </Field>
-              <Field label="Due">
+              <Field label={t("tasks.dialog.due")}>
                 <Input
                   onChange={(e) => setDue(e.target.value)}
-                  placeholder="e.g. Today"
+                  placeholder={t("tasks.dialog.duePlaceholder")}
                   value={due}
                 />
               </Field>
             </div>
-            <Field label="Priority">
+            <Field label={t("tasks.dialog.priorityLabel")}>
               <select
                 className={controlClass}
                 onChange={(e) => setPriority(e.target.value as Priority)}
                 value={priority}
               >
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
+                <option value="high">{t("tasks.priority.high")}</option>
+                <option value="medium">{t("tasks.priority.medium")}</option>
+                <option value="low">{t("tasks.priority.low")}</option>
               </select>
             </Field>
           </DialogPanel>
 
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" />}>
-              Cancel
+              {t("tasks.dialog.cancel")}
             </DialogClose>
-            <Button type="submit">Add task</Button>
+            <Button type="submit">{t("tasks.dialog.add")}</Button>
           </DialogFooter>
         </form>
       </DialogPopup>
@@ -206,6 +205,7 @@ function AddTaskDialog({
 }
 
 export function TasksView() {
+  const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -226,29 +226,32 @@ export function TasksView() {
     };
   }, []);
 
-  const selected = tasks.find((t) => t.id === selectedId) ?? null;
+  const selected = tasks.find((task) => task.id === selectedId) ?? null;
 
   const visible = useMemo(() => {
-    if (filter === "open") return tasks.filter((t) => !t.done);
-    if (filter === "done") return tasks.filter((t) => t.done);
+    if (filter === "open") return tasks.filter((task) => !task.done);
+    if (filter === "done") return tasks.filter((task) => task.done);
     return tasks;
   }, [tasks, filter]);
 
   // Optimistically flip done, then persist; roll back on failure.
   const toggle = async (id: string) => {
-    const current = tasks.find((t) => t.id === id);
+    const current = tasks.find((task) => task.id === id);
     if (!current) return;
     const next = !current.done;
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, done: next } : t)),
+      prev.map((row) => (row.id === id ? { ...row, done: next } : row)),
     );
     try {
       await updateTask(id, { done: next });
     } catch {
       setTasks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, done: current.done } : t)),
+        prev.map((row) => (row.id === id ? { ...row, done: current.done } : row)),
       );
-      notify.error("Couldn't update task", "Please try again.");
+      notify.error(
+        t("tasks.toast.updateFailedTitle"),
+        t("tasks.toast.updateFailedBody"),
+      );
     }
   };
 
@@ -262,7 +265,10 @@ export function TasksView() {
       const created = await createTask(task);
       setTasks((prev) => [created, ...prev]);
     } catch {
-      notify.error("Couldn't add task", "Please try again.");
+      notify.error(
+        t("tasks.toast.addFailedTitle"),
+        t("tasks.toast.addFailedBody"),
+      );
     }
   };
 
@@ -270,10 +276,10 @@ export function TasksView() {
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="font-semibold text-2xl tracking-tight">Tasks</h1>
-          <p className="text-muted-foreground text-sm">
-            Care-team to-dos. Click a task to see its details.
-          </p>
+          <h1 className="font-semibold text-2xl tracking-tight">
+            {t("tasks.title")}
+          </h1>
+          <p className="text-muted-foreground text-sm">{t("tasks.subtitle")}</p>
         </div>
         <Button
           className="rounded-3xl"
@@ -281,21 +287,21 @@ export function TasksView() {
           type="button"
         >
           <Plus className="size-4" />
-          New task
+          {t("tasks.new")}
         </Button>
       </div>
 
       <div className="flex w-full items-center gap-1 rounded-2xl border bg-card/30 p-1 sm:w-fit">
         {(["all", "open", "done"] as Filter[]).map((f) => (
           <Button
-            className="flex-1 capitalize sm:flex-none"
+            className="flex-1 sm:flex-none"
             key={f}
             onClick={() => setFilter(f)}
             size="sm"
             type="button"
             variant={filter === f ? "secondary" : "ghost"}
           >
-            {f}
+            {t(`tasks.filters.${f}`)}
           </Button>
         ))}
       </div>
@@ -303,33 +309,42 @@ export function TasksView() {
       <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
         {visible.length === 0 ? (
           <p className="px-4 py-10 text-center text-muted-foreground text-sm">
-            No tasks here.
+            {t("tasks.empty")}
           </p>
         ) : (
-          visible.map((t) => (
-            <div className="flex items-center gap-3 px-4 py-3" key={t.id}>
-              <CheckButton done={t.done} onClick={() => toggle(t.id)} />
+          visible.map((task) => (
+            <div className="flex items-center gap-3 px-4 py-3" key={task.id}>
+              <CheckButton
+                done={task.done}
+                label={
+                  task.done ? t("tasks.markNotDone") : t("tasks.markDone")
+                }
+                onClick={() => toggle(task.id)}
+              />
               <button
                 className="flex min-w-0 flex-1 flex-col text-left"
-                onClick={() => openTask(t.id)}
+                onClick={() => openTask(task.id)}
                 type="button"
               >
                 <span
                   className={cn(
                     "truncate text-sm",
-                    t.done
+                    task.done
                       ? "text-muted-foreground line-through"
                       : "font-medium text-foreground",
                   )}
                 >
-                  {t.title}
+                  {task.title}
                 </span>
                 <span className="truncate text-muted-foreground text-xs">
-                  {t.assignee} · {t.due}
+                  {task.assignee} · {task.due}
                 </span>
               </button>
-              <Badge className="shrink-0" variant={priorityVariant[t.priority]}>
-                {priorityLabel[t.priority]}
+              <Badge
+                className="shrink-0"
+                variant={priorityVariant[task.priority]}
+              >
+                {t(`tasks.priority.${task.priority}`)}
               </Badge>
             </div>
           ))

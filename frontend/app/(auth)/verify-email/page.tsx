@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { AuthShell, FormAlert } from "@/components/auth/auth-ui";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
 function VerifyEmailInner() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useSearchParams();
   const email = params.get("email") ?? "";
@@ -34,31 +36,25 @@ function VerifyEmailInner() {
     });
     setSending(false);
     if (err) {
-      setError(err.message ?? "Could not resend the verification email.");
+      setError(err.message ?? t("auth.verifyEmail.resendError"));
       return;
     }
-    setNotice("Verification email sent. Check your inbox.");
+    setNotice(t("auth.verifyEmail.resent"));
   };
 
   return (
     <AuthShell
       footer={
         <Link className="text-foreground hover:underline" href="/login">
-          Back to sign in
+          {t("common.backToSignIn")}
         </Link>
       }
       subtitle={
-        email ? (
-          <>
-            We sent a verification link to{" "}
-            <span className="text-foreground">{email}</span>. Open it to activate
-            your account.
-          </>
-        ) : (
-          "Open the verification link we emailed you to activate your account."
-        )
+        email
+          ? t("auth.verifyEmail.subtitle", { email })
+          : t("auth.verifyEmail.subtitleNoEmail")
       }
-      title="Check your inbox"
+      title={t("auth.verifyEmail.title")}
     >
       <div className="flex flex-col gap-4">
         {notice && <FormAlert tone="success">{notice}</FormAlert>}
@@ -68,7 +64,7 @@ function VerifyEmailInner() {
           onClick={() => router.push("/")}
           type="button"
         >
-          I&apos;ve verified — continue
+          {t("auth.verifyEmail.continue")}
         </Button>
         {email && (
           <Button
@@ -78,7 +74,7 @@ function VerifyEmailInner() {
             type="button"
             variant="outline"
           >
-            {sending ? "Sending…" : "Resend email"}
+            {sending ? t("auth.verifyEmail.resending") : t("auth.verifyEmail.resend")}
           </Button>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import { AlertTriangle, Search } from "lucide-react";
 import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -122,6 +123,7 @@ export function AddPrescriptionDialog({
   onOpenChange: (open: boolean) => void;
   onAdd: (rx: NewPrescription) => void;
 }) {
+  const { t } = useTranslation();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Patient | null>(null);
@@ -177,17 +179,26 @@ export function AddPrescriptionDialog({
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!selected) {
-      notify.error("Pick a patient", "Search and select a patient first.");
+      notify.error(
+        t("prescriptions.dialog.pickPatientTitle"),
+        t("prescriptions.dialog.pickPatientBody"),
+      );
       return;
     }
     if (!medication.trim()) {
-      notify.error("Add a medication", "Enter the medication name.");
+      notify.error(
+        t("prescriptions.dialog.needMedTitle"),
+        t("prescriptions.dialog.needMedBody"),
+      );
       return;
     }
     const duration =
       durationChoice === OTHER_DURATION ? durationCustom.trim() : durationChoice;
     if (durationChoice === OTHER_DURATION && !duration) {
-      notify.error("Add a duration", "Enter the custom duration.");
+      notify.error(
+        t("prescriptions.dialog.needDurationTitle"),
+        t("prescriptions.dialog.needDurationBody"),
+      );
       return;
     }
     onAdd({
@@ -200,7 +211,10 @@ export function AddPrescriptionDialog({
       duration,
       notes: notes.trim(),
     });
-    notify.success("Prescription added", `${medication.trim()} for ${selected.name}`);
+    notify.success(
+      t("prescriptions.dialog.addedTitle"),
+      `${medication.trim()} · ${selected.name}`,
+    );
     reset();
     onOpenChange(false);
   };
@@ -215,15 +229,15 @@ export function AddPrescriptionDialog({
     >
       <DialogPopup className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New prescription</DialogTitle>
+          <DialogTitle>{t("prescriptions.dialog.title")}</DialogTitle>
           <DialogDescription>
-            Search for a patient by name or file number, then set the medication.
+            {t("prescriptions.dialog.description")}
           </DialogDescription>
         </DialogHeader>
 
         <form className="contents" onSubmit={submit}>
           <DialogPanel className="flex flex-col gap-4">
-            <Field label="Patient">
+            <Field label={t("prescriptions.dialog.patient")}>
               {selected ? (
                 <div className="flex items-center justify-between gap-2 rounded-2xl border bg-input/30 px-3 py-2">
                   <div className="flex min-w-0 flex-col">
@@ -231,7 +245,9 @@ export function AddPrescriptionDialog({
                       {selected.name}
                     </span>
                     <span className="text-muted-foreground text-xs">
-                      File #{selected.fileNumber}
+                      {t("prescriptions.dialog.fileNumber", {
+                        number: selected.fileNumber,
+                      })}
                     </span>
                   </div>
                   <Button
@@ -243,7 +259,7 @@ export function AddPrescriptionDialog({
                     type="button"
                     variant="ghost"
                   >
-                    Change
+                    {t("prescriptions.dialog.change")}
                   </Button>
                 </div>
               ) : (
@@ -254,7 +270,7 @@ export function AddPrescriptionDialog({
                       autoFocus
                       className="pl-9"
                       onChange={(event) => setQuery(event.target.value)}
-                      placeholder="Search name or file number"
+                      placeholder={t("prescriptions.dialog.searchPlaceholder")}
                       value={query}
                     />
                   </div>
@@ -262,7 +278,7 @@ export function AddPrescriptionDialog({
                     <div className="max-h-56 overflow-y-auto rounded-2xl border bg-popover p-1">
                       {matches.length === 0 ? (
                         <p className="px-2 py-2 text-muted-foreground text-sm">
-                          No patients found.
+                          {t("prescriptions.dialog.noPatients")}
                         </p>
                       ) : (
                         matches.map((p) => (
@@ -290,23 +306,23 @@ export function AddPrescriptionDialog({
               )}
             </Field>
 
-            <Field label="Medication">
+            <Field label={t("prescriptions.dialog.medication")}>
               <Input
                 onChange={(event) => setMedication(event.target.value)}
-                placeholder="e.g. Amoxicillin"
+                placeholder={t("prescriptions.dialog.medicationPlaceholder")}
                 value={medication}
               />
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Dose">
+              <Field label={t("prescriptions.dialog.dose")}>
                 <Input
                   onChange={(event) => setDose(event.target.value)}
-                  placeholder="e.g. 500 mg"
+                  placeholder={t("prescriptions.dialog.dosePlaceholder")}
                   value={dose}
                 />
               </Field>
-              <Field label="Frequency">
+              <Field label={t("prescriptions.dialog.frequency")}>
                 <select
                   className={controlClass}
                   onChange={(event) => setFrequency(event.target.value)}
@@ -321,7 +337,7 @@ export function AddPrescriptionDialog({
               </Field>
             </div>
 
-            <Field label="Duration">
+            <Field label={t("prescriptions.dialog.duration")}>
               <select
                 className={controlClass}
                 onChange={(event) => setDurationChoice(event.target.value)}
@@ -337,16 +353,16 @@ export function AddPrescriptionDialog({
                 <Input
                   autoFocus
                   onChange={(event) => setDurationCustom(event.target.value)}
-                  placeholder="e.g. 21 days"
+                  placeholder={t("prescriptions.dialog.durationOtherPlaceholder")}
                   value={durationCustom}
                 />
               )}
             </Field>
 
-            <Field label="Notes">
+            <Field label={t("prescriptions.dialog.notes")}>
               <Textarea
                 onChange={(event) => setNotes(event.target.value)}
-                placeholder="Instructions, e.g. take with food in the morning"
+                placeholder={t("prescriptions.dialog.notesPlaceholder")}
                 rows={3}
                 value={notes}
               />
@@ -355,7 +371,9 @@ export function AddPrescriptionDialog({
             {conflicts.length > 0 && (
               <Alert variant="warning">
                 <AlertTriangle />
-                <AlertTitle>Possible interaction</AlertTitle>
+                <AlertTitle>
+                  {t("prescriptions.dialog.interactionTitle")}
+                </AlertTitle>
                 <AlertDescription>
                   <ul className="list-disc ps-4">
                     {conflicts.map((c) => (
@@ -369,10 +387,10 @@ export function AddPrescriptionDialog({
 
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" />}>
-              Cancel
+              {t("prescriptions.dialog.cancel")}
             </DialogClose>
             <Button disabled={!selected} type="submit">
-              Add prescription
+              {t("prescriptions.dialog.submit")}
             </Button>
           </DialogFooter>
         </form>

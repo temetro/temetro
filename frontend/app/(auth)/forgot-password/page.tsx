@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { type FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { AuthShell, Field, FormAlert } from "@/components/auth/auth-ui";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { authClient } from "@/lib/auth-client";
 import { notify } from "@/lib/toast";
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,12 +30,15 @@ export default function ForgotPasswordPage() {
 
     setSubmitting(false);
     if (err) {
-      const message = err.message ?? "Could not send the reset email.";
+      const message = err.message ?? t("auth.forgotPassword.error");
       setError(message);
-      notify.error("Couldn't send reset link", message);
+      notify.error(t("auth.forgotPassword.failedToastTitle"), message);
       return;
     }
-    notify.success("Reset link sent", "Check your inbox for the link.");
+    notify.success(
+      t("auth.forgotPassword.sentToastTitle"),
+      t("auth.forgotPassword.sentToastBody"),
+    );
     setSent(true);
   };
 
@@ -41,33 +46,34 @@ export default function ForgotPasswordPage() {
     <AuthShell
       footer={
         <Link className="text-foreground hover:underline" href="/login">
-          Back to sign in
+          {t("common.backToSignIn")}
         </Link>
       }
-      subtitle="We'll email you a link to reset your password"
-      title="Reset your password"
+      subtitle={t("auth.forgotPassword.subtitle")}
+      title={t("auth.forgotPassword.title")}
     >
       {sent ? (
         <FormAlert tone="success">
-          If an account exists for {email}, a reset link is on its way. Check
-          your inbox.
+          {t("auth.forgotPassword.sent", { email })}
         </FormAlert>
       ) : (
         <form className="flex flex-col gap-4" onSubmit={onSubmit}>
           {error && <FormAlert>{error}</FormAlert>}
-          <Field htmlFor="email" label="Email">
+          <Field htmlFor="email" label={t("auth.forgotPassword.emailLabel")}>
             <Input
               autoComplete="email"
               id="email"
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@clinic.org"
+              placeholder={t("auth.forgotPassword.emailPlaceholder")}
               required
               type="email"
               value={email}
             />
           </Field>
           <Button className="mt-1 w-full" disabled={submitting} type="submit">
-            {submitting ? "Sending…" : "Send reset link"}
+            {submitting
+              ? t("auth.forgotPassword.submitting")
+              : t("auth.forgotPassword.submit")}
           </Button>
         </form>
       )}

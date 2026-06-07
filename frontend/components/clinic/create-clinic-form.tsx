@@ -1,6 +1,7 @@
 "use client";
 
 import { type FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,11 +21,12 @@ function slugify(value: string): string {
 // clinic menu's "Create clinic" dialog.
 export function CreateClinicForm({
   onCreated,
-  submitLabel = "Create clinic",
+  submitLabel,
 }: {
   onCreated?: (org: { id: string; name: string }) => void;
   submitLabel?: string;
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugEdited, setSlugEdited] = useState(false);
@@ -42,15 +44,15 @@ export function CreateClinicForm({
       await authClient.organization.create({ name: name.trim(), slug: finalSlug });
 
     if (createErr || !org) {
-      const message = createErr?.message ?? "Could not create the clinic.";
+      const message = createErr?.message ?? t("clinic.createError");
       setError(message);
-      notify.error("Couldn't create clinic", message);
+      notify.error(t("clinic.createFailedTitle"), message);
       setSubmitting(false);
       return;
     }
 
     await authClient.organization.setActive({ organizationId: org.id });
-    notify.success("Clinic created", `${org.name} is ready.`);
+    notify.success(t("clinic.createdTitle"), t("clinic.createdBody", { name: org.name }));
     onCreated?.(org);
   };
 
@@ -66,7 +68,7 @@ export function CreateClinicForm({
           className="font-medium text-foreground text-sm"
           htmlFor="clinic-name"
         >
-          Clinic name
+          {t("clinic.nameLabel")}
         </label>
         <Input
           id="clinic-name"
@@ -74,7 +76,7 @@ export function CreateClinicForm({
             setName(e.target.value);
             if (!slugEdited) setSlug(slugify(e.target.value));
           }}
-          placeholder="North Side Family Practice"
+          placeholder={t("clinic.namePlaceholder")}
           required
           value={name}
         />
@@ -84,7 +86,7 @@ export function CreateClinicForm({
           className="font-medium text-foreground text-sm"
           htmlFor="clinic-slug"
         >
-          Clinic URL slug
+          {t("clinic.slugLabel")}
         </label>
         <Input
           id="clinic-slug"
@@ -92,16 +94,14 @@ export function CreateClinicForm({
             setSlugEdited(true);
             setSlug(slugify(e.target.value));
           }}
-          placeholder="north-side-family-practice"
+          placeholder={t("clinic.slugPlaceholder")}
           required
           value={slug}
         />
-        <p className="text-muted-foreground text-xs">
-          Used in links and invitations. Lowercase letters, numbers and dashes.
-        </p>
+        <p className="text-muted-foreground text-xs">{t("clinic.slugHint")}</p>
       </div>
       <Button className="mt-1 w-full" disabled={submitting} type="submit">
-        {submitting ? "Creating clinic…" : submitLabel}
+        {submitting ? t("clinic.creating") : (submitLabel ?? t("clinic.create"))}
       </Button>
     </form>
   );

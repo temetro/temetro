@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   AddAppointmentDialog,
@@ -60,13 +61,6 @@ const statusVariant: Record<
   cancelled: "destructive",
 };
 
-const statusLabel: Record<ApptStatus, string> = {
-  "checked-in": "Checked in",
-  confirmed: "Confirmed",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
-
 // "2026-06-05" -> "Wednesday, June 5"
 function formatDayKey(key: string): string {
   return new Date(`${key}T00:00:00`).toLocaleDateString("en-US", {
@@ -105,6 +99,7 @@ function Kpi({
 }
 
 function ApptRow({ appt }: { appt: Appointment }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-3 px-4 py-3">
       <span className="w-12 shrink-0 font-medium text-foreground text-sm tabular-nums">
@@ -121,7 +116,9 @@ function ApptRow({ appt }: { appt: Appointment }) {
           {appt.type} · {appt.provider}
         </span>
       </div>
-      <Badge variant={statusVariant[appt.status]}>{statusLabel[appt.status]}</Badge>
+      <Badge variant={statusVariant[appt.status]}>
+        {t(`appointments.status.${appt.status}`)}
+      </Badge>
     </div>
   );
 }
@@ -159,6 +156,7 @@ function Section({
 }
 
 export function AppointmentsView() {
+  const { t } = useTranslation();
   const [addOpen, setAddOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -192,7 +190,10 @@ export function AppointmentsView() {
       });
       setAppointments((prev) => [...prev, created]);
     } catch {
-      notify.error("Couldn't add appointment", "Please try again.");
+      notify.error(
+        t("appointments.addFailedTitle"),
+        t("appointments.addFailedBody"),
+      );
     }
   };
 
@@ -201,20 +202,20 @@ export function AppointmentsView() {
     const today = appointments.filter((a) => a.date === TODAY);
     const week = appointments.filter((a) => a.date >= start && a.date <= end);
     return [
-      { label: "Today", value: String(today.length), icon: CalendarClock },
-      { label: "This week", value: String(week.length), icon: Users },
+      { label: t("appointments.kpi.today"), value: String(today.length), icon: CalendarClock },
+      { label: t("appointments.kpi.thisWeek"), value: String(week.length), icon: Users },
       {
-        label: "Checked in",
+        label: t("appointments.kpi.checkedIn"),
         value: String(today.filter((a) => a.status === "checked-in").length),
         icon: Stethoscope,
       },
       {
-        label: "Completed",
+        label: t("appointments.kpi.completed"),
         value: String(today.filter((a) => a.status === "completed").length),
         icon: Clock,
       },
     ];
-  }, [appointments]);
+  }, [appointments, t]);
 
   const todayItems = useMemo(
     () => appointments.filter((a) => a.date === TODAY).sort(byTime),
@@ -256,10 +257,10 @@ export function AppointmentsView() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="font-semibold text-2xl tracking-tight">
-            Appointments &amp; Schedule
+            {t("appointments.title")}
           </h1>
           <p className="text-muted-foreground text-sm">
-            Today&apos;s clinic schedule and what&apos;s coming up.
+            {t("appointments.subtitle")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -268,7 +269,7 @@ export function AppointmentsView() {
             <Input
               className="w-full pl-9 sm:w-64"
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search patient, type, provider"
+              placeholder={t("appointments.searchPlaceholder")}
               value={query}
             />
           </div>
@@ -279,7 +280,7 @@ export function AppointmentsView() {
             variant="outline"
           >
             <CalendarDays className="size-4" />
-            Calendar
+            {t("appointments.calendar")}
           </Button>
           <Button
             className="rounded-3xl"
@@ -287,7 +288,7 @@ export function AppointmentsView() {
             type="button"
           >
             <Plus className="size-4" />
-            Add
+            {t("appointments.add")}
           </Button>
         </div>
       </div>
@@ -301,7 +302,7 @@ export function AppointmentsView() {
           ))
         ) : (
           <p className="rounded-2xl border border-dashed bg-card/20 px-4 py-8 text-center text-muted-foreground text-sm">
-            No matching appointments.
+            {t("appointments.noMatches")}
           </p>
         )
       ) : (
@@ -312,12 +313,12 @@ export function AppointmentsView() {
             ))}
           </div>
 
-          <Section description={formatDayKey(TODAY)} title="Today">
+          <Section description={formatDayKey(TODAY)} title={t("appointments.today")}>
             {todayItems.length > 0 ? (
               <ScheduleList items={todayItems} />
             ) : (
               <p className="rounded-2xl border border-dashed bg-card/20 px-4 py-8 text-center text-muted-foreground text-sm">
-                Nothing scheduled today.
+                {t("appointments.nothingToday")}
               </p>
             )}
           </Section>

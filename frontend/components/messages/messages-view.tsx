@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -59,6 +60,7 @@ function formatTime(iso: string): string {
 }
 
 export function MessagesView() {
+  const { t } = useTranslation();
   const { data: session } = authClient.useSession();
   const myId = session?.user?.id ?? "";
 
@@ -182,7 +184,10 @@ export function MessagesView() {
       setComposeOpen(false);
       open(conv.id);
     } catch {
-      notify.error("Couldn't start conversation", "Please try again.");
+      notify.error(
+        t("messages.startFailedTitle"),
+        t("messages.startFailedBody"),
+      );
     }
   };
 
@@ -191,7 +196,9 @@ export function MessagesView() {
       {/* Left: conversation list */}
       <aside className="flex w-72 shrink-0 flex-col overflow-hidden rounded-2xl border bg-card/30">
         <div className="flex items-center justify-between gap-2 border-border border-b px-4 py-3">
-          <h1 className="font-semibold text-base tracking-tight">Inbox</h1>
+          <h1 className="font-semibold text-base tracking-tight">
+            {t("messages.inbox")}
+          </h1>
           <div className="flex items-center gap-1">
             <Button
               aria-pressed={showUnreadOnly}
@@ -200,10 +207,10 @@ export function MessagesView() {
               type="button"
               variant={showUnreadOnly ? "secondary" : "ghost"}
             >
-              Unread · {unreadCount}
+              {t("messages.unread", { count: unreadCount })}
             </Button>
             <Button
-              aria-label="New message"
+              aria-label={t("messages.newMessage")}
               onClick={openCompose}
               size="icon-sm"
               type="button"
@@ -216,7 +223,9 @@ export function MessagesView() {
         <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
           {visible.length === 0 ? (
             <p className="px-2 py-1.5 text-muted-foreground text-sm">
-              {showUnreadOnly ? "No unread messages." : "No conversations yet."}
+              {showUnreadOnly
+                ? t("messages.noUnread")
+                : t("messages.noConversations")}
             </p>
           ) : (
             visible.map((c) => {
@@ -250,7 +259,7 @@ export function MessagesView() {
                     </span>
                   </div>
                   <span className="w-full truncate text-muted-foreground text-xs">
-                    {last?.senderId === myId && "You: "}
+                    {last?.senderId === myId && t("messages.you")}
                     {last?.body}
                   </span>
                 </button>
@@ -274,8 +283,10 @@ export function MessagesView() {
                 </span>
                 <span className="text-muted-foreground text-xs">
                   {selected.isGroup
-                    ? `${selected.participants.length} people`
-                    : "Direct message"}
+                    ? t("messages.peopleCount", {
+                        count: selected.participants.length,
+                      })
+                    : t("messages.directMessage")}
                 </span>
               </div>
             </div>
@@ -324,14 +335,16 @@ export function MessagesView() {
               onSubmit={send}
             >
               <Input
-                aria-label="Message"
+                aria-label={t("messages.newMessage")}
                 className="border-0 bg-transparent shadow-none before:hidden"
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder={`Message ${selected.name}…`}
+                placeholder={t("messages.messagePlaceholder", {
+                  name: selected.name,
+                })}
                 value={draft}
               />
               <Button
-                aria-label="Send"
+                aria-label={t("messages.send")}
                 disabled={!draft.trim()}
                 size="icon"
                 type="submit"
@@ -347,9 +360,9 @@ export function MessagesView() {
                 <EmptyMedia variant="icon">
                   <Mail />
                 </EmptyMedia>
-                <EmptyTitle>No conversation selected</EmptyTitle>
+                <EmptyTitle>{t("messages.emptyTitle")}</EmptyTitle>
                 <EmptyDescription>
-                  Choose a conversation from the inbox, or start a new one.
+                  {t("messages.emptyDescription")}
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
@@ -361,16 +374,15 @@ export function MessagesView() {
       <Dialog onOpenChange={setComposeOpen} open={composeOpen}>
         <DialogPopup className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>New message</DialogTitle>
+            <DialogTitle>{t("messages.compose.title")}</DialogTitle>
             <DialogDescription>
-              Start a conversation with a member of your clinic.
+              {t("messages.compose.description")}
             </DialogDescription>
           </DialogHeader>
           <DialogPanel className="flex flex-col gap-1">
             {members.length === 0 ? (
               <p className="px-1 py-4 text-center text-muted-foreground text-sm">
-                No other clinic members yet. Invite colleagues from Settings →
-                Care team.
+                {t("messages.compose.noMembers")}
               </p>
             ) : (
               members.map((m) => (

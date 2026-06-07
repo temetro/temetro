@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { AuthShell, FormAlert } from "@/components/auth/auth-ui";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
 
 function AcceptInviteInner() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useSearchParams();
   const invitationId = params.get("id") ?? "";
@@ -24,7 +26,7 @@ function AcceptInviteInner() {
       invitationId,
     });
     if (err || !data) {
-      setError(err?.message ?? "This invitation is invalid or has expired.");
+      setError(err?.message ?? t("auth.acceptInvite.error"));
       setAccepting(false);
       return;
     }
@@ -37,8 +39,8 @@ function AcceptInviteInner() {
 
   if (!invitationId) {
     return (
-      <AuthShell title="Invitation not found">
-        <FormAlert>This invitation link is missing or invalid.</FormAlert>
+      <AuthShell title={t("auth.acceptInvite.notFoundTitle")}>
+        <FormAlert>{t("auth.acceptInvite.notFoundBody")}</FormAlert>
       </AuthShell>
     );
   }
@@ -48,8 +50,8 @@ function AcceptInviteInner() {
     const back = `/accept-invite?id=${encodeURIComponent(invitationId)}`;
     return (
       <AuthShell
-        subtitle="Sign in with the email this invitation was sent to, then return to this link to accept."
-        title="You've been invited"
+        subtitle={t("auth.acceptInvite.invitedSubtitle")}
+        title={t("auth.acceptInvite.invitedTitle")}
       >
         <div className="flex flex-col gap-3">
           <Button
@@ -57,7 +59,7 @@ function AcceptInviteInner() {
             onClick={() => router.push("/login")}
             type="button"
           >
-            Sign in
+            {t("auth.acceptInvite.signIn")}
           </Button>
           <Button
             className="w-full"
@@ -65,12 +67,12 @@ function AcceptInviteInner() {
             type="button"
             variant="outline"
           >
-            Create an account
+            {t("auth.acceptInvite.createAccount")}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            After signing in, reopen{" "}
+            {t("auth.acceptInvite.reopenPrefix")}{" "}
             <Link className="hover:underline" href={back}>
-              this invitation link
+              {t("auth.acceptInvite.reopenLink")}
             </Link>
             .
           </p>
@@ -81,8 +83,8 @@ function AcceptInviteInner() {
 
   return (
     <AuthShell
-      subtitle="Join the clinic you were invited to on temetro."
-      title="Accept your invitation"
+      subtitle={t("auth.acceptInvite.acceptSubtitle")}
+      title={t("auth.acceptInvite.acceptTitle")}
     >
       <div className="flex flex-col gap-4">
         {error && <FormAlert>{error}</FormAlert>}
@@ -92,7 +94,9 @@ function AcceptInviteInner() {
           onClick={accept}
           type="button"
         >
-          {accepting ? "Joining…" : "Accept invitation"}
+          {accepting
+            ? t("auth.acceptInvite.accepting")
+            : t("auth.acceptInvite.accept")}
         </Button>
       </div>
     </AuthShell>

@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Card } from "@/components/ui/card";
 import { type Analytics, getAnalytics } from "@/lib/analytics";
@@ -45,6 +46,7 @@ function Section({
 }
 
 export function AnalysisView() {
+  const { t } = useTranslation();
   const [data, setData] = useState<Analytics | null>(null);
 
   useEffect(() => {
@@ -66,39 +68,75 @@ export function AnalysisView() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-10">
       <div>
-        <h1 className="font-semibold text-2xl tracking-tight">Analysis</h1>
-        <p className="text-muted-foreground text-sm">
-          Clinic performance at a glance, computed from your clinic&apos;s data.
-        </p>
+        <h1 className="font-semibold text-2xl tracking-tight">
+          {t("analysis.title")}
+        </h1>
+        <p className="text-muted-foreground text-sm">{t("analysis.subtitle")}</p>
       </div>
 
       <Section
-        description="New, active and total patients"
-        title="Patient volume"
+        description={t("analysis.patientVolume.description")}
+        title={t("analysis.patientVolume.title")}
       >
-        <StatCard label="Total patients" value={n(data?.patients.total)} />
-        <StatCard label="New this month" value={n(data?.patients.newThisMonth)} />
-        <StatCard label="Active patients" value={n(data?.patients.active)} />
+        <StatCard
+          label={t("analysis.patientVolume.total")}
+          value={n(data?.patients.total)}
+        />
+        <StatCard
+          label={t("analysis.patientVolume.newThisMonth")}
+          value={n(data?.patients.newThisMonth)}
+        />
+        <StatCard
+          label={t("analysis.patientVolume.active")}
+          value={n(data?.patients.active)}
+        />
       </Section>
 
       <Section
-        description="Bookings, attendance and what's coming up"
-        title="Appointments & schedule"
+        description={t("analysis.appointments.description")}
+        title={t("analysis.appointments.title")}
       >
-        <StatCard label="This week" value={n(data?.appointments.thisWeek)} />
-        <StatCard label="Upcoming" value={n(data?.appointments.upcoming)} />
-        <StatCard label="Completed" value={n(data?.appointments.completed)} />
-        <StatCard label="Cancelled" value={n(data?.appointments.cancelled)} />
+        <StatCard
+          label={t("analysis.appointments.thisWeek")}
+          value={n(data?.appointments.thisWeek)}
+        />
+        <StatCard
+          label={t("analysis.appointments.upcoming")}
+          value={n(data?.appointments.upcoming)}
+        />
+        <StatCard
+          label={t("analysis.appointments.completed")}
+          value={n(data?.appointments.completed)}
+        />
+        <StatCard
+          label={t("analysis.appointments.cancelled")}
+          value={n(data?.appointments.cancelled)}
+        />
       </Section>
 
-      <Section description="Medications prescribed" title="Prescriptions">
-        <StatCard label="Total issued" value={n(data?.prescriptions.total)} />
-        <StatCard label="Active" value={n(data?.prescriptions.active)} />
+      <Section
+        description={t("analysis.prescriptions.description")}
+        title={t("analysis.prescriptions.title")}
+      >
+        <StatCard
+          label={t("analysis.prescriptions.total")}
+          value={n(data?.prescriptions.total)}
+        />
+        <StatCard
+          label={t("analysis.prescriptions.active")}
+          value={n(data?.prescriptions.active)}
+        />
       </Section>
 
-      <Section description="Care-team workload" title="Tasks">
-        <StatCard label="Open" value={n(data?.tasks.open)} />
-        <StatCard label="Completed" value={n(data?.tasks.done)} />
+      <Section
+        description={t("analysis.tasks.description")}
+        title={t("analysis.tasks.title")}
+      >
+        <StatCard label={t("analysis.tasks.open")} value={n(data?.tasks.open)} />
+        <StatCard
+          label={t("analysis.tasks.completed")}
+          value={n(data?.tasks.done)}
+        />
       </Section>
     </div>
   );

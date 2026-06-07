@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   type Appointment,
@@ -57,6 +58,7 @@ export function CalendarDialog({
   onOpenChange: (open: boolean) => void;
   appointments: Appointment[];
 }) {
+  const { t } = useTranslation();
   // First-of-month for the displayed month; defaults to TODAY's month.
   const [viewMonth, setViewMonth] = useState<Date>(() => {
     const t = parseKey(TODAY);
@@ -120,7 +122,7 @@ export function CalendarDialog({
                 type="button"
                 variant="outline"
               >
-                Today
+                {t("appointments.calendarDialog.today")}
               </Button>
               <Button
                 aria-label="Previous month"
@@ -214,16 +216,16 @@ export function CalendarDialog({
                 {formatDayKey(selectedKey)}
               </h3>
               <p className="text-muted-foreground text-xs">
-                {selectedItems.length === 1
-                  ? "1 appointment"
-                  : `${selectedItems.length} appointments`}
+                {t("appointments.calendarDialog.appointmentCount", {
+                  count: selectedItems.length,
+                })}
               </p>
             </div>
             {selectedItems.length > 0 ? (
               <ScheduleList items={selectedItems} />
             ) : (
               <div className="rounded-2xl border border-dashed bg-card/20 px-4 py-8 text-center text-muted-foreground text-sm">
-                No appointments on this day.
+                {t("appointments.calendarDialog.none")}
               </div>
             )}
           </div>

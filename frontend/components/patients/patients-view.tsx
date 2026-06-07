@@ -2,6 +2,7 @@
 
 import { Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import { PatientDetailSheet } from "@/components/patients/patient-detail-sheet";
@@ -19,6 +20,7 @@ const statusVariant: Record<Patient["status"], BadgeVariant> = {
 };
 
 export function PatientsView() {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   // Bumped on open so the create dialog remounts with a fresh file # / form.
@@ -44,7 +46,7 @@ export function PatientsView() {
       .catch((err) => {
         if (!active) return;
         setLoadError(
-          err instanceof Error ? err.message : "Failed to load patients."
+          err instanceof Error ? err.message : t("patients.loadError")
         );
       })
       .finally(() => {
@@ -76,7 +78,9 @@ export function PatientsView() {
   return (
     <div className="mx-auto w-full max-w-4xl px-6 py-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Patients</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t("patients.title")}
+        </h1>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
@@ -90,7 +94,7 @@ export function PatientsView() {
                   open(patients[0].fileNumber);
                 }
               }}
-              placeholder="Search name or MRN"
+              placeholder={t("patients.searchPlaceholder")}
               value={query}
             />
           </div>
@@ -103,7 +107,7 @@ export function PatientsView() {
             type="button"
           >
             <Plus className="size-4" />
-            Add patient
+            {t("patients.add")}
           </Button>
         </div>
       </div>
@@ -112,12 +116,20 @@ export function PatientsView() {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-border border-b text-left text-xs text-muted-foreground uppercase">
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">MRN</th>
-              <th className="px-4 py-3 font-medium">Age · Sex</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Last seen</th>
-              <th className="px-4 py-3 font-medium">Allergies</th>
+              <th className="px-4 py-3 font-medium">{t("patients.columns.name")}</th>
+              <th className="px-4 py-3 font-medium">{t("patients.columns.mrn")}</th>
+              <th className="px-4 py-3 font-medium">
+                {t("patients.columns.ageSex")}
+              </th>
+              <th className="px-4 py-3 font-medium">
+                {t("patients.columns.status")}
+              </th>
+              <th className="px-4 py-3 font-medium">
+                {t("patients.columns.lastSeen")}
+              </th>
+              <th className="px-4 py-3 font-medium">
+                {t("patients.columns.allergies")}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -127,7 +139,7 @@ export function PatientsView() {
                   className="px-4 py-10 text-center text-muted-foreground"
                   colSpan={6}
                 >
-                  Loading patients…
+                  {t("patients.loading")}
                 </td>
               </tr>
             ) : loadError ? (
@@ -142,7 +154,7 @@ export function PatientsView() {
                   className="px-4 py-10 text-center text-muted-foreground"
                   colSpan={6}
                 >
-                  No patients found.
+                  {t("patients.empty")}
                 </td>
               </tr>
             ) : (
@@ -170,8 +182,8 @@ export function PatientsView() {
                     {p.age} · {p.sex}
                   </td>
                   <td className="px-4 py-3">
-                    <Badge className="capitalize" variant={statusVariant[p.status]}>
-                      {p.status}
+                    <Badge variant={statusVariant[p.status]}>
+                      {t(`patients.status.${p.status}`)}
                     </Badge>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">

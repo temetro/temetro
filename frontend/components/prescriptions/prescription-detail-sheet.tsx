@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,12 +23,6 @@ const statusVariant: Record<
   expired: "destructive",
 };
 
-const statusLabel: Record<RxStatus, string> = {
-  active: "Active",
-  completed: "Completed",
-  expired: "Expired",
-};
-
 // Right-side Sheet showing one prescription's full detail, opened by clicking a
 // row in the Prescriptions list (mirrors the Patients table → side Sheet
 // pattern). The selected record is passed in from the page.
@@ -39,12 +35,15 @@ export function PrescriptionDetailSheet({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetPopup className="sm:max-w-xl" side="right">
         <SheetHeader>
           <SheetTitle>
-            {rx ? `${rx.medication}${rx.dose ? ` · ${rx.dose}` : ""}` : "Prescription"}
+            {rx
+              ? `${rx.medication}${rx.dose ? ` · ${rx.dose}` : ""}`
+              : t("prescriptions.detail.fallbackTitle")}
           </SheetTitle>
         </SheetHeader>
         <SheetPanel className="min-h-0 flex-1">
@@ -59,40 +58,60 @@ export function PrescriptionDetailSheet({
                     {rx.name}
                   </span>
                   <span className="text-muted-foreground text-xs">
-                    File #{rx.fileNumber}
+                    {t("prescriptions.detail.fileNumber", {
+                      number: rx.fileNumber,
+                    })}
                   </span>
                 </div>
                 <Badge className="ms-auto" variant={statusVariant[rx.status]}>
-                  {statusLabel[rx.status]}
+                  {t(`prescriptions.status.${rx.status}`)}
                 </Badge>
               </div>
 
               <dl className="grid grid-cols-[7rem_1fr] gap-x-3 gap-y-2 text-sm">
-                <dt className="text-muted-foreground">Medication</dt>
+                <dt className="text-muted-foreground">
+                  {t("prescriptions.detail.medication")}
+                </dt>
                 <dd className="text-foreground">{rx.medication}</dd>
                 {rx.dose && (
                   <>
-                    <dt className="text-muted-foreground">Dose</dt>
+                    <dt className="text-muted-foreground">
+                      {t("prescriptions.detail.dose")}
+                    </dt>
                     <dd className="text-foreground">{rx.dose}</dd>
                   </>
                 )}
-                <dt className="text-muted-foreground">Frequency</dt>
+                <dt className="text-muted-foreground">
+                  {t("prescriptions.detail.frequency")}
+                </dt>
                 <dd className="text-foreground">{rx.frequency}</dd>
-                <dt className="text-muted-foreground">Duration</dt>
+                <dt className="text-muted-foreground">
+                  {t("prescriptions.detail.duration")}
+                </dt>
                 <dd className="text-foreground">{rx.duration || "—"}</dd>
-                <dt className="text-muted-foreground">Prescriber</dt>
+                <dt className="text-muted-foreground">
+                  {t("prescriptions.detail.prescriber")}
+                </dt>
                 <dd className="text-foreground">{rx.prescriber}</dd>
-                <dt className="text-muted-foreground">Date</dt>
+                <dt className="text-muted-foreground">
+                  {t("prescriptions.detail.date")}
+                </dt>
                 <dd className="text-foreground">
                   {formatPrescribedAt(rx.prescribedAt)}
                 </dd>
-                <dt className="text-muted-foreground">Status</dt>
-                <dd className="text-foreground">{statusLabel[rx.status]}</dd>
+                <dt className="text-muted-foreground">
+                  {t("prescriptions.detail.status")}
+                </dt>
+                <dd className="text-foreground">
+                  {t(`prescriptions.status.${rx.status}`)}
+                </dd>
               </dl>
 
               {rx.notes && (
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-muted-foreground text-xs">Notes</span>
+                  <span className="text-muted-foreground text-xs">
+                    {t("prescriptions.detail.notes")}
+                  </span>
                   <p className="whitespace-pre-wrap text-foreground text-sm leading-relaxed">
                     {rx.notes}
                   </p>

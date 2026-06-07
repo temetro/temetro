@@ -13,6 +13,7 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
@@ -80,6 +81,7 @@ function Kpi({
 }
 
 export function ActivityView() {
+  const { t } = useTranslation();
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
 
   useEffect(() => {
@@ -108,19 +110,27 @@ export function ActivityView() {
     const today = entries.filter((e) => new Date(e.createdAt) >= startOfToday);
     const week = entries.filter((e) => new Date(e.createdAt) >= startOfWeek);
     return [
-      { label: "Changes today", value: String(today.length), icon: ActivityIcon },
-      { label: "This week", value: String(week.length), icon: CalendarDays },
-      { label: "Total recorded", value: String(entries.length), icon: Hash },
+      {
+        label: t("activity.changesToday"),
+        value: String(today.length),
+        icon: ActivityIcon,
+      },
+      { label: t("activity.thisWeek"), value: String(week.length), icon: CalendarDays },
+      {
+        label: t("activity.totalRecorded"),
+        value: String(entries.length),
+        icon: Hash,
+      },
     ];
-  }, [entries]);
+  }, [entries, t]);
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-6 py-10">
       <div>
-        <h1 className="font-semibold text-2xl tracking-tight">Activity</h1>
-        <p className="text-muted-foreground text-sm">
-          An audit log of record changes across the clinic.
-        </p>
+        <h1 className="font-semibold text-2xl tracking-tight">
+          {t("activity.title")}
+        </h1>
+        <p className="text-muted-foreground text-sm">{t("activity.subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -131,8 +141,7 @@ export function ActivityView() {
 
       {entries.length === 0 ? (
         <div className="rounded-2xl border border-dashed bg-card/20 px-4 py-12 text-center text-muted-foreground text-sm">
-          No activity yet. Changes to patients, notes, appointments,
-          prescriptions and tasks will appear here.
+          {t("activity.empty")}
         </div>
       ) : (
         <ol className="flex flex-col">

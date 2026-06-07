@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useCommandPalette } from "@/components/command-palette";
 import { CreateClinicForm } from "@/components/clinic/create-clinic-form";
@@ -80,6 +81,7 @@ function GitHubIcon({ className }: { className?: string }) {
 // shortcut hint (below Theme) and a clinic switcher submenu (below that) whose
 // popup reveals the active clinic's details on hover.
 export function NavUser() {
+  const { t } = useTranslation();
   const { isMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const router = useRouter();
@@ -92,10 +94,10 @@ export function NavUser() {
 
   const [createOpen, setCreateOpen] = useState(false);
 
-  const name = data?.user?.name ?? "Clinician";
+  const name = data?.user?.name ?? t("userMenu.defaultName");
   const email = data?.user?.email ?? "";
   const initials = initialsFromName(name);
-  const activeName = activeOrg?.name ?? "Select clinic";
+  const activeName = activeOrg?.name ?? t("userMenu.selectClinic");
 
   const setActive = async (organizationId: string) => {
     if (organizationId === activeOrg?.id) return;
@@ -105,10 +107,13 @@ export function NavUser() {
   const signOut = async () => {
     const { error } = await authClient.signOut();
     if (error) {
-      notify.error("Sign out failed", error.message ?? "Please try again.");
+      notify.error(
+        t("userMenu.signOutFailed"),
+        error.message ?? t("userMenu.tryAgain"),
+      );
       return;
     }
-    notify.success("Signed out");
+    notify.success(t("userMenu.signedOut"));
     router.push("/login");
   };
 
@@ -162,27 +167,29 @@ export function NavUser() {
             <MenuSeparator />
             <MenuItem render={<Link href="/settings" />}>
               <SettingsIcon />
-              Settings
+              {t("userMenu.settings")}
             </MenuItem>
             <MenuItem
               render={<a href={REPO_URL} rel="noreferrer" target="_blank" />}
             >
               <GitHubIcon className="size-4" />
-              Docs &amp; GitHub
+              {t("userMenu.docs")}
             </MenuItem>
             <MenuItem
               closeOnClick={false}
               onClick={() => setTheme(isDark ? "light" : "dark")}
             >
               {isDark ? <Moon /> : <Sun />}
-              Theme
-              <MenuShortcut>{isDark ? "Dark" : "Light"}</MenuShortcut>
+              {t("userMenu.theme")}
+              <MenuShortcut>
+                {isDark ? t("userMenu.dark") : t("userMenu.light")}
+              </MenuShortcut>
             </MenuItem>
 
             {/* Command palette: hint + shortcut, sits below Theme. */}
             <MenuItem onClick={openCommand}>
               <Search />
-              Search
+              {t("userMenu.search")}
               <KbdGroup className="ms-auto">
                 <Kbd>⌘</Kbd>
                 <Kbd>K</Kbd>
@@ -198,18 +205,17 @@ export function NavUser() {
               <MenuSubPopup className="min-w-64" sideOffset={8}>
                 <div className="px-2 py-1.5">
                   <p className="truncate font-medium text-foreground text-sm">
-                    {activeOrg?.name ?? "No clinic selected"}
+                    {activeOrg?.name ?? t("userMenu.noClinic")}
                   </p>
                   <p className="truncate text-muted-foreground text-xs">
                     {activeOrg?.slug ? `/${activeOrg.slug}` : "—"} ·{" "}
-                    {orgs?.length ?? 0}{" "}
-                    {orgs?.length === 1 ? "clinic" : "clinics"}
+                    {t("userMenu.clinicCount", { count: orgs?.length ?? 0 })}
                   </p>
                 </div>
                 <MenuSeparator />
                 <MenuGroup>
                   <MenuGroupLabel className="text-muted-foreground text-xs">
-                    Switch clinic
+                    {t("userMenu.switchClinic")}
                   </MenuGroupLabel>
                   {(orgs ?? []).map((org) => (
                     <MenuItem
@@ -228,7 +234,7 @@ export function NavUser() {
                 <MenuSeparator />
                 <MenuItem className="gap-2" onClick={() => setCreateOpen(true)}>
                   <Plus />
-                  Create clinic
+                  {t("userMenu.createClinic")}
                 </MenuItem>
               </MenuSubPopup>
             </MenuSub>
@@ -236,7 +242,7 @@ export function NavUser() {
             <MenuSeparator />
             <MenuItem onClick={signOut} variant="destructive">
               <LogOut />
-              Log out
+              {t("userMenu.logout")}
             </MenuItem>
           </MenuPopup>
         </Menu>
@@ -246,9 +252,9 @@ export function NavUser() {
       <Dialog onOpenChange={setCreateOpen} open={createOpen}>
         <DialogPopup className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Create clinic</DialogTitle>
+            <DialogTitle>{t("userMenu.createDialogTitle")}</DialogTitle>
             <DialogDescription>
-              Add a new clinic and switch to it.
+              {t("userMenu.createDialogDescription")}
             </DialogDescription>
           </DialogHeader>
           <DialogPanel>

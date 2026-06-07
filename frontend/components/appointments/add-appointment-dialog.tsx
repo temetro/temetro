@@ -2,6 +2,7 @@
 
 import { CalendarDays, Search } from "lucide-react";
 import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { TODAY } from "@/components/appointments/appointments-view";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,7 @@ export function AddAppointmentDialog({
   onOpenChange: (open: boolean) => void;
   onAdd: (appt: NewAppointment) => void;
 }) {
+  const { t } = useTranslation();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Patient | null>(null);
@@ -118,7 +120,10 @@ export function AddAppointmentDialog({
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (!selected) {
-      notify.error("Pick a patient", "Search and select a patient first.");
+      notify.error(
+        t("appointments.dialog.pickPatientTitle"),
+        t("appointments.dialog.pickPatientBody"),
+      );
       return;
     }
     onAdd({
@@ -130,7 +135,10 @@ export function AddAppointmentDialog({
       type,
       provider: provider.trim() || selected.pcp,
     });
-    notify.success("Appointment added", `${selected.name} at ${time}`);
+    notify.success(
+      t("appointments.dialog.addedTitle"),
+      `${selected.name} · ${time}`,
+    );
     reset();
     onOpenChange(false);
   };
@@ -145,15 +153,15 @@ export function AddAppointmentDialog({
     >
       <DialogPopup className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>New appointment</DialogTitle>
+          <DialogTitle>{t("appointments.dialog.title")}</DialogTitle>
           <DialogDescription>
-            Search for a patient by name or file number, then set the slot.
+            {t("appointments.dialog.description")}
           </DialogDescription>
         </DialogHeader>
 
         <form className="contents" onSubmit={submit}>
           <DialogPanel className="flex flex-col gap-4">
-            <Field label="Patient">
+            <Field label={t("appointments.dialog.patient")}>
               {selected ? (
                 <div className="flex items-center justify-between gap-2 rounded-2xl border bg-input/30 px-3 py-2">
                   <div className="flex min-w-0 flex-col">
@@ -161,7 +169,9 @@ export function AddAppointmentDialog({
                       {selected.name}
                     </span>
                     <span className="text-muted-foreground text-xs">
-                      File #{selected.fileNumber}
+                      {t("appointments.dialog.fileNumber", {
+                        number: selected.fileNumber,
+                      })}
                     </span>
                   </div>
                   <Button
@@ -173,7 +183,7 @@ export function AddAppointmentDialog({
                     type="button"
                     variant="ghost"
                   >
-                    Change
+                    {t("appointments.dialog.change")}
                   </Button>
                 </div>
               ) : (
@@ -184,7 +194,7 @@ export function AddAppointmentDialog({
                       autoFocus
                       className="pl-9"
                       onChange={(event) => setQuery(event.target.value)}
-                      placeholder="Search name or file number"
+                      placeholder={t("appointments.dialog.searchPlaceholder")}
                       value={query}
                     />
                   </div>
@@ -192,7 +202,7 @@ export function AddAppointmentDialog({
                     <div className="max-h-56 overflow-y-auto rounded-2xl border bg-popover p-1">
                       {matches.length === 0 ? (
                         <p className="px-2 py-2 text-muted-foreground text-sm">
-                          No patients found.
+                          {t("appointments.dialog.noPatients")}
                         </p>
                       ) : (
                         matches.map((p) => (
@@ -222,7 +232,9 @@ export function AddAppointmentDialog({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <span className="text-muted-foreground text-xs">Date</span>
+                <span className="text-muted-foreground text-xs">
+                  {t("appointments.dialog.date")}
+                </span>
                 <Popover onOpenChange={setDateOpen} open={dateOpen}>
                   <PopoverTrigger
                     render={
@@ -254,7 +266,7 @@ export function AddAppointmentDialog({
                   </PopoverPopup>
                 </Popover>
               </div>
-              <Field label="Time">
+              <Field label={t("appointments.dialog.time")}>
                 <Input
                   onChange={(event) => setTime(event.target.value)}
                   type="time"
@@ -264,23 +276,23 @@ export function AddAppointmentDialog({
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Type">
+              <Field label={t("appointments.dialog.type")}>
                 <select
                   className={controlClass}
                   onChange={(event) => setType(event.target.value)}
                   value={type}
                 >
-                  {TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
+                  {TYPES.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
                     </option>
                   ))}
                 </select>
               </Field>
-              <Field label="Provider">
+              <Field label={t("appointments.dialog.provider")}>
                 <Input
                   onChange={(event) => setProvider(event.target.value)}
-                  placeholder="e.g. Dr. Okafor"
+                  placeholder={t("appointments.dialog.providerPlaceholder")}
                   value={provider}
                 />
               </Field>
@@ -289,10 +301,10 @@ export function AddAppointmentDialog({
 
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" />}>
-              Cancel
+              {t("appointments.dialog.cancel")}
             </DialogClose>
             <Button disabled={!selected} type="submit">
-              Add appointment
+              {t("appointments.dialog.submit")}
             </Button>
           </DialogFooter>
         </form>

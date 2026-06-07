@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, Suspense, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { AuthShell, Field, FormAlert } from "@/components/auth/auth-ui";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { notify } from "@/lib/toast";
 const MIN_PASSWORD = 12;
 
 function ResetPasswordInner() {
+  const { t } = useTranslation();
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("token") ?? "";
@@ -28,15 +30,15 @@ function ResetPasswordInner() {
     setError(null);
 
     if (!token) {
-      setError("This reset link is invalid or has expired.");
+      setError(t("auth.resetPassword.invalidToken"));
       return;
     }
     if (password.length < MIN_PASSWORD) {
-      setError(`Password must be at least ${MIN_PASSWORD} characters.`);
+      setError(t("auth.resetPassword.tooShort", { count: MIN_PASSWORD }));
       return;
     }
     if (password !== confirm) {
-      setError("Passwords do not match.");
+      setError(t("auth.resetPassword.mismatch"));
       return;
     }
 
@@ -47,12 +49,15 @@ function ResetPasswordInner() {
     });
     setSubmitting(false);
     if (err) {
-      const message = err.message ?? "Could not reset your password.";
+      const message = err.message ?? t("auth.resetPassword.error");
       setError(message);
-      notify.error("Couldn't reset password", message);
+      notify.error(t("auth.resetPassword.failedToastTitle"), message);
       return;
     }
-    notify.success("Password updated", "Redirecting you to sign in…");
+    notify.success(
+      t("auth.resetPassword.successToastTitle"),
+      t("auth.resetPassword.successToastBody"),
+    );
     setDone(true);
     setTimeout(() => router.push("/login"), 1500);
   };
@@ -61,23 +66,21 @@ function ResetPasswordInner() {
     <AuthShell
       footer={
         <Link className="text-foreground hover:underline" href="/login">
-          Back to sign in
+          {t("common.backToSignIn")}
         </Link>
       }
-      subtitle="Choose a new password for your account"
-      title="Set a new password"
+      subtitle={t("auth.resetPassword.subtitle")}
+      title={t("auth.resetPassword.title")}
     >
       {done ? (
-        <FormAlert tone="success">
-          Your password has been reset. Redirecting you to sign in…
-        </FormAlert>
+        <FormAlert tone="success">{t("auth.resetPassword.done")}</FormAlert>
       ) : (
         <form className="flex flex-col gap-4" onSubmit={onSubmit}>
           {error && <FormAlert>{error}</FormAlert>}
           <Field
-            hint={`At least ${MIN_PASSWORD} characters.`}
+            hint={t("auth.resetPassword.passwordHint", { count: MIN_PASSWORD })}
             htmlFor="password"
-            label="New password"
+            label={t("auth.resetPassword.passwordLabel")}
           >
             <Input
               autoComplete="new-password"
@@ -89,7 +92,10 @@ function ResetPasswordInner() {
               value={password}
             />
           </Field>
-          <Field htmlFor="confirm" label="Confirm new password">
+          <Field
+            htmlFor="confirm"
+            label={t("auth.resetPassword.confirmLabel")}
+          >
             <Input
               autoComplete="new-password"
               id="confirm"
@@ -101,7 +107,9 @@ function ResetPasswordInner() {
             />
           </Field>
           <Button className="mt-1 w-full" disabled={submitting} type="submit">
-            {submitting ? "Saving…" : "Reset password"}
+            {submitting
+              ? t("auth.resetPassword.submitting")
+              : t("auth.resetPassword.submit")}
           </Button>
         </form>
       )}

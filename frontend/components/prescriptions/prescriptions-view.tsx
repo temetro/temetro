@@ -2,6 +2,7 @@
 
 import { CircleCheck, Clock, Pill, Plus } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   AddPrescriptionDialog,
@@ -32,12 +33,6 @@ const statusVariant: Record<
   expired: "destructive",
 };
 
-const statusLabel: Record<RxStatus, string> = {
-  active: "Active",
-  completed: "Completed",
-  expired: "Expired",
-};
-
 function Kpi({
   label,
   value,
@@ -63,6 +58,7 @@ function Kpi({
 }
 
 function RxRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void }) {
+  const { t } = useTranslation();
   return (
     <div
       className="flex cursor-pointer items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/50"
@@ -96,7 +92,9 @@ function RxRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void }) {
           {formatPrescribedAt(rx.prescribedAt)}
         </span>
       </div>
-      <Badge variant={statusVariant[rx.status]}>{statusLabel[rx.status]}</Badge>
+      <Badge variant={statusVariant[rx.status]}>
+        {t(`prescriptions.status.${rx.status}`)}
+      </Badge>
     </div>
   );
 }
@@ -124,6 +122,7 @@ function Section({
 }
 
 export function PrescriptionsView() {
+  const { t } = useTranslation();
   const [addOpen, setAddOpen] = useState(false);
   const [list, setList] = useState<Prescription[]>([]);
   const [selected, setSelected] = useState<Prescription | null>(null);
@@ -163,38 +162,43 @@ export function PrescriptionsView() {
       });
       setList((prev) => [created, ...prev]);
     } catch {
-      notify.error("Couldn't add prescription", "Please try again.");
+      notify.error(
+        t("prescriptions.addFailedTitle"),
+        t("prescriptions.addFailedBody"),
+      );
     }
   };
 
   const kpis = useMemo(
     () => [
       {
-        label: "Active",
+        label: t("prescriptions.kpi.active"),
         value: String(list.filter((r) => r.status === "active").length),
         icon: Pill,
       },
       {
-        label: "Completed",
+        label: t("prescriptions.kpi.completed"),
         value: String(list.filter((r) => r.status === "completed").length),
         icon: CircleCheck,
       },
       {
-        label: "Expired",
+        label: t("prescriptions.kpi.expired"),
         value: String(list.filter((r) => r.status === "expired").length),
         icon: Clock,
       },
     ],
-    [list],
+    [list, t],
   );
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="font-semibold text-2xl tracking-tight">Prescriptions</h1>
+          <h1 className="font-semibold text-2xl tracking-tight">
+            {t("prescriptions.title")}
+          </h1>
           <p className="text-muted-foreground text-sm">
-            Medications prescribed across the clinic.
+            {t("prescriptions.subtitle")}
           </p>
         </div>
         <Button
@@ -203,7 +207,7 @@ export function PrescriptionsView() {
           type="button"
         >
           <Plus className="size-4" />
-          New prescription
+          {t("prescriptions.new")}
         </Button>
       </div>
 
@@ -213,7 +217,10 @@ export function PrescriptionsView() {
         ))}
       </div>
 
-      <Section description="Most recent first" title="Recent prescriptions">
+      <Section
+        description={t("prescriptions.recentDescription")}
+        title={t("prescriptions.recent")}
+      >
         <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
           {list.map((rx) => (
             <RxRow key={rx.id} onOpen={() => openRx(rx)} rx={rx} />

@@ -4,7 +4,8 @@
     "email": "Email",
     "password": "Password",
     "signIn": "Sign in",
-    "signUp": "Sign up"
+    "signUp": "Sign up",
+    "backToSignIn": "Back to sign in"
   },
   "auth": {
     "login": {
@@ -42,6 +43,65 @@
       "errorTitle": "Sign up failed",
       "created": "Account created",
       "createdHint": "Set up your clinic to get started."
+    },
+    "verifyEmail": {
+      "title": "Check your inbox",
+      "subtitle": "We sent a verification link to {{email}}. Open it to activate your account.",
+      "subtitleNoEmail": "Open the verification link we emailed you to activate your account.",
+      "continue": "I've verified — continue",
+      "resend": "Resend email",
+      "resending": "Sending…",
+      "resent": "Verification email sent. Check your inbox.",
+      "resendError": "Could not resend the verification email."
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "subtitle": "We'll email you a link to reset your password",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@clinic.org",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "sent": "If an account exists for {{email}}, a reset link is on its way. Check your inbox.",
+      "error": "Could not send the reset email.",
+      "failedToastTitle": "Couldn't send reset link",
+      "sentToastTitle": "Reset link sent",
+      "sentToastBody": "Check your inbox for the link."
+    },
+    "resetPassword": {
+      "title": "Set a new password",
+      "subtitle": "Choose a new password for your account",
+      "passwordLabel": "New password",
+      "confirmLabel": "Confirm new password",
+      "passwordHint": "At least {{count}} characters.",
+      "submit": "Reset password",
+      "submitting": "Saving…",
+      "done": "Your password has been reset. Redirecting you to sign in…",
+      "invalidToken": "This reset link is invalid or has expired.",
+      "tooShort": "Password must be at least {{count}} characters.",
+      "mismatch": "Passwords do not match.",
+      "error": "Could not reset your password.",
+      "failedToastTitle": "Couldn't reset password",
+      "successToastTitle": "Password updated",
+      "successToastBody": "Redirecting you to sign in…"
+    },
+    "acceptInvite": {
+      "notFoundTitle": "Invitation not found",
+      "notFoundBody": "This invitation link is missing or invalid.",
+      "invitedTitle": "You've been invited",
+      "invitedSubtitle": "Sign in with the email this invitation was sent to, then return to this link to accept.",
+      "signIn": "Sign in",
+      "createAccount": "Create an account",
+      "reopenPrefix": "After signing in, reopen",
+      "reopenLink": "this invitation link",
+      "acceptTitle": "Accept your invitation",
+      "acceptSubtitle": "Join the clinic you were invited to on temetro.",
+      "accept": "Accept invitation",
+      "accepting": "Joining…",
+      "error": "This invitation is invalid or has expired."
+    },
+    "onboarding": {
+      "title": "Set up your clinic",
+      "subtitle": "Create your clinic to start organizing patient records"
     }
   },
   "nav": {
@@ -64,6 +124,284 @@
     "commandNavigate": "Navigate",
     "commandOpen": "Open",
     "commandClose": "Close"
+  },
+  "userMenu": {
+    "defaultName": "Clinician",
+    "selectClinic": "Select clinic",
+    "settings": "Settings",
+    "docs": "Docs & GitHub",
+    "theme": "Theme",
+    "dark": "Dark",
+    "light": "Light",
+    "search": "Search",
+    "noClinic": "No clinic selected",
+    "clinicCount_one": "{{count}} clinic",
+    "clinicCount_other": "{{count}} clinics",
+    "switchClinic": "Switch clinic",
+    "createClinic": "Create clinic",
+    "logout": "Log out",
+    "createDialogTitle": "Create clinic",
+    "createDialogDescription": "Add a new clinic and switch to it.",
+    "signOutFailed": "Sign out failed",
+    "tryAgain": "Please try again.",
+    "signedOut": "Signed out"
+  },
+  "clinic": {
+    "create": "Create clinic",
+    "creating": "Creating clinic…",
+    "nameLabel": "Clinic name",
+    "namePlaceholder": "North Side Family Practice",
+    "slugLabel": "Clinic URL slug",
+    "slugPlaceholder": "north-side-family-practice",
+    "slugHint": "Used in links and invitations. Lowercase letters, numbers and dashes.",
+    "createError": "Could not create the clinic.",
+    "createFailedTitle": "Couldn't create clinic",
+    "createdTitle": "Clinic created",
+    "createdBody": "{{name}} is ready."
+  },
+  "patients": {
+    "title": "Patients",
+    "searchPlaceholder": "Search name or MRN",
+    "add": "Add patient",
+    "loading": "Loading patients…",
+    "empty": "No patients found.",
+    "loadError": "Failed to load patients.",
+    "columns": {
+      "name": "Name",
+      "mrn": "MRN",
+      "ageSex": "Age · Sex",
+      "status": "Status",
+      "lastSeen": "Last seen",
+      "allergies": "Allergies"
+    },
+    "status": {
+      "active": "Active",
+      "inpatient": "Inpatient",
+      "discharged": "Discharged"
+    }
+  },
+  "appointments": {
+    "title": "Appointments & Schedule",
+    "subtitle": "Today's clinic schedule and what's coming up.",
+    "searchPlaceholder": "Search patient, type, provider",
+    "calendar": "Calendar",
+    "add": "Add",
+    "noMatches": "No matching appointments.",
+    "today": "Today",
+    "nothingToday": "Nothing scheduled today.",
+    "addFailedTitle": "Couldn't add appointment",
+    "addFailedBody": "Please try again.",
+    "kpi": {
+      "today": "Today",
+      "thisWeek": "This week",
+      "checkedIn": "Checked in",
+      "completed": "Completed"
+    },
+    "status": {
+      "confirmed": "Confirmed",
+      "checked-in": "Checked in",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "dialog": {
+      "title": "New appointment",
+      "description": "Search for a patient by name or file number, then set the slot.",
+      "patient": "Patient",
+      "fileNumber": "File #{{number}}",
+      "change": "Change",
+      "searchPlaceholder": "Search name or file number",
+      "noPatients": "No patients found.",
+      "date": "Date",
+      "time": "Time",
+      "type": "Type",
+      "provider": "Provider",
+      "providerPlaceholder": "e.g. Dr. Okafor",
+      "cancel": "Cancel",
+      "submit": "Add appointment",
+      "pickPatientTitle": "Pick a patient",
+      "pickPatientBody": "Search and select a patient first.",
+      "addedTitle": "Appointment added"
+    },
+    "calendarDialog": {
+      "today": "Today",
+      "appointmentCount_one": "{{count}} appointment",
+      "appointmentCount_other": "{{count}} appointments",
+      "none": "No appointments on this day."
+    }
+  },
+  "prescriptions": {
+    "title": "Prescriptions",
+    "subtitle": "Medications prescribed across the clinic.",
+    "new": "New prescription",
+    "recent": "Recent prescriptions",
+    "recentDescription": "Most recent first",
+    "addFailedTitle": "Couldn't add prescription",
+    "addFailedBody": "Please try again.",
+    "kpi": {
+      "active": "Active",
+      "completed": "Completed",
+      "expired": "Expired"
+    },
+    "status": {
+      "active": "Active",
+      "completed": "Completed",
+      "expired": "Expired"
+    },
+    "detail": {
+      "fallbackTitle": "Prescription",
+      "fileNumber": "File #{{number}}",
+      "medication": "Medication",
+      "dose": "Dose",
+      "frequency": "Frequency",
+      "duration": "Duration",
+      "prescriber": "Prescriber",
+      "date": "Date",
+      "status": "Status",
+      "notes": "Notes"
+    },
+    "dialog": {
+      "title": "New prescription",
+      "description": "Search for a patient by name or file number, then set the medication.",
+      "patient": "Patient",
+      "fileNumber": "File #{{number}}",
+      "change": "Change",
+      "searchPlaceholder": "Search name or file number",
+      "noPatients": "No patients found.",
+      "medication": "Medication",
+      "medicationPlaceholder": "e.g. Amoxicillin",
+      "dose": "Dose",
+      "dosePlaceholder": "e.g. 500 mg",
+      "frequency": "Frequency",
+      "duration": "Duration",
+      "durationOtherPlaceholder": "e.g. 21 days",
+      "notes": "Notes",
+      "notesPlaceholder": "Instructions, e.g. take with food in the morning",
+      "interactionTitle": "Possible interaction",
+      "cancel": "Cancel",
+      "submit": "Add prescription",
+      "pickPatientTitle": "Pick a patient",
+      "pickPatientBody": "Search and select a patient first.",
+      "needMedTitle": "Add a medication",
+      "needMedBody": "Enter the medication name.",
+      "needDurationTitle": "Add a duration",
+      "needDurationBody": "Enter the custom duration.",
+      "addedTitle": "Prescription added"
+    }
+  },
+  "tasks": {
+    "title": "Tasks",
+    "subtitle": "Care-team to-dos. Click a task to see its details.",
+    "new": "New task",
+    "empty": "No tasks here.",
+    "markDone": "Mark as done",
+    "markNotDone": "Mark as not done",
+    "filters": {
+      "all": "All",
+      "open": "Open",
+      "done": "Done"
+    },
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "dialog": {
+      "title": "New task",
+      "description": "Assign a follow-up to the care team.",
+      "subject": "Subject",
+      "subjectPlaceholder": "e.g. Review lab results",
+      "details": "Details — what needs to be done",
+      "detailsPlaceholder": "Describe what needs to happen, any context, links…",
+      "assignee": "Assignee",
+      "assigneePlaceholder": "e.g. Dr. Okafor",
+      "due": "Due",
+      "duePlaceholder": "e.g. Today",
+      "priorityLabel": "Priority",
+      "cancel": "Cancel",
+      "add": "Add task"
+    },
+    "detail": {
+      "fallbackTitle": "Task",
+      "priorityBadge": "{{priority}} priority",
+      "status": "Status",
+      "completed": "Completed",
+      "open": "Open",
+      "assignee": "Assignee",
+      "due": "Due",
+      "patient": "Patient",
+      "details": "Details",
+      "reopen": "Reopen task",
+      "complete": "Mark complete"
+    },
+    "toast": {
+      "needSubjectTitle": "Add a subject",
+      "needSubjectBody": "Describe the task first.",
+      "addedTitle": "Task added",
+      "addFailedTitle": "Couldn't add task",
+      "addFailedBody": "Please try again.",
+      "updateFailedTitle": "Couldn't update task",
+      "updateFailedBody": "Please try again."
+    }
+  },
+  "messages": {
+    "inbox": "Inbox",
+    "unread": "Unread · {{count}}",
+    "newMessage": "New message",
+    "noUnread": "No unread messages.",
+    "noConversations": "No conversations yet.",
+    "you": "You: ",
+    "directMessage": "Direct message",
+    "peopleCount": "{{count}} people",
+    "messagePlaceholder": "Message {{name}}…",
+    "send": "Send",
+    "emptyTitle": "No conversation selected",
+    "emptyDescription": "Choose a conversation from the inbox, or start a new one.",
+    "compose": {
+      "title": "New message",
+      "description": "Start a conversation with a member of your clinic.",
+      "noMembers": "No other clinic members yet. Invite colleagues from Settings → Care team."
+    },
+    "startFailedTitle": "Couldn't start conversation",
+    "startFailedBody": "Please try again."
+  },
+  "analysis": {
+    "title": "Analysis",
+    "subtitle": "Clinic performance at a glance, computed from your clinic's data.",
+    "patientVolume": {
+      "title": "Patient volume",
+      "description": "New, active and total patients",
+      "total": "Total patients",
+      "newThisMonth": "New this month",
+      "active": "Active patients"
+    },
+    "appointments": {
+      "title": "Appointments & schedule",
+      "description": "Bookings, attendance and what's coming up",
+      "thisWeek": "This week",
+      "upcoming": "Upcoming",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "prescriptions": {
+      "title": "Prescriptions",
+      "description": "Medications prescribed",
+      "total": "Total issued",
+      "active": "Active"
+    },
+    "tasks": {
+      "title": "Tasks",
+      "description": "Care-team workload",
+      "open": "Open",
+      "completed": "Completed"
+    }
+  },
+  "activity": {
+    "title": "Activity",
+    "subtitle": "An audit log of record changes across the clinic.",
+    "changesToday": "Changes today",
+    "thisWeek": "This week",
+    "totalRecorded": "Total recorded",
+    "empty": "No activity yet. Changes to patients, notes, appointments, prescriptions and tasks will appear here."
   },
   "settings": {
     "tabs": {
