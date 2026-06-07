@@ -9,7 +9,7 @@ import {
   Stethoscope,
   Users,
 } from "lucide-react";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import {
   AddAppointmentDialog,
@@ -21,25 +21,34 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  type Appointment,
+  createAppointment,
+  listAppointments,
+} from "@/lib/appointments";
+import { notify } from "@/lib/toast";
 
-// All figures here are mock/placeholder data — there is no scheduling backend.
-// They illustrate the Appointments & Schedule layout.
+export type { Appointment } from "@/lib/appointments";
 
-// Anchor "today" to a fixed date so the mock copy ("Wednesday, June 5") lines up
-// across the page, the calendar dialog, and the add dialog. ISO YYYY-MM-DD.
-export const TODAY = "2026-06-05";
+// Local-date ISO key (avoids UTC drift from toISOString).
+const keyOf = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate(),
+  ).padStart(2, "0")}`;
 
-type ApptStatus = "confirmed" | "checked-in" | "completed" | "cancelled";
+// "Today" is the real current date — appointments are persisted, not seeded, so
+// the schedule and calendar anchor to now. ISO YYYY-MM-DD.
+export const TODAY = keyOf(new Date());
 
-export type Appointment = {
-  date: string; // ISO YYYY-MM-DD
-  time: string;
-  name: string;
-  initials: string;
-  type: string;
-  provider: string;
-  status: ApptStatus;
-};
+// Sunday-anchored week window [start, end] as ISO keys, for the "This week" KPI.
+function weekRange(): { start: string; end: string } {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 6);
+  return { start: keyOf(start), end: keyOf(end) };
+}
+
+type ApptStatus = Appointment["status"];
 
 const statusVariant: Record<
   ApptStatus,
@@ -57,116 +66,6 @@ const statusLabel: Record<ApptStatus, string> = {
   completed: "Completed",
   cancelled: "Cancelled",
 };
-
-const kpis = [
-  { label: "Today", value: "12", icon: CalendarClock },
-  { label: "This week", value: "146", icon: Users },
-  { label: "Avg. visit", value: "22 min", icon: Clock },
-  { label: "Utilization", value: "87%", icon: Stethoscope },
-];
-
-// Mock schedule spread across June 2026 so the month calendar looks populated.
-const seed: Appointment[] = [
-  {
-    date: TODAY,
-    time: "09:00",
-    name: "Amina Yusuf",
-    initials: "AY",
-    type: "Follow-up",
-    provider: "Dr. Okafor",
-    status: "completed",
-  },
-  {
-    date: TODAY,
-    time: "09:30",
-    name: "Daniel Mensah",
-    initials: "DM",
-    type: "New patient",
-    provider: "Dr. Okafor",
-    status: "checked-in",
-  },
-  {
-    date: TODAY,
-    time: "10:15",
-    name: "Leila Haddad",
-    initials: "LH",
-    type: "Lab review",
-    provider: "Dr. Stein",
-    status: "confirmed",
-  },
-  {
-    date: TODAY,
-    time: "11:00",
-    name: "Carlos Rivera",
-    initials: "CR",
-    type: "Consultation",
-    provider: "Dr. Okafor",
-    status: "confirmed",
-  },
-  {
-    date: TODAY,
-    time: "13:30",
-    name: "Priya Nair",
-    initials: "PN",
-    type: "Follow-up",
-    provider: "Dr. Stein",
-    status: "cancelled",
-  },
-  {
-    date: TODAY,
-    time: "14:45",
-    name: "Tom Becker",
-    initials: "TB",
-    type: "Vaccination",
-    provider: "Dr. Okafor",
-    status: "confirmed",
-  },
-  {
-    date: "2026-06-06",
-    time: "08:45",
-    name: "Grace Lin",
-    initials: "GL",
-    type: "Follow-up",
-    provider: "Dr. Stein",
-    status: "confirmed",
-  },
-  {
-    date: "2026-06-06",
-    time: "10:00",
-    name: "Omar Farouk",
-    initials: "OF",
-    type: "New patient",
-    provider: "Dr. Okafor",
-    status: "confirmed",
-  },
-  {
-    date: "2026-06-09",
-    time: "11:30",
-    name: "Sofia Marin",
-    initials: "SM",
-    type: "Consultation",
-    provider: "Dr. Stein",
-    status: "confirmed",
-  },
-  {
-    date: "2026-06-12",
-    time: "15:00",
-    name: "Henry Adeyemi",
-    initials: "HA",
-    type: "Lab review",
-    provider: "Dr. Okafor",
-    status: "confirmed",
-  },
-  {
-    date: "2026-06-18",
-    time: "09:15",
-    name: "Nadia Petrova",
-    initials: "NP",
-    type: "Follow-up",
-    provider: "Dr. Stein",
-    status: "confirmed",
-  },
-];
 
 // "2026-06-05" -> "Wednesday, June 5"
 function formatDayKey(key: string): string {
@@ -231,7 +130,7 @@ export function ScheduleList({ items }: { items: Appointment[] }) {
   return (
     <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
       {items.map((appt) => (
-        <ApptRow appt={appt} key={appt.time + appt.name} />
+        <ApptRow appt={appt} key={appt.id} />
       ))}
     </div>
   );
@@ -262,24 +161,60 @@ function Section({
 export function AppointmentsView() {
   const [addOpen, setAddOpen] = useState(false);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [appointments, setAppointments] = useState<Appointment[]>(seed);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [query, setQuery] = useState("");
 
-  // Insert a new (mock) appointment at the date/time chosen in the dialog.
-  const addAppointment = (appt: NewAppointment) => {
-    setAppointments((prev) => [
-      ...prev,
-      {
-        date: appt.date,
-        time: appt.time,
+  useEffect(() => {
+    let active = true;
+    listAppointments()
+      .then((data) => {
+        if (active) setAppointments(data);
+      })
+      .catch(() => {
+        /* api-client redirects on 401; otherwise leave the list empty */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Persist a new appointment, then add the saved record to the list.
+  const addAppointment = async (appt: NewAppointment) => {
+    try {
+      const created = await createAppointment({
+        fileNumber: appt.fileNumber,
         name: appt.name,
         initials: appt.initials,
+        date: appt.date,
+        time: appt.time,
         type: appt.type,
         provider: appt.provider,
-        status: "confirmed" as const,
-      },
-    ]);
+      });
+      setAppointments((prev) => [...prev, created]);
+    } catch {
+      notify.error("Couldn't add appointment", "Please try again.");
+    }
   };
+
+  const kpis = useMemo(() => {
+    const { start, end } = weekRange();
+    const today = appointments.filter((a) => a.date === TODAY);
+    const week = appointments.filter((a) => a.date >= start && a.date <= end);
+    return [
+      { label: "Today", value: String(today.length), icon: CalendarClock },
+      { label: "This week", value: String(week.length), icon: Users },
+      {
+        label: "Checked in",
+        value: String(today.filter((a) => a.status === "checked-in").length),
+        icon: Stethoscope,
+      },
+      {
+        label: "Completed",
+        value: String(today.filter((a) => a.status === "completed").length),
+        icon: Clock,
+      },
+    ];
+  }, [appointments]);
 
   const todayItems = useMemo(
     () => appointments.filter((a) => a.date === TODAY).sort(byTime),
@@ -324,7 +259,7 @@ export function AppointmentsView() {
             Appointments &amp; Schedule
           </h1>
           <p className="text-muted-foreground text-sm">
-            Today&apos;s clinic schedule and what&apos;s coming up. Sample data.
+            Today&apos;s clinic schedule and what&apos;s coming up.
           </p>
         </div>
         <div className="flex items-center gap-2">

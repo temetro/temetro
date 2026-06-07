@@ -47,7 +47,7 @@ const chipClass: Record<Appointment["status"], string> = {
 
 // A Google-Calendar-style month grid in a dialog: a 6×7 grid of day cells with
 // color-coded event chips; navigate months and click a day to list its
-// appointments. Mock-only — there's no per-date scheduling backend.
+// appointments. Reads the appointments passed down from the page.
 export function CalendarDialog({
   open,
   onOpenChange,

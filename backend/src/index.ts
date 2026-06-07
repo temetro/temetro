@@ -5,6 +5,7 @@ import express from "express";
 import { auth } from "./auth.js";
 import { env } from "./env.js";
 import { errorHandler, notFound } from "./middleware/error.js";
+import { appointmentsRouter } from "./routes/appointments.js";
 import { notesRouter } from "./routes/notes.js";
 import { patientsRouter } from "./routes/patients.js";
 
@@ -45,6 +46,7 @@ app.get("/health", (_req, res) => {
 
 app.use("/api/patients", patientsRouter);
 app.use("/api/notes", notesRouter);
+app.use("/api/appointments", appointmentsRouter);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -54,4 +56,5 @@ app.listen(env.PORT, () => {
   console.log(`  • auth:     /api/auth/*  (frontend origin: ${env.FRONTEND_URL})`);
   console.log(`  • patients: /api/patients`);
   console.log(`  • notes:    /api/notes`);
+  console.log(`  • appts:    /api/appointments`);
 });

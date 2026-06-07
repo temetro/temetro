@@ -58,8 +58,8 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 // Compact "New appointment" dialog. The patient is chosen via a quick search by
-// name or file number; the rest is the slot. Appointments are mock-only, so a
-// confirmed entry is handed back to the page via onAdd.
+// name or file number; the rest is the slot. The new entry is handed back to the
+// page via onAdd, which persists it through the appointments API.
 export function AddAppointmentDialog({
   open,
   onOpenChange,
