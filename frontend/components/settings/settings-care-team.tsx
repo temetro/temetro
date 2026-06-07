@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { type FormEvent, useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   SettingsCard,
@@ -48,6 +49,7 @@ function initials(name?: string | null, email?: string | null): string {
 }
 
 export function CareTeamPanel() {
+  const { t } = useTranslation();
   const { data: session } = authClient.useSession();
   const [members, setMembers] = useState<Member[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -63,7 +65,7 @@ export function CareTeamPanel() {
     const { data, error: err } =
       await authClient.organization.getFullOrganization();
     if (err || !data) {
-      setError(err?.message ?? "Could not load the care team.");
+      setError(err?.message ?? t("settings.careTeam.loadError"));
       setLoading(false);
       return;
     }
@@ -96,11 +98,11 @@ export function CareTeamPanel() {
     });
     setInviting(false);
     if (err) {
-      setError(err.message ?? "Could not send the invitation.");
+      setError(err.message ?? t("settings.careTeam.inviteError"));
       return;
     }
     setEmail("");
-    setNotice(`Invitation sent to ${email.trim()}.`);
+    setNotice(t("settings.careTeam.inviteSent", { email: email.trim() }));
     void load();
   };
 
@@ -116,8 +118,8 @@ export function CareTeamPanel() {
 
   return (
     <SettingsSection
-      description="Clinicians with access to this clinic"
-      title="Care team"
+      description={t("settings.careTeam.description")}
+      title={t("settings.careTeam.title")}
     >
       {error && (
         <p className="rounded-2xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -139,7 +141,7 @@ export function CareTeamPanel() {
             <Input
               className="flex-1"
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="colleague@clinic.org"
+              placeholder={t("settings.careTeam.invitePlaceholder")}
               required
               type="email"
               value={email}
@@ -158,7 +160,9 @@ export function CareTeamPanel() {
               ))}
             </select>
             <Button disabled={inviting} type="submit">
-              {inviting ? "Sending…" : "Invite"}
+              {inviting
+                ? t("settings.careTeam.inviting")
+                : t("settings.careTeam.invite")}
             </Button>
           </form>
         </SettingsCard>
@@ -167,7 +171,7 @@ export function CareTeamPanel() {
       <SettingsCard className="divide-y divide-border">
         {loading ? (
           <p className="p-6 text-center text-sm text-muted-foreground">
-            Loading care team…
+            {t("settings.careTeam.loading")}
           </p>
         ) : (
           members.map((m) => {
@@ -184,7 +188,7 @@ export function CareTeamPanel() {
                     {m.user?.name || m.user?.email || m.userId}
                     {isSelf && (
                       <span className="ml-1 text-xs text-muted-foreground">
-                        (you)
+                        {t("settings.careTeam.you")}
                       </span>
                     )}
                   </p>
@@ -199,7 +203,7 @@ export function CareTeamPanel() {
                 </Badge>
                 {canManage && !isSelf && m.role !== "owner" && (
                   <Button
-                    aria-label="Remove member"
+                    aria-label={t("settings.careTeam.removeMember")}
                     onClick={() => removeMember(m.id)}
                     size="icon-sm"
                     type="button"
@@ -217,7 +221,7 @@ export function CareTeamPanel() {
       {invites.length > 0 && (
         <SettingsCard className="divide-y divide-border">
           <p className="px-4 py-2.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-            Pending invitations
+            {t("settings.careTeam.pendingInvitations")}
           </p>
           {invites.map((inv) => (
             <div className="flex items-center gap-3 px-4 py-3" key={inv.id}>
@@ -229,7 +233,7 @@ export function CareTeamPanel() {
               </Badge>
               {canManage && (
                 <Button
-                  aria-label="Cancel invitation"
+                  aria-label={t("settings.careTeam.cancelInvitation")}
                   onClick={() => cancelInvite(inv.id)}
                   size="icon-sm"
                   type="button"

@@ -57,6 +57,22 @@ organization; access is gated by the caller's clinic role.
 | PUT | `/api/patients/:fileNumber` | `patient:write` | replace the full record |
 | DELETE | `/api/patients/:fileNumber` | `patient:delete` | remove a patient |
 
+Other org-scoped resources follow the same pattern (CRUD, role-gated):
+
+| Resource | Base path | Permission | Notes |
+| --- | --- | --- | --- |
+| Appointments | `/api/appointments` | `appointment:*` | list / create / update / delete |
+| Prescriptions | `/api/prescriptions` | `prescription:*` | prescriber defaults to the signed-in user |
+| Tasks | `/api/tasks` | `task:*` | `PATCH /:id` for partial updates / the done toggle |
+| Notes | `/api/notes` | — (author-scoped) | private to the signed-in author |
+| Activity | `GET /api/activity` | — (any member) | audit feed of record changes |
+| Analytics | `GET /api/analytics` | — (any member) | computed clinic aggregates |
+| Conversations | `/api/conversations` | — (participant-scoped) | staff messaging; real-time over Socket.io |
+| Notifications | `/api/notifications` | — (per-recipient) | auto-generated; `read-all` + per-id read |
+
+Real-time messaging and live notifications are delivered over **Socket.io**, attached to the same
+HTTP server; the handshake is authenticated with the Better Auth session cookie.
+
 Auth endpoints (sign up / in / out, verify email, reset password, organizations & invitations) are
 served by Better Auth under `/api/auth/*`.
 

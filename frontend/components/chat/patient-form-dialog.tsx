@@ -2,6 +2,7 @@
 
 import { CalendarIcon, Plus, RefreshCw, X } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -72,6 +73,7 @@ function SectionList<T>({
   onChange: (rows: T[]) => void;
   render: (row: T, set: (patch: Partial<T>) => void) => ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
@@ -85,7 +87,7 @@ function SectionList<T>({
           variant="ghost"
         >
           <Plus className="size-4" />
-          Add
+          {t("patientForm.add")}
         </Button>
       </div>
       {rows.map((row, index) => (
@@ -94,7 +96,7 @@ function SectionList<T>({
             onChange(rows.map((r, i) => (i === index ? { ...r, ...patch } : r)))
           )}
           <button
-            aria-label={`Remove ${label} row`}
+            aria-label={t("patientForm.removeRow", { label })}
             className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
             onClick={() => onChange(rows.filter((_, i) => i !== index))}
             type="button"
@@ -145,7 +147,7 @@ function DatePicker({
   value,
   onChange,
   ariaLabel,
-  placeholder = "Pick a date",
+  placeholder,
   className,
 }: {
   value: string;
@@ -154,7 +156,9 @@ function DatePicker({
   placeholder?: string;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const placeholderText = placeholder ?? t("patientForm.pickDate");
 
   return (
     <Popover onOpenChange={setOpen} open={open}>
@@ -173,7 +177,7 @@ function DatePicker({
         }
       >
         <CalendarIcon className="size-4" />
-        <span className="truncate">{value || placeholder}</span>
+        <span className="truncate">{value || placeholderText}</span>
       </PopoverTrigger>
       <PopoverPopup className="w-auto p-0">
         <Calendar
@@ -197,6 +201,7 @@ export function PatientFormDialog({
   onCreated,
   onSaved,
 }: PatientFormDialogProps) {
+  const { t } = useTranslation();
   const isEdit = mode === "edit";
 
   const [submitting, setSubmitting] = useState(false);
@@ -290,17 +295,26 @@ export function PatientFormDialog({
         : await createPatient(built);
       if (isEdit) {
         onSaved?.(saved);
-        notify.success("Record updated", `${saved.name}'s chart was saved.`);
+        notify.success(
+          t("patientForm.updatedTitle"),
+          t("patientForm.updatedBody", { name: saved.name }),
+        );
       } else {
         onCreated?.(saved.fileNumber);
-        notify.success("Patient added", `${saved.name} (${saved.fileNumber}).`);
+        notify.success(
+          t("patientForm.addedTitle"),
+          t("patientForm.addedBody", {
+            name: saved.name,
+            fileNumber: saved.fileNumber,
+          }),
+        );
       }
       onOpenChange(false);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Could not save the patient.";
+        err instanceof Error ? err.message : t("patientForm.saveError");
       setError(message);
-      notify.error("Couldn't save patient", message);
+      notify.error(t("patientForm.saveFailedTitle"), message);
     } finally {
       setSubmitting(false);
     }
@@ -310,11 +324,15 @@ export function PatientFormDialog({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogPopup className="max-h-[85dvh] sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? "Edit record" : "Add patient"}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? t("patientForm.editTitle") : t("patientForm.createTitle")}
+          </DialogTitle>
           <DialogDescription>
             {isEdit
-              ? `Update ${patient?.name ?? "this"}'s chart and add new data.`
-              : "Create a new chart. A file number has been generated for you."}
+              ? t("patientForm.editDescription", {
+                  name: patient?.name ?? "this",
+                })
+              : t("patientForm.createDescription")}
           </DialogDescription>
         </DialogHeader>
 
@@ -323,12 +341,12 @@ export function PatientFormDialog({
             scrollFade={false}
             className="no-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto"
           >
-            <Field label="File number">
+            <Field label={t("patientForm.fileNumber")}>
               <div className="flex items-center gap-2">
                 <Input readOnly value={fileNumber} />
                 {!isEdit && (
                   <Button
-                    aria-label="Regenerate file number"
+                    aria-label={t("patientForm.regenerate")}
                     onClick={() => setFileNumber(generateFileNumber())}
                     size="icon"
                     type="button"
@@ -340,18 +358,18 @@ export function PatientFormDialog({
               </div>
             </Field>
 
-            <Field label="Full name">
+            <Field label={t("patientForm.fullName")}>
               <Input
                 autoFocus={!isEdit}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="e.g. Jordan Pierce"
+                placeholder={t("patientForm.fullNamePlaceholder")}
                 required
                 value={name}
               />
             </Field>
 
             <div className="grid grid-cols-3 gap-3">
-              <Field label="Age">
+              <Field label={t("patientForm.age")}>
                 <Input
                   inputMode="numeric"
                   onChange={(event) => setAge(event.target.value)}
@@ -359,7 +377,7 @@ export function PatientFormDialog({
                   value={age}
                 />
               </Field>
-              <Field label="Sex">
+              <Field label={t("patientForm.sex")}>
                 <select
                   className={controlClass}
                   onChange={(event) =>
@@ -367,11 +385,11 @@ export function PatientFormDialog({
                   }
                   value={sex}
                 >
-                  <option value="F">Female</option>
-                  <option value="M">Male</option>
+                  <option value="F">{t("patientCard.sex.F")}</option>
+                  <option value="M">{t("patientCard.sex.M")}</option>
                 </select>
               </Field>
-              <Field label="Status">
+              <Field label={t("patientForm.status")}>
                 <select
                   className={controlClass}
                   onChange={(event) =>
@@ -379,48 +397,52 @@ export function PatientFormDialog({
                   }
                   value={status}
                 >
-                  <option value="active">Active</option>
-                  <option value="inpatient">Inpatient</option>
-                  <option value="discharged">Discharged</option>
+                  <option value="active">{t("patients.status.active")}</option>
+                  <option value="inpatient">
+                    {t("patients.status.inpatient")}
+                  </option>
+                  <option value="discharged">
+                    {t("patients.status.discharged")}
+                  </option>
                 </select>
               </Field>
             </div>
 
-            <Field label="Primary care">
+            <Field label={t("patientForm.primaryCare")}>
               <Input
                 onChange={(event) => setPcp(event.target.value)}
-                placeholder="e.g. Dr. Lena Ortiz"
+                placeholder={t("patientForm.primaryCarePlaceholder")}
                 value={pcp}
               />
             </Field>
 
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                Current vitals
+                {t("patientForm.currentVitals")}
               </span>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Input
-                  aria-label="Blood pressure"
+                  aria-label={t("patientForm.bp")}
                   onChange={(event) => setBp(event.target.value)}
-                  placeholder="BP"
+                  placeholder={t("patientCard.vitals.bp")}
                   value={bp}
                 />
                 <Input
-                  aria-label="Heart rate"
+                  aria-label={t("patientForm.hr")}
                   onChange={(event) => setHr(event.target.value)}
-                  placeholder="HR"
+                  placeholder={t("patientCard.vitals.hr")}
                   value={hr}
                 />
                 <Input
-                  aria-label="Temperature"
+                  aria-label={t("patientForm.temp")}
                   onChange={(event) => setTemp(event.target.value)}
-                  placeholder="Temp"
+                  placeholder={t("patientCard.vitals.temp")}
                   value={temp}
                 />
                 <Input
-                  aria-label="Oxygen saturation"
+                  aria-label={t("patientForm.spo2")}
                   onChange={(event) => setSpo2(event.target.value)}
-                  placeholder="SpO₂"
+                  placeholder={t("patientCard.vitals.spo2")}
                   value={spo2}
                 />
               </div>
@@ -428,33 +450,37 @@ export function PatientFormDialog({
 
             <SectionList<AllergyDraft>
               blank={{ substance: "", reaction: "", severity: "mild" }}
-              label="Allergies"
+              label={t("patientForm.allergies")}
               onChange={setAllergies}
               render={(row, set) => (
                 <>
                   <Input
-                    aria-label="Substance"
+                    aria-label={t("patientForm.substance")}
                     onChange={(event) => set({ substance: event.target.value })}
-                    placeholder="Substance"
+                    placeholder={t("patientForm.substance")}
                     value={row.substance}
                   />
                   <Input
-                    aria-label="Reaction"
+                    aria-label={t("patientForm.reaction")}
                     onChange={(event) => set({ reaction: event.target.value })}
-                    placeholder="Reaction"
+                    placeholder={t("patientForm.reaction")}
                     value={row.reaction}
                   />
                   <select
-                    aria-label="Severity"
+                    aria-label={t("patientForm.severityAria")}
                     className={cn(controlClass, "w-auto")}
                     onChange={(event) =>
                       set({ severity: event.target.value as AllergySeverity })
                     }
                     value={row.severity}
                   >
-                    <option value="mild">Mild</option>
-                    <option value="moderate">Moderate</option>
-                    <option value="severe">Severe</option>
+                    <option value="mild">{t("patientCard.severity.mild")}</option>
+                    <option value="moderate">
+                      {t("patientCard.severity.moderate")}
+                    </option>
+                    <option value="severe">
+                      {t("patientCard.severity.severe")}
+                    </option>
                   </select>
                 </>
               )}
@@ -463,26 +489,26 @@ export function PatientFormDialog({
 
             <SectionList<MedicationDraft>
               blank={{ name: "", dose: "", frequency: "" }}
-              label="Medications"
+              label={t("patientForm.medications")}
               onChange={setMedications}
               render={(row, set) => (
                 <>
                   <Input
-                    aria-label="Medication name"
+                    aria-label={t("patientForm.medNameAria")}
                     onChange={(event) => set({ name: event.target.value })}
-                    placeholder="Name"
+                    placeholder={t("patientForm.medName")}
                     value={row.name}
                   />
                   <Input
-                    aria-label="Dose"
+                    aria-label={t("patientForm.dose")}
                     onChange={(event) => set({ dose: event.target.value })}
-                    placeholder="Dose"
+                    placeholder={t("patientForm.dose")}
                     value={row.dose}
                   />
                   <Input
-                    aria-label="Frequency"
+                    aria-label={t("patientForm.frequency")}
                     onChange={(event) => set({ frequency: event.target.value })}
-                    placeholder="Frequency"
+                    placeholder={t("patientForm.frequency")}
                     value={row.frequency}
                   />
                 </>
@@ -492,21 +518,21 @@ export function PatientFormDialog({
 
             <SectionList<ProblemDraft>
               blank={{ label: "", since: "" }}
-              label="Problems"
+              label={t("patientForm.problems")}
               onChange={setProblems}
               render={(row, set) => (
                 <>
                   <Input
-                    aria-label="Problem"
+                    aria-label={t("patientForm.problemAria")}
                     onChange={(event) => set({ label: event.target.value })}
-                    placeholder="Diagnosis"
+                    placeholder={t("patientForm.diagnosis")}
                     value={row.label}
                   />
                   <DatePicker
-                    ariaLabel="Since"
+                    ariaLabel={t("patientForm.sinceAria")}
                     className="w-40 shrink-0"
                     onChange={(since) => set({ since })}
-                    placeholder="Since"
+                    placeholder={t("patientForm.sinceAria")}
                     value={row.since}
                   />
                 </>
@@ -516,32 +542,36 @@ export function PatientFormDialog({
 
             <SectionList<LabDraft>
               blank={{ name: "", value: "", flag: "normal", takenAt: "" }}
-              label="Labs"
+              label={t("patientForm.labs")}
               onChange={setLabs}
               render={(row, set) => (
                 <>
                   <Input
-                    aria-label="Lab name"
+                    aria-label={t("patientForm.labNameAria")}
                     onChange={(event) => set({ name: event.target.value })}
-                    placeholder="Test"
+                    placeholder={t("patientForm.test")}
                     value={row.name}
                   />
                   <Input
-                    aria-label="Value"
+                    aria-label={t("patientForm.valueAria")}
                     onChange={(event) => set({ value: event.target.value })}
-                    placeholder="Value"
+                    placeholder={t("patientForm.value")}
                     value={row.value}
                   />
                   <select
-                    aria-label="Flag"
+                    aria-label={t("patientForm.flagAria")}
                     className={cn(controlClass, "w-auto")}
                     onChange={(event) => set({ flag: event.target.value as LabFlag })}
                     value={row.flag}
                   >
-                    <option value="normal">Normal</option>
-                    <option value="low">Low</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
+                    <option value="normal">
+                      {t("patientCard.labFlag.normal")}
+                    </option>
+                    <option value="low">{t("patientCard.labFlag.low")}</option>
+                    <option value="high">{t("patientCard.labFlag.high")}</option>
+                    <option value="critical">
+                      {t("patientCard.labFlag.critical")}
+                    </option>
                   </select>
                 </>
               )}
@@ -550,35 +580,35 @@ export function PatientFormDialog({
 
             <SectionList<VisitDraft>
               blank={{ type: "", date: "", provider: "", summary: "" }}
-              label="Visits"
+              label={t("patientForm.visits")}
               onChange={setVisits}
               render={(row, set) => (
                 <div className="flex w-full flex-col gap-2">
                   <div className="flex items-center gap-2">
                     <Input
-                      aria-label="Visit type"
+                      aria-label={t("patientForm.visitTypeAria")}
                       onChange={(event) => set({ type: event.target.value })}
-                      placeholder="Type"
+                      placeholder={t("patientForm.visitType")}
                       value={row.type}
                     />
                     <DatePicker
-                      ariaLabel="Visit date"
+                      ariaLabel={t("patientForm.visitDateAria")}
                       className="w-40 shrink-0"
                       onChange={(date) => set({ date })}
-                      placeholder="Date"
+                      placeholder={t("patientForm.visitDate")}
                       value={row.date}
                     />
                   </div>
                   <Input
-                    aria-label="Provider"
+                    aria-label={t("patientForm.providerAria")}
                     onChange={(event) => set({ provider: event.target.value })}
-                    placeholder="Provider"
+                    placeholder={t("patientForm.provider")}
                     value={row.provider}
                   />
                   <Input
-                    aria-label="Summary"
+                    aria-label={t("patientForm.summaryAria")}
                     onChange={(event) => set({ summary: event.target.value })}
-                    placeholder="Summary"
+                    placeholder={t("patientForm.summary")}
                     value={row.summary}
                   />
                 </div>
@@ -592,10 +622,14 @@ export function PatientFormDialog({
               <p className="text-sm text-destructive sm:mr-auto">{error}</p>
             )}
             <DialogClose render={<Button type="button" variant="outline" />}>
-              Cancel
+              {t("patientForm.cancel")}
             </DialogClose>
             <Button disabled={!name.trim() || submitting} type="submit">
-              {submitting ? "Saving…" : isEdit ? "Save changes" : "Save patient"}
+              {submitting
+                ? t("patientForm.saving")
+                : isEdit
+                  ? t("patientForm.saveChanges")
+                  : t("patientForm.savePatient")}
             </Button>
           </DialogFooter>
         </form>

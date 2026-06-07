@@ -2,6 +2,7 @@
 
 import { Pencil } from "lucide-react";
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Sparkline } from "@/components/chat/sparkline";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -27,7 +28,6 @@ const statusVariant: Record<Patient["status"], BadgeVariant> = {
   inpatient: "destructive",
   discharged: "outline",
 };
-const sexLabel: Record<Patient["sex"], string> = { F: "Female", M: "Male" };
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -85,7 +85,9 @@ export function PatientDetail({
   patient: Patient;
   onEdit?: () => void;
 }) {
-  const idLine = `${patient.age} · ${sexLabel[patient.sex]} · MRN ${patient.fileNumber}`;
+  const { t } = useTranslation();
+  const sex = t(`patientCard.sex.${patient.sex}`);
+  const idLine = `${patient.age} · ${sex} · MRN ${patient.fileNumber}`;
 
   return (
     <div className="flex flex-col gap-4">
@@ -98,8 +100,8 @@ export function PatientDetail({
             <span className="truncate font-semibold text-base text-foreground">
               {patient.name}
             </span>
-            <Badge className="capitalize" variant={statusVariant[patient.status]}>
-              {patient.status}
+            <Badge variant={statusVariant[patient.status]}>
+              {t(`patients.status.${patient.status}`)}
             </Badge>
           </div>
           <span className="text-muted-foreground text-sm">{idLine}</span>
@@ -116,36 +118,56 @@ export function PatientDetail({
         {onEdit && (
           <Button onClick={onEdit} size="sm" type="button" variant="outline">
             <Pencil className="size-4" />
-            Edit
+            {t("patientCard.edit")}
           </Button>
         )}
       </div>
 
-      <Section title="Overview">
+      <Section title={t("patientCard.overview")}>
         <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-          <Stat label="Primary care" value={patient.pcp} />
-          <Stat label="Last seen" value={patient.encounters[0]?.date ?? "—"} />
-          <Stat label="Active meds" value={patient.medications.length} />
-          <Stat label="Open problems" value={patient.problems.length} />
+          <Stat
+            label={t("patientCard.summary.primaryCare")}
+            value={patient.pcp}
+          />
+          <Stat
+            label={t("patientCard.summary.lastSeen")}
+            value={patient.encounters[0]?.date ?? "—"}
+          />
+          <Stat
+            label={t("patientCard.summary.activeMeds")}
+            value={patient.medications.length}
+          />
+          <Stat
+            label={t("patientCard.summary.openProblems")}
+            value={patient.problems.length}
+          />
         </div>
       </Section>
 
-      <Section title="Vitals">
+      <Section title={t("patientCard.vitals.title")}>
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
-          <Stat label="BP" value={patient.vitals.bp} />
-          <Stat label="HR" value={patient.vitals.hr} />
-          <Stat label="Temp" value={patient.vitals.temp} />
-          <Stat label="SpO₂" value={patient.vitals.spo2} />
+          <Stat label={t("patientCard.vitals.bp")} value={patient.vitals.bp} />
+          <Stat label={t("patientCard.vitals.hr")} value={patient.vitals.hr} />
+          <Stat
+            label={t("patientCard.vitals.temp")}
+            value={patient.vitals.temp}
+          />
+          <Stat
+            label={t("patientCard.vitals.spo2")}
+            value={patient.vitals.spo2}
+          />
         </div>
         <p className="mt-2 text-muted-foreground text-xs">
-          Taken {patient.vitals.takenAt}
+          {t("patientCard.vitals.taken", { at: patient.vitals.takenAt })}
         </p>
         <TrendBlock trend={patient.vitalsTrend} />
       </Section>
 
-      <Section title="Labs">
+      <Section title={t("patientCard.labs.title")}>
         {patient.labs.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No labs on file.</p>
+          <p className="text-muted-foreground text-sm">
+            {t("patientCard.labs.empty")}
+          </p>
         ) : (
           <div className="flex flex-col gap-2">
             {patient.labs.map((lab) => (
@@ -155,11 +177,8 @@ export function PatientDetail({
                 value={
                   <span className="flex items-center gap-2">
                     {lab.value}
-                    <Badge
-                      className="capitalize"
-                      variant={labFlagVariant[lab.flag]}
-                    >
-                      {lab.flag}
+                    <Badge variant={labFlagVariant[lab.flag]}>
+                      {t(`patientCard.labFlag.${lab.flag}`)}
                     </Badge>
                   </span>
                 }
@@ -170,9 +189,11 @@ export function PatientDetail({
         <TrendBlock trend={patient.labTrend} />
       </Section>
 
-      <Section title="Medications">
+      <Section title={t("patientCard.medications.title")}>
         {patient.medications.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No active medications.</p>
+          <p className="text-muted-foreground text-sm">
+            {t("patientCard.medications.empty")}
+          </p>
         ) : (
           <div className="flex flex-col gap-2">
             {patient.medications.map((med) => (
@@ -186,25 +207,29 @@ export function PatientDetail({
         )}
       </Section>
 
-      <Section title="Problems">
+      <Section title={t("patientCard.problems.title")}>
         {patient.problems.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No active problems.</p>
+          <p className="text-muted-foreground text-sm">
+            {t("patientCard.problems.empty")}
+          </p>
         ) : (
           <div className="flex flex-col gap-2">
             {patient.problems.map((problem) => (
               <Row
                 key={problem.label}
                 label={problem.label}
-                value={`since ${problem.since}`}
+                value={t("patientCard.problems.since", { date: problem.since })}
               />
             ))}
           </div>
         )}
       </Section>
 
-      <Section title="Allergies & alerts">
+      <Section title={t("patientCard.allergies.title")}>
         {patient.allergies.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No known allergies.</p>
+          <p className="text-muted-foreground text-sm">
+            {t("patientCard.allergies.none")}
+          </p>
         ) : (
           <div className="flex flex-col gap-2">
             {patient.allergies.map((allergy) => (
@@ -220,11 +245,8 @@ export function PatientDetail({
                   </>
                 }
                 value={
-                  <Badge
-                    className="capitalize"
-                    variant={severityVariant[allergy.severity]}
-                  >
-                    {allergy.severity}
+                  <Badge variant={severityVariant[allergy.severity]}>
+                    {t(`patientCard.severity.${allergy.severity}`)}
                   </Badge>
                 }
               />
@@ -233,9 +255,11 @@ export function PatientDetail({
         )}
       </Section>
 
-      <Section title="Recent visits">
+      <Section title={t("patientCard.visits.title")}>
         {patient.encounters.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No visits yet.</p>
+          <p className="text-muted-foreground text-sm">
+            {t("patientCard.visits.empty")}
+          </p>
         ) : (
           <div className="flex flex-col gap-3">
             {patient.encounters.map((encounter) => (

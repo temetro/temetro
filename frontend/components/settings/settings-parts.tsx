@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { Copy } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
 import { Switch } from "@/components/ui/switch";
@@ -78,6 +79,7 @@ export function CopyField({
   description?: string;
   value: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div className="space-y-0.5">
@@ -95,7 +97,7 @@ export function CopyField({
           type="button"
         >
           <Copy className="size-3.5" />
-          Copy
+          {t("settings.copy")}
         </button>
       </div>
     </div>

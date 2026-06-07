@@ -178,6 +178,11 @@
       "active": "Active",
       "inpatient": "Inpatient",
       "discharged": "Discharged"
+    },
+    "detail": {
+      "notFound": "Patient not found",
+      "loading": "Loading patient…",
+      "noPatientForFile": "No patient found for file #{{number}}."
     }
   },
   "appointments": {
@@ -403,6 +408,224 @@
     "totalRecorded": "Total recorded",
     "empty": "No activity yet. Changes to patients, notes, appointments, prescriptions and tasks will appear here."
   },
+  "notes": {
+    "title": "Notes",
+    "subtitle": "Clinical notes. Click a note to open it.",
+    "new": "New note",
+    "editNote": "Edit note",
+    "loading": "Loading…",
+    "emptyTitle": "No notes yet",
+    "emptyDescription": "Create a note to start writing.",
+    "untitled": "Untitled note",
+    "updated": "Updated {{date}}",
+    "tryAgain": "Please try again.",
+    "loadFailed": "Couldn't load notes",
+    "saved": "Note saved",
+    "saveFailed": "Couldn't save note",
+    "deleted": "Note deleted",
+    "deleteFailed": "Couldn't delete note",
+    "editor": {
+      "placeholder": "Write your note…",
+      "titlePlaceholder": "Note title",
+      "delete": "Delete note",
+      "save": "Save",
+      "saving": "Saving…",
+      "bold": "Bold",
+      "italic": "Italic",
+      "underline": "Underline",
+      "heading1": "Heading 1",
+      "heading2": "Heading 2",
+      "bulletList": "Bullet list",
+      "numberedList": "Numbered list",
+      "undo": "Undo",
+      "redo": "Redo",
+      "confirmTitle": "Delete this note?",
+      "confirmDescription": "\"{{name}}\" will be permanently deleted. This can't be undone.",
+      "confirmLabel": "Delete note"
+    }
+  },
+  "chat": {
+    "heading": "Which patient would you like to look up?",
+    "input": {
+      "placeholder": "Look up a patient — try /patient 10293",
+      "message": "Message",
+      "addPatient": "Add patient",
+      "clinical": "Clinical",
+      "attachFile": "Attach file",
+      "attachFiles": "Attach files",
+      "removeFile": "Remove {{name}}",
+      "dictate": "Dictate",
+      "send": "Send",
+      "stop": "Stop",
+      "accessLevel": "Access level",
+      "responseMode": "Response mode",
+      "specialty": "Specialty",
+      "facility": "Facility",
+      "timeRange": "Time range",
+      "access": {
+        "standard": "Standard access",
+        "breakGlass": "Break-glass (emergency)",
+        "readOnly": "Read-only"
+      },
+      "response": {
+        "concise": "Concise",
+        "detailed": "Detailed",
+        "comprehensive": "Comprehensive"
+      },
+      "specialtyOptions": {
+        "internalMedicine": "Internal Medicine",
+        "cardiology": "Cardiology",
+        "pediatrics": "Pediatrics",
+        "emergency": "Emergency",
+        "all": "All specialties"
+      },
+      "facilityOptions": {
+        "mainHospital": "Main Hospital",
+        "northClinic": "North Clinic",
+        "telehealth": "Telehealth"
+      },
+      "timeOptions": {
+        "30d": "Last 30 days",
+        "12m": "Last 12 months",
+        "5y": "Last 5 years",
+        "all": "All time"
+      }
+    }
+  },
+  "patientCard": {
+    "notFound": "No patient found for file #{{number}}.",
+    "overview": "Overview",
+    "edit": "Edit",
+    "sex": { "F": "Female", "M": "Male" },
+    "summary": {
+      "fullName": "Full name",
+      "mrn": "MRN",
+      "age": "Age",
+      "sex": "Sex",
+      "primaryCare": "Primary care",
+      "status": "Status",
+      "lastSeen": "Last seen",
+      "allergies": "Allergies",
+      "activeMeds": "Active meds",
+      "openProblems": "Open problems",
+      "none": "None",
+      "editRecord": "Edit record"
+    },
+    "vitals": {
+      "title": "Vitals",
+      "taken": "Taken {{at}}",
+      "bp": "BP",
+      "hr": "HR",
+      "temp": "Temp",
+      "spo2": "SpO₂"
+    },
+    "labs": {
+      "title": "Labs",
+      "asOf": "As of {{at}}",
+      "empty": "No labs on file."
+    },
+    "medications": {
+      "title": "Medications",
+      "active": "{{count}} active",
+      "empty": "No active medications."
+    },
+    "problems": {
+      "title": "Problems",
+      "active": "{{count}} active",
+      "empty": "No active problems.",
+      "since": "since {{date}}"
+    },
+    "allergies": {
+      "title": "Allergies & alerts",
+      "sectionLabel": "Allergies",
+      "none": "No known allergies."
+    },
+    "visits": {
+      "title": "Recent visits",
+      "recent": "{{count}} recent",
+      "empty": "No visits yet."
+    },
+    "trend": {
+      "empty": "No trend data yet.",
+      "last": "{{label}} · last {{count}}",
+      "lastReadings": "{{label}} · last {{count}} readings",
+      "latest": "Latest",
+      "min": "Min",
+      "max": "Max"
+    },
+    "labFlag": {
+      "normal": "Normal",
+      "low": "Low",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "severity": {
+      "mild": "Mild",
+      "moderate": "Moderate",
+      "severe": "Severe"
+    }
+  },
+  "patientForm": {
+    "editTitle": "Edit record",
+    "createTitle": "Add patient",
+    "editDescription": "Update {{name}}'s chart and add new data.",
+    "createDescription": "Create a new chart. A file number has been generated for you.",
+    "fileNumber": "File number",
+    "regenerate": "Regenerate file number",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "e.g. Jordan Pierce",
+    "age": "Age",
+    "sex": "Sex",
+    "status": "Status",
+    "primaryCare": "Primary care",
+    "primaryCarePlaceholder": "e.g. Dr. Lena Ortiz",
+    "currentVitals": "Current vitals",
+    "bp": "Blood pressure",
+    "hr": "Heart rate",
+    "temp": "Temperature",
+    "spo2": "Oxygen saturation",
+    "allergies": "Allergies",
+    "medications": "Medications",
+    "problems": "Problems",
+    "labs": "Labs",
+    "visits": "Visits",
+    "add": "Add",
+    "removeRow": "Remove {{label}} row",
+    "pickDate": "Pick a date",
+    "substance": "Substance",
+    "reaction": "Reaction",
+    "severityAria": "Severity",
+    "medNameAria": "Medication name",
+    "medName": "Name",
+    "dose": "Dose",
+    "frequency": "Frequency",
+    "problemAria": "Problem",
+    "diagnosis": "Diagnosis",
+    "sinceAria": "Since",
+    "labNameAria": "Lab name",
+    "test": "Test",
+    "valueAria": "Value",
+    "value": "Value",
+    "flagAria": "Flag",
+    "visitTypeAria": "Visit type",
+    "visitType": "Type",
+    "visitDateAria": "Visit date",
+    "visitDate": "Date",
+    "providerAria": "Provider",
+    "provider": "Provider",
+    "summaryAria": "Summary",
+    "summary": "Summary",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "saveChanges": "Save changes",
+    "savePatient": "Save patient",
+    "saveError": "Could not save the patient.",
+    "updatedTitle": "Record updated",
+    "updatedBody": "{{name}}'s chart was saved.",
+    "addedTitle": "Patient added",
+    "addedBody": "{{name}} ({{fileNumber}}).",
+    "saveFailedTitle": "Couldn't save patient"
+  },
   "settings": {
     "tabs": {
       "profile": "Profile",
@@ -412,11 +635,92 @@
       "developers": "Developers"
     },
     "empty": "Nothing here yet.",
+    "copy": "Copy",
     "records": {
       "description": "How patient records are sourced, stored, and displayed"
     },
     "developers": {
       "description": "Access tokens for the temetro API"
+    },
+    "profile": {
+      "sectionTitle": "Clinician profile",
+      "clinicianIdLabel": "Clinician ID",
+      "clinicianIdDescription": "Your unique clinician identifier, used when signing records",
+      "handleLabel": "Handle",
+      "handleDescription": "Used in your public profile and the patient portal",
+      "avatar": "Avatar",
+      "displayName": "Display name",
+      "specialty": "Specialty",
+      "selectSpecialty": "Select specialty",
+      "clinic": "Clinic / practice",
+      "clinicPlaceholder": "e.g. Main Hospital",
+      "contactEmail": "Contact email",
+      "contactEmailPlaceholder": "clinician@example.org",
+      "professionalLinks": "Professional links",
+      "professionalLinksHint": "Registry or institutional profiles used to verify your identity. They are never shown to patients.",
+      "addLink": "Add link",
+      "patientNotifications": "Patient notifications",
+      "patientNotificationsDescription": "Emails sent to patients about their records, results, and pending approvals",
+      "accountNotifications": "Account notifications",
+      "accountNotificationsDescription": "Notifications sent to you about your patients and the care team",
+      "features": "Features",
+      "featuresDescription": "Manage alpha & beta features for your account",
+      "dangerZone": "Danger Zone",
+      "dangerZoneDescription": "Irreversible actions for your account",
+      "deleteAccount": "Delete account",
+      "deleteAccountDescription": "Permanently delete your temetro account and any locally stored signing keys. This action cannot be undone.",
+      "delete": "Delete",
+      "notif": {
+        "newLab": "New lab result",
+        "newLabDesc": "Sent when a new lab result is available on a patient's chart",
+        "recordUpdated": "Record updated",
+        "recordUpdatedDesc": "Sent when a patient's record is updated by a member of the care team",
+        "approvalRequested": "Approval requested",
+        "approvalRequestedDesc": "Sent when a signed change is awaiting the patient's approval",
+        "changeApproved": "Change approved",
+        "changeApprovedDesc": "Sent when a patient approves a pending change to their record",
+        "newMessage": "New message",
+        "newMessageDesc": "Sent when a patient or another clinician sends a message",
+        "visitScheduled": "Visit scheduled",
+        "visitScheduledDesc": "Sent when an upcoming visit is added to a patient's record",
+        "pendingApprovals": "Pending approvals",
+        "pendingApprovalsDesc": "Notify me when a patient approves or rejects a pending change",
+        "recordsShared": "Records shared with me",
+        "recordsSharedDesc": "Notify me when a patient shares a record with me",
+        "patientStorage": "Patient-owned storage (beta)",
+        "patientStorageDesc": "Write records to the patient's own device instead of your database",
+        "requireSigned": "Require signed records",
+        "requireSignedDesc": "Require a signature on every change you make to a patient record"
+      }
+    },
+    "careTeam": {
+      "title": "Care team",
+      "description": "Clinicians with access to this clinic",
+      "loadError": "Could not load the care team.",
+      "invitePlaceholder": "colleague@clinic.org",
+      "inviting": "Sending…",
+      "invite": "Invite",
+      "inviteError": "Could not send the invitation.",
+      "inviteSent": "Invitation sent to {{email}}.",
+      "loading": "Loading care team…",
+      "you": "(you)",
+      "pendingInvitations": "Pending invitations",
+      "removeMember": "Remove member",
+      "cancelInvitation": "Cancel invitation"
+    },
+    "signing": {
+      "keyTitle": "Signing key",
+      "active": "Active",
+      "keyDescription": "Every change you make to a patient record is signed with this key, so patients can verify it came from you before approving it.",
+      "rotateKey": "Rotate key",
+      "createdAt": "Created May 28, 2026",
+      "identityTitle": "Signing identity",
+      "identityDescription": "The public key patients use to verify your signatures",
+      "fingerprintLabel": "Public key fingerprint",
+      "fingerprintDescription": "Share or publish this fingerprint so patients can trust your changes",
+      "signedRecordsTitle": "Signed records",
+      "signedRecordsDescription": "Changes you've signed that are waiting on the patient's approval",
+      "noPending": "No pending signatures"
     }
   }
 }

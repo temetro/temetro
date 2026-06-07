@@ -2,6 +2,7 @@
 
 import { Pencil } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -59,8 +60,6 @@ const statusVariant: Record<Patient["status"], BadgeVariant> = {
   discharged: "outline",
 };
 
-const sexLabel: Record<Patient["sex"], string> = { F: "Female", M: "Male" };
-
 // Fixed width so the cards sit in a horizontal scroll row instead of squashing,
 // plus a subtle clickable affordance (they open a detail dialog).
 const rowCard =
@@ -102,13 +101,19 @@ function Empty({ children }: { children: ReactNode }) {
 }
 
 function TrendBlock({ trend }: { trend: Trend }) {
+  const { t } = useTranslation();
   if (trend.points.length === 0) {
-    return <Empty>No trend data yet.</Empty>;
+    return <Empty>{t("patientCard.trend.empty")}</Empty>;
   }
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-2">
-        <SectionLabel>{`${trend.label} · last ${trend.points.length}`}</SectionLabel>
+        <SectionLabel>
+          {t("patientCard.trend.last", {
+            label: trend.label,
+            count: trend.points.length,
+          })}
+        </SectionLabel>
         <span className="text-foreground">
           {trend.points.at(-1)}
           <span className="text-muted-foreground"> {trend.unit}</span>
@@ -120,27 +125,35 @@ function TrendBlock({ trend }: { trend: Trend }) {
 }
 
 function TrendDetail({ trend }: { trend: Trend }) {
+  const { t } = useTranslation();
   if (trend.points.length === 0) {
-    return <Empty>No trend data yet.</Empty>;
+    return <Empty>{t("patientCard.trend.empty")}</Empty>;
   }
   const min = Math.min(...trend.points);
   const max = Math.max(...trend.points);
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <SectionLabel>{`${trend.label} · last ${trend.points.length} readings`}</SectionLabel>
+        <SectionLabel>
+          {t("patientCard.trend.lastReadings", {
+            label: trend.label,
+            count: trend.points.length,
+          })}
+        </SectionLabel>
         <div className="flex gap-3 text-xs text-muted-foreground">
           <span>
-            Latest{" "}
+            {t("patientCard.trend.latest")}{" "}
             <span className="text-foreground">
               {trend.points.at(-1)} {trend.unit}
             </span>
           </span>
           <span>
-            Min <span className="text-foreground">{min}</span>
+            {t("patientCard.trend.min")}{" "}
+            <span className="text-foreground">{min}</span>
           </span>
           <span>
-            Max <span className="text-foreground">{max}</span>
+            {t("patientCard.trend.max")}{" "}
+            <span className="text-foreground">{max}</span>
           </span>
         </div>
       </div>
@@ -204,26 +217,29 @@ function SummaryCard({
   patient: Patient;
   onEdit?: () => void;
 }) {
-  const idLine = `${patient.age} · ${sexLabel[patient.sex]} · MRN ${patient.fileNumber}`;
+  const { t } = useTranslation();
+  const sex = t(`patientCard.sex.${patient.sex}`);
+  const statusLabel = t(`patients.status.${patient.status}`);
+  const idLine = `${patient.age} · ${sex} · MRN ${patient.fileNumber}`;
   return (
     <ExpandableCard
       description={idLine}
       detail={
         <div className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-x-4 gap-y-3">
-            <Stat label="Full name" value={patient.name} />
-            <Stat label="MRN" value={patient.fileNumber} />
-            <Stat label="Age" value={patient.age} />
-            <Stat label="Sex" value={sexLabel[patient.sex]} />
-            <Stat label="Primary care" value={patient.pcp} />
+            <Stat label={t("patientCard.summary.fullName")} value={patient.name} />
+            <Stat label={t("patientCard.summary.mrn")} value={patient.fileNumber} />
+            <Stat label={t("patientCard.summary.age")} value={patient.age} />
+            <Stat label={t("patientCard.summary.sex")} value={sex} />
+            <Stat label={t("patientCard.summary.primaryCare")} value={patient.pcp} />
+            <Stat label={t("patientCard.summary.status")} value={statusLabel} />
             <Stat
-              label="Status"
-              value={<span className="capitalize">{patient.status}</span>}
+              label={t("patientCard.summary.lastSeen")}
+              value={patient.encounters[0]?.date ?? "—"}
             />
-            <Stat label="Last seen" value={patient.encounters[0]?.date ?? "—"} />
             <Stat
-              label="Allergies"
-              value={patient.allergies.length || "None"}
+              label={t("patientCard.summary.allergies")}
+              value={patient.allergies.length || t("patientCard.summary.none")}
             />
           </div>
           <AlertBadges alerts={patient.alerts} />
@@ -240,17 +256,24 @@ function SummaryCard({
             <CardTitle>{patient.name}</CardTitle>
             <CardDescription>{idLine}</CardDescription>
           </div>
-          <Badge className="capitalize" variant={statusVariant[patient.status]}>
-            {patient.status}
-          </Badge>
+          <Badge variant={statusVariant[patient.status]}>{statusLabel}</Badge>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-x-3 gap-y-3">
-          <Stat label="Primary care" value={patient.pcp} />
-          <Stat label="Last seen" value={patient.encounters[0]?.date ?? "—"} />
-          <Stat label="Active meds" value={patient.medications.length} />
-          <Stat label="Open problems" value={patient.problems.length} />
+          <Stat label={t("patientCard.summary.primaryCare")} value={patient.pcp} />
+          <Stat
+            label={t("patientCard.summary.lastSeen")}
+            value={patient.encounters[0]?.date ?? "—"}
+          />
+          <Stat
+            label={t("patientCard.summary.activeMeds")}
+            value={patient.medications.length}
+          />
+          <Stat
+            label={t("patientCard.summary.openProblems")}
+            value={patient.problems.length}
+          />
         </div>
         <AlertBadges alerts={patient.alerts} />
         <button
@@ -262,7 +285,7 @@ function SummaryCard({
           type="button"
         >
           <Pencil className="size-4" />
-          Edit record
+          {t("patientCard.summary.editRecord")}
         </button>
       </CardContent>
     </ExpandableCard>
@@ -270,12 +293,13 @@ function SummaryCard({
 }
 
 function VitalsCard({ patient }: { patient: Patient }) {
+  const { t } = useTranslation();
   const { vitals } = patient;
   const vitalItems = [
-    { label: "BP", value: vitals.bp },
-    { label: "HR", value: vitals.hr },
-    { label: "Temp", value: vitals.temp },
-    { label: "SpO₂", value: vitals.spo2 },
+    { label: t("patientCard.vitals.bp"), value: vitals.bp },
+    { label: t("patientCard.vitals.hr"), value: vitals.hr },
+    { label: t("patientCard.vitals.temp"), value: vitals.temp },
+    { label: t("patientCard.vitals.spo2"), value: vitals.spo2 },
   ];
   const vitalsGrid = (gapY: string) => (
     <div className={cn("grid grid-cols-2 gap-x-4", gapY)}>
@@ -287,7 +311,7 @@ function VitalsCard({ patient }: { patient: Patient }) {
 
   return (
     <ExpandableCard
-      description={`Taken ${vitals.takenAt}`}
+      description={t("patientCard.vitals.taken", { at: vitals.takenAt })}
       detail={
         <div className="flex flex-col gap-4">
           {vitalsGrid("gap-y-3")}
@@ -295,11 +319,13 @@ function VitalsCard({ patient }: { patient: Patient }) {
           <TrendDetail trend={patient.vitalsTrend} />
         </div>
       }
-      title="Vitals"
+      title={t("patientCard.vitals.title")}
     >
       <CardHeader>
-        <CardTitle>Vitals</CardTitle>
-        <CardDescription>Taken {vitals.takenAt}</CardDescription>
+        <CardTitle>{t("patientCard.vitals.title")}</CardTitle>
+        <CardDescription>
+          {t("patientCard.vitals.taken", { at: vitals.takenAt })}
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {vitalsGrid("gap-y-3")}
@@ -310,24 +336,26 @@ function VitalsCard({ patient }: { patient: Patient }) {
   );
 }
 
-function labValue(value: string, flag: LabFlag) {
+function LabValue({ value, flag }: { value: string; flag: LabFlag }) {
+  const { t } = useTranslation();
   return (
     <span className="flex items-center gap-2">
       {value}
-      <Badge className="capitalize" variant={labFlagVariant[flag]}>
-        {flag}
-      </Badge>
+      <Badge variant={labFlagVariant[flag]}>{t(`patientCard.labFlag.${flag}`)}</Badge>
     </span>
   );
 }
 
 function LabsCard({ patient }: { patient: Patient }) {
+  const { t } = useTranslation();
   return (
     <ExpandableCard
-      description={`As of ${patient.labs[0]?.takenAt ?? "—"}`}
+      description={t("patientCard.labs.asOf", {
+        at: patient.labs[0]?.takenAt ?? "—",
+      })}
       detail={
         patient.labs.length === 0 ? (
-          <Empty>No labs on file.</Empty>
+          <Empty>{t("patientCard.labs.empty")}</Empty>
         ) : (
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2.5">
@@ -342,7 +370,7 @@ function LabsCard({ patient }: { patient: Patient }) {
                       {lab.takenAt}
                     </span>
                   </div>
-                  {labValue(lab.value, lab.flag)}
+                  <LabValue flag={lab.flag} value={lab.value} />
                 </div>
               ))}
             </div>
@@ -351,15 +379,17 @@ function LabsCard({ patient }: { patient: Patient }) {
           </div>
         )
       }
-      title="Labs"
+      title={t("patientCard.labs.title")}
     >
       <CardHeader>
-        <CardTitle>Labs</CardTitle>
-        <CardDescription>As of {patient.labs[0]?.takenAt ?? "—"}</CardDescription>
+        <CardTitle>{t("patientCard.labs.title")}</CardTitle>
+        <CardDescription>
+          {t("patientCard.labs.asOf", { at: patient.labs[0]?.takenAt ?? "—" })}
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {patient.labs.length === 0 ? (
-          <Empty>No labs on file.</Empty>
+          <Empty>{t("patientCard.labs.empty")}</Empty>
         ) : (
           <>
             <div className="flex flex-col gap-2">
@@ -367,7 +397,7 @@ function LabsCard({ patient }: { patient: Patient }) {
                 <Row
                   key={lab.name}
                   label={lab.name}
-                  value={labValue(lab.value, lab.flag)}
+                  value={<LabValue flag={lab.flag} value={lab.value} />}
                 />
               ))}
             </div>
@@ -381,9 +411,10 @@ function LabsCard({ patient }: { patient: Patient }) {
 }
 
 function MedicationsCard({ patient }: { patient: Patient }) {
+  const { t } = useTranslation();
   const list =
     patient.medications.length === 0 ? (
-      <Empty>No active medications.</Empty>
+      <Empty>{t("patientCard.medications.empty")}</Empty>
     ) : (
       <div className="flex flex-col gap-2">
         {patient.medications.map((med) => (
@@ -397,13 +428,19 @@ function MedicationsCard({ patient }: { patient: Patient }) {
     );
   return (
     <ExpandableCard
-      description={`${patient.medications.length} active`}
+      description={t("patientCard.medications.active", {
+        count: patient.medications.length,
+      })}
       detail={list}
-      title="Medications"
+      title={t("patientCard.medications.title")}
     >
       <CardHeader>
-        <CardTitle>Medications</CardTitle>
-        <CardDescription>{patient.medications.length} active</CardDescription>
+        <CardTitle>{t("patientCard.medications.title")}</CardTitle>
+        <CardDescription>
+          {t("patientCard.medications.active", {
+            count: patient.medications.length,
+          })}
+        </CardDescription>
       </CardHeader>
       <CardContent>{list}</CardContent>
     </ExpandableCard>
@@ -411,29 +448,34 @@ function MedicationsCard({ patient }: { patient: Patient }) {
 }
 
 function ProblemsCard({ patient }: { patient: Patient }) {
+  const { t } = useTranslation();
   const list =
     patient.problems.length === 0 ? (
-      <Empty>No active problems.</Empty>
+      <Empty>{t("patientCard.problems.empty")}</Empty>
     ) : (
       <div className="flex flex-col gap-2">
         {patient.problems.map((problem) => (
           <Row
             key={problem.label}
             label={problem.label}
-            value={`since ${problem.since}`}
+            value={t("patientCard.problems.since", { date: problem.since })}
           />
         ))}
       </div>
     );
   return (
     <ExpandableCard
-      description={`${patient.problems.length} active`}
+      description={t("patientCard.problems.active", {
+        count: patient.problems.length,
+      })}
       detail={list}
-      title="Problems"
+      title={t("patientCard.problems.title")}
     >
       <CardHeader>
-        <CardTitle>Problems</CardTitle>
-        <CardDescription>{patient.problems.length} active</CardDescription>
+        <CardTitle>{t("patientCard.problems.title")}</CardTitle>
+        <CardDescription>
+          {t("patientCard.problems.active", { count: patient.problems.length })}
+        </CardDescription>
       </CardHeader>
       <CardContent>{list}</CardContent>
     </ExpandableCard>
@@ -441,13 +483,16 @@ function ProblemsCard({ patient }: { patient: Patient }) {
 }
 
 function AllergiesList({ patient }: { patient: Patient }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-4">
       <AlertBadges alerts={patient.alerts} />
       <div className="flex flex-col gap-2">
-        <SectionLabel>Allergies</SectionLabel>
+        <SectionLabel>{t("patientCard.allergies.sectionLabel")}</SectionLabel>
         {patient.allergies.length === 0 ? (
-          <p className="text-muted-foreground">No known allergies.</p>
+          <p className="text-muted-foreground">
+            {t("patientCard.allergies.none")}
+          </p>
         ) : (
           patient.allergies.map((allergy) => (
             <Row
@@ -462,11 +507,8 @@ function AllergiesList({ patient }: { patient: Patient }) {
                 </>
               }
               value={
-                <Badge
-                  className="capitalize"
-                  variant={severityVariant[allergy.severity]}
-                >
-                  {allergy.severity}
+                <Badge variant={severityVariant[allergy.severity]}>
+                  {t(`patientCard.severity.${allergy.severity}`)}
                 </Badge>
               }
             />
@@ -478,13 +520,14 @@ function AllergiesList({ patient }: { patient: Patient }) {
 }
 
 function AllergiesCard({ patient }: { patient: Patient }) {
+  const { t } = useTranslation();
   return (
     <ExpandableCard
       detail={<AllergiesList patient={patient} />}
-      title="Allergies & alerts"
+      title={t("patientCard.allergies.title")}
     >
       <CardHeader>
-        <CardTitle>Allergies & alerts</CardTitle>
+        <CardTitle>{t("patientCard.allergies.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <AllergiesList patient={patient} />
@@ -494,8 +537,9 @@ function AllergiesCard({ patient }: { patient: Patient }) {
 }
 
 function VisitsList({ patient }: { patient: Patient }) {
+  const { t } = useTranslation();
   if (patient.encounters.length === 0) {
-    return <Empty>No visits yet.</Empty>;
+    return <Empty>{t("patientCard.visits.empty")}</Empty>;
   }
   return (
     <div className="flex flex-col gap-3">
@@ -521,14 +565,17 @@ function VisitsList({ patient }: { patient: Patient }) {
 }
 
 function VisitsCard({ patient }: { patient: Patient }) {
+  const { t } = useTranslation();
   return (
     <ExpandableCard
-      description={`${patient.encounters.length} recent`}
+      description={t("patientCard.visits.recent", {
+        count: patient.encounters.length,
+      })}
       detail={<VisitsList patient={patient} />}
-      title="Recent visits"
+      title={t("patientCard.visits.title")}
     >
       <CardHeader>
-        <CardTitle>Recent visits</CardTitle>
+        <CardTitle>{t("patientCard.visits.title")}</CardTitle>
       </CardHeader>
       <CardContent>
         <VisitsList patient={patient} />
@@ -580,6 +627,7 @@ export function PatientResult({
   onPatientUpdated,
   layout = "row",
 }: PatientResultProps) {
+  const { t } = useTranslation();
   const [editOpen, setEditOpen] = useState(false);
   // Bumped on open so the editor remounts with the latest patient data.
   const [editKey, setEditKey] = useState(0);
@@ -589,7 +637,7 @@ export function PatientResult({
       <Card className={compactCard}>
         <CardContent>
           <p className="text-muted-foreground">
-            No patient found for file #{fileNumber}.
+            {t("patientCard.notFound", { number: fileNumber })}
           </p>
         </CardContent>
       </Card>

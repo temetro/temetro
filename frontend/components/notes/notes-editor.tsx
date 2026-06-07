@@ -17,6 +17,7 @@ import {
   Undo2,
 } from "lucide-react";
 import { type ReactNode, useReducer, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -77,6 +78,7 @@ export function NotesEditor({
   onSave: (data: { title: string; content: string }) => void;
   onDelete?: () => void;
 }) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState(note.title);
   const [confirmOpen, setConfirmOpen] = useState(false);
   // Force a re-render on every editor transaction so the toolbar reflects the
@@ -87,7 +89,7 @@ export function NotesEditor({
     content: note.content,
     extensions: [
       StarterKit,
-      Placeholder.configure({ placeholder: "Write your note…" }),
+      Placeholder.configure({ placeholder: t("notes.editor.placeholder") }),
     ],
     // Required under Next's SSR to avoid a hydration mismatch.
     immediatelyRender: false,
@@ -105,7 +107,7 @@ export function NotesEditor({
 
   const save = () =>
     onSave({
-      title: title.trim() || "Untitled note",
+      title: title.trim() || t("notes.untitled"),
       content: editor.getHTML(),
     });
 
@@ -115,12 +117,12 @@ export function NotesEditor({
         <Input
           className="font-medium text-base"
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Note title"
+          placeholder={t("notes.editor.titlePlaceholder")}
           value={title}
         />
         {onDelete && (
           <Button
-            aria-label="Delete note"
+            aria-label={t("notes.editor.delete")}
             onClick={() => setConfirmOpen(true)}
             size="icon"
             type="button"
@@ -131,7 +133,7 @@ export function NotesEditor({
         )}
         <Button disabled={saving} onClick={save} type="button">
           <Save className="size-4" />
-          {saving ? "Saving…" : "Save"}
+          {saving ? t("notes.editor.saving") : t("notes.editor.save")}
         </Button>
       </div>
 
@@ -139,21 +141,21 @@ export function NotesEditor({
         <ToolbarGroup>
           <FormatButton
             active={editor.isActive("bold")}
-            label="Bold"
+            label={t("notes.editor.bold")}
             onClick={() => editor.chain().focus().toggleBold().run()}
           >
             <Bold />
           </FormatButton>
           <FormatButton
             active={editor.isActive("italic")}
-            label="Italic"
+            label={t("notes.editor.italic")}
             onClick={() => editor.chain().focus().toggleItalic().run()}
           >
             <Italic />
           </FormatButton>
           <FormatButton
             active={editor.isActive("underline")}
-            label="Underline"
+            label={t("notes.editor.underline")}
             onClick={() => editor.chain().focus().toggleUnderline().run()}
           >
             <UnderlineIcon />
@@ -163,7 +165,7 @@ export function NotesEditor({
         <ToolbarGroup>
           <FormatButton
             active={editor.isActive("heading", { level: 1 })}
-            label="Heading 1"
+            label={t("notes.editor.heading1")}
             onClick={() =>
               editor.chain().focus().toggleHeading({ level: 1 }).run()
             }
@@ -172,7 +174,7 @@ export function NotesEditor({
           </FormatButton>
           <FormatButton
             active={editor.isActive("heading", { level: 2 })}
-            label="Heading 2"
+            label={t("notes.editor.heading2")}
             onClick={() =>
               editor.chain().focus().toggleHeading({ level: 2 }).run()
             }
@@ -184,14 +186,14 @@ export function NotesEditor({
         <ToolbarGroup>
           <FormatButton
             active={editor.isActive("bulletList")}
-            label="Bullet list"
+            label={t("notes.editor.bulletList")}
             onClick={() => editor.chain().focus().toggleBulletList().run()}
           >
             <List />
           </FormatButton>
           <FormatButton
             active={editor.isActive("orderedList")}
-            label="Numbered list"
+            label={t("notes.editor.numberedList")}
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
           >
             <ListOrdered />
@@ -201,14 +203,14 @@ export function NotesEditor({
         <ToolbarGroup>
           <FormatButton
             disabled={!editor.can().undo()}
-            label="Undo"
+            label={t("notes.editor.undo")}
             onClick={() => editor.chain().focus().undo().run()}
           >
             <Undo2 />
           </FormatButton>
           <FormatButton
             disabled={!editor.can().redo()}
-            label="Redo"
+            label={t("notes.editor.redo")}
             onClick={() => editor.chain().focus().redo().run()}
           >
             <Redo2 />
@@ -222,12 +224,14 @@ export function NotesEditor({
 
       {onDelete && (
         <ConfirmDialog
-          confirmLabel="Delete note"
-          description={`"${title.trim() || "Untitled note"}" will be permanently deleted. This can't be undone.`}
+          confirmLabel={t("notes.editor.confirmLabel")}
+          description={t("notes.editor.confirmDescription", {
+            name: title.trim() || t("notes.untitled"),
+          })}
           onConfirm={onDelete}
           onOpenChange={setConfirmOpen}
           open={confirmOpen}
-          title="Delete this note?"
+          title={t("notes.editor.confirmTitle")}
         />
       )}
     </div>

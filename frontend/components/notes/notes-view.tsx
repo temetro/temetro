@@ -2,6 +2,7 @@
 
 import { NotebookPen, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { NoteDetailSheet } from "@/components/notes/note-detail-sheet";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ const newDraft = (): Note => ({
 });
 
 export function NotesView() {
+  const { t } = useTranslation();
   const [notes, setNotes] = useState<Note[]>([]);
   // The note shown in the editor Sheet; null when the Sheet is closed.
   const [selected, setSelected] = useState<Note | null>(null);
@@ -48,8 +50,8 @@ export function NotesView() {
       .catch((err) => {
         if (active) {
           notify.error(
-            "Couldn't load notes",
-            err instanceof Error ? err.message : "Please try again.",
+            t("notes.loadFailed"),
+            err instanceof Error ? err.message : t("notes.tryAgain"),
           );
         }
       })
@@ -81,11 +83,11 @@ export function NotesView() {
       const list = await listNotes();
       setNotes(list);
       setSelected(list.find((n) => n.id === saved.id) ?? saved);
-      notify.success("Note saved");
+      notify.success(t("notes.saved"));
     } catch (err) {
       notify.error(
-        "Couldn't save note",
-        err instanceof Error ? err.message : "Please try again.",
+        t("notes.saveFailed"),
+        err instanceof Error ? err.message : t("notes.tryAgain"),
       );
     } finally {
       setSaving(false);
@@ -99,11 +101,11 @@ export function NotesView() {
       setNotes(list);
       setSelected(null);
       setSheetOpen(false);
-      notify.success("Note deleted");
+      notify.success(t("notes.deleted"));
     } catch (err) {
       notify.error(
-        "Couldn't delete note",
-        err instanceof Error ? err.message : "Please try again.",
+        t("notes.deleteFailed"),
+        err instanceof Error ? err.message : t("notes.tryAgain"),
       );
     }
   };
@@ -112,20 +114,20 @@ export function NotesView() {
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="font-semibold text-2xl tracking-tight">Notes</h1>
-          <p className="text-muted-foreground text-sm">
-            Clinical notes. Click a note to open it.
-          </p>
+          <h1 className="font-semibold text-2xl tracking-tight">
+            {t("notes.title")}
+          </h1>
+          <p className="text-muted-foreground text-sm">{t("notes.subtitle")}</p>
         </div>
         <Button className="rounded-3xl" onClick={startNew} type="button">
           <Plus className="size-4" />
-          New note
+          {t("notes.new")}
         </Button>
       </div>
 
       {loading ? (
         <div className="rounded-2xl border bg-card/30 px-4 py-10 text-center text-muted-foreground text-sm">
-          Loading…
+          {t("notes.loading")}
         </div>
       ) : notes.length === 0 ? (
         <div className="flex flex-1 items-center justify-center rounded-2xl border bg-card/30 py-16">
@@ -134,15 +136,15 @@ export function NotesView() {
               <EmptyMedia variant="icon">
                 <NotebookPen />
               </EmptyMedia>
-              <EmptyTitle>No notes yet</EmptyTitle>
+              <EmptyTitle>{t("notes.emptyTitle")}</EmptyTitle>
               <EmptyDescription>
-                Create a note to start writing.
+                {t("notes.emptyDescription")}
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button onClick={startNew} type="button">
                 <Plus className="size-4" />
-                New note
+                {t("notes.new")}
               </Button>
             </EmptyContent>
           </Empty>
@@ -157,10 +159,12 @@ export function NotesView() {
               type="button"
             >
               <span className="w-full truncate font-medium text-foreground text-sm">
-                {n.title || "Untitled note"}
+                {n.title || t("notes.untitled")}
               </span>
               <span className="text-muted-foreground text-xs">
-                Updated {new Date(n.updatedAt).toLocaleDateString()}
+                {t("notes.updated", {
+                  date: new Date(n.updatedAt).toLocaleDateString(),
+                })}
               </span>
             </button>
           ))}

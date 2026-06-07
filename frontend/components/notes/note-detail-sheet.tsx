@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
+
 import { NotesEditor } from "@/components/notes/notes-editor";
 import {
   Sheet,
@@ -30,11 +32,14 @@ export function NoteDetailSheet({
   onSave: (data: { title: string; content: string }) => void;
   onDelete?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetPopup className="sm:max-w-2xl" side="right">
         <SheetHeader>
-          <SheetTitle>{note?.id ? "Edit note" : "New note"}</SheetTitle>
+          <SheetTitle>
+            {note?.id ? t("notes.editNote") : t("notes.new")}
+          </SheetTitle>
         </SheetHeader>
         {/* Plain flex container (not SheetPanel) so the editor gets a bounded
             height and scrolls internally rather than nesting two scroll areas. */}

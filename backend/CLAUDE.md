@@ -38,6 +38,14 @@ No test runner is configured. Verify by running the stack (`docker compose up`) 
   (`src/types/patient.ts`, mirrors `../frontend/lib/patients.ts`). **`src/routes/patients.ts`** is
   org-scoped CRUD, gated by **`src/middleware/auth.ts`** (`requireAuth` → `requireOrg` →
   `requirePermission`).
+- **Other resources** follow the patients/notes pattern (schema → validation → types → service →
+  org-scoped route): **appointments**, **prescriptions**, **tasks** (RBAC-gated like patients),
+  plus **activity** (an audit log written best-effort from every resource route via
+  `services/activity.ts`), **analytics** (computed aggregates), **messaging** (conversations /
+  participants / messages) and **notifications** (per-recipient, auto-generated).
+- **Real-time** lives in **`src/realtime.ts`** — a Socket.io server attached to the same HTTP server
+  in `index.ts`; the handshake reuses Better Auth's `getSession`. Other modules push via
+  `emitToUser` / `emitToConversation` (no direct socket import, so no circular deps).
 - **`src/lib/email.ts`** — `sendEmail` logs links to the console when SMTP is unset.
 
 ## Gotchas / conventions

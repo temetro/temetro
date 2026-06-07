@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import { PatientDetail } from "@/components/patients/patient-detail";
@@ -52,6 +53,7 @@ export function PatientDetailSheet({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useTranslation();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [status, setStatus] = useState<Status>("loading");
   const [editOpen, setEditOpen] = useState(false);
@@ -81,8 +83,8 @@ export function PatientDetailSheet({
     status === "ready" && patient
       ? patient.name
       : status === "not-found"
-        ? "Patient not found"
-        : "Loading patient…";
+        ? t("patients.detail.notFound")
+        : t("patients.detail.loading");
 
   return (
     <>
@@ -95,7 +97,7 @@ export function PatientDetailSheet({
             {status === "loading" && <DetailSkeleton />}
             {status === "not-found" && (
               <p className="text-muted-foreground text-sm">
-                No patient found for file #{fileNumber}.
+                {t("patients.detail.noPatientForFile", { number: fileNumber })}
               </p>
             )}
             {status === "ready" && patient && (

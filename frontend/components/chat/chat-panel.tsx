@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import type { ChatStatus } from "ai";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   Conversation,
@@ -31,12 +32,11 @@ type ChatMessage =
       patient?: Patient;
     };
 
-const HEADING = "Which patient would you like to look up?";
-
 // Trigger: `/patient 10293` or just `/10293` pulls up records.
 const PATIENT_COMMAND = /^\/(?:patient\s+)?(\d+)$/i;
 
 export function ChatPanel() {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>("ready");
 
@@ -135,7 +135,7 @@ export function ChatPanel() {
       <div className="flex flex-1 flex-col items-center justify-center px-4">
         <div className="flex w-full max-w-3xl flex-col items-center gap-10">
           <h1 className="text-center text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
-            {HEADING}
+            {t("chat.heading")}
           </h1>
           {promptInput}
         </div>

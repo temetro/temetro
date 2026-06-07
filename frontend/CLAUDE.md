@@ -108,8 +108,14 @@ white/6%), so layered surfaces stay close in lightness.
 `lib/i18n/locales/en/translation.json`). `components/i18n-provider.tsx` wraps the app in
 `app/layout.tsx`. Use `const { t } = useTranslation()` + nested keys (e.g. `t("auth.login.title")`)
 in **client** components. To add a language, drop a `locales/<lng>/translation.json` and register it
-in `resources`/`supportedLngs` in `config.ts`. Auth forms, sidebar nav, and settings tabs are
-converted as the reference pattern; other strings can be migrated incrementally.
+in `resources`/`supportedLngs` in `config.ts`.
+
+**Coverage:** essentially all user-facing strings are now keyed (every app page + its dialogs/sheets,
+auth pages, settings panels, the sidebar/user menu, chat input, patient cards/detail/form, messages,
+notifications, notes). Keys are grouped by feature (`appointments.*`, `patientCard.*`, `messages.*`,
+…). When adding UI, add a key rather than a literal. The only intentional literals left are clinical
+**option values** stored as data (appointment types, dose frequencies/durations) and proper nouns
+(e.g. `Ed25519`). There is no language switcher yet (English only); locale is auto-detected.
 
 ## Gotchas
 
