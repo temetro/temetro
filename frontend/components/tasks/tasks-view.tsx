@@ -1,7 +1,13 @@
 "use client";
 
 import { Check, Plus } from "lucide-react";
-import { type FormEvent, type ReactNode, useMemo, useState } from "react";
+import {
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { Badge } from "@/components/ui/badge";
@@ -18,24 +24,18 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  type Priority,
+  type Task,
+  type TaskInput,
+  createTask,
+  listTasks,
+  updateTask,
+} from "@/lib/tasks";
 import { notify } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
-// All tasks here are mock/placeholder data — there is no tasks backend. They
-// illustrate a care-team to-do board.
-
-export type Priority = "high" | "medium" | "low";
-
-export type Task = {
-  id: string;
-  title: string;
-  assignee: string;
-  due: string;
-  priority: Priority;
-  patient?: string;
-  notes?: string;
-  done: boolean;
-};
+export type { Priority, Task } from "@/lib/tasks";
 
 type Filter = "all" | "open" | "done";
 
@@ -51,46 +51,6 @@ const priorityLabel: Record<Priority, string> = {
   medium: "Medium",
   low: "Low",
 };
-
-const seed: Task[] = [
-  {
-    id: "1",
-    title: "Review Amina Yusuf's lab results",
-    assignee: "Dr. Okafor",
-    due: "Today",
-    priority: "high",
-    patient: "Amina Yusuf · #10293",
-    notes: "Lipid panel + HbA1c back. Decide whether to adjust the plan before her follow-up.",
-    done: false,
-  },
-  {
-    id: "2",
-    title: "Confirm Daniel Mensah's prior records import",
-    assignee: "Reception",
-    due: "Today",
-    priority: "medium",
-    patient: "Daniel Mensah · #10311",
-    notes: "Check the import completed before tomorrow's 10:00 appointment.",
-    done: false,
-  },
-  {
-    id: "3",
-    title: "Call Carlos Rivera about expired statin",
-    assignee: "Dr. Okafor",
-    due: "Tomorrow",
-    priority: "medium",
-    patient: "Carlos Rivera · #10358",
-    done: false,
-  },
-  {
-    id: "4",
-    title: "Restock vaccination fridge log",
-    assignee: "Care team",
-    due: "Jun 8",
-    priority: "low",
-    done: true,
-  },
-];
 
 function CheckButton({
   done,
@@ -136,7 +96,7 @@ function AddTaskDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (task: Omit<Task, "id" | "done">) => void;
+  onAdd: (task: TaskInput) => void;
 }) {
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
@@ -246,11 +206,25 @@ function AddTaskDialog({
 }
 
 export function TasksView() {
-  const [tasks, setTasks] = useState<Task[]>(seed);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
   const [addOpen, setAddOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    listTasks()
+      .then((data) => {
+        if (active) setTasks(data);
+      })
+      .catch(() => {
+        /* api-client redirects on 401; otherwise leave the list empty */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const selected = tasks.find((t) => t.id === selectedId) ?? null;
 
@@ -260,21 +234,37 @@ export function TasksView() {
     return tasks;
   }, [tasks, filter]);
 
-  const toggle = (id: string) =>
+  // Optimistically flip done, then persist; roll back on failure.
+  const toggle = async (id: string) => {
+    const current = tasks.find((t) => t.id === id);
+    if (!current) return;
+    const next = !current.done;
     setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
+      prev.map((t) => (t.id === id ? { ...t, done: next } : t)),
     );
+    try {
+      await updateTask(id, { done: next });
+    } catch {
+      setTasks((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, done: current.done } : t)),
+      );
+      notify.error("Couldn't update task", "Please try again.");
+    }
+  };
 
   const openTask = (id: string) => {
     setSelectedId(id);
     setSheetOpen(true);
   };
 
-  const addTask = (task: Omit<Task, "id" | "done">) =>
-    setTasks((prev) => [
-      { ...task, id: `t-${Date.now()}`, done: false },
-      ...prev,
-    ]);
+  const addTask = async (task: TaskInput) => {
+    try {
+      const created = await createTask(task);
+      setTasks((prev) => [created, ...prev]);
+    } catch {
+      notify.error("Couldn't add task", "Please try again.");
+    }
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
@@ -282,7 +272,7 @@ export function TasksView() {
         <div>
           <h1 className="font-semibold text-2xl tracking-tight">Tasks</h1>
           <p className="text-muted-foreground text-sm">
-            Care-team to-dos. Click a task to see its details. Sample data.
+            Care-team to-dos. Click a task to see its details.
           </p>
         </div>
         <Button

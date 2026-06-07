@@ -9,6 +9,7 @@ import { appointmentsRouter } from "./routes/appointments.js";
 import { notesRouter } from "./routes/notes.js";
 import { patientsRouter } from "./routes/patients.js";
 import { prescriptionsRouter } from "./routes/prescriptions.js";
+import { tasksRouter } from "./routes/tasks.js";
 
 const app = express();
 
@@ -49,6 +50,7 @@ app.use("/api/patients", patientsRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/appointments", appointmentsRouter);
 app.use("/api/prescriptions", prescriptionsRouter);
+app.use("/api/tasks", tasksRouter);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -60,4 +62,5 @@ app.listen(env.PORT, () => {
   console.log(`  • notes:    /api/notes`);
   console.log(`  • appts:    /api/appointments`);
   console.log(`  • rx:       /api/prescriptions`);
+  console.log(`  • tasks:    /api/tasks`);
 });
