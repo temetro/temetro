@@ -1,3 +1,5 @@
+import { createServer } from "node:http";
+
 import { toNodeHandler } from "better-auth/node";
 import cors from "cors";
 import express from "express";
@@ -5,10 +7,13 @@ import express from "express";
 import { auth } from "./auth.js";
 import { env } from "./env.js";
 import { errorHandler, notFound } from "./middleware/error.js";
+import { initRealtime } from "./realtime.js";
 import { activityRouter } from "./routes/activity.js";
 import { analyticsRouter } from "./routes/analytics.js";
 import { appointmentsRouter } from "./routes/appointments.js";
+import { conversationsRouter } from "./routes/conversations.js";
 import { notesRouter } from "./routes/notes.js";
+import { notificationsRouter } from "./routes/notifications.js";
 import { patientsRouter } from "./routes/patients.js";
 import { prescriptionsRouter } from "./routes/prescriptions.js";
 import { tasksRouter } from "./routes/tasks.js";
@@ -55,11 +60,17 @@ app.use("/api/prescriptions", prescriptionsRouter);
 app.use("/api/tasks", tasksRouter);
 app.use("/api/activity", activityRouter);
 app.use("/api/analytics", analyticsRouter);
+app.use("/api/conversations", conversationsRouter);
+app.use("/api/notifications", notificationsRouter);
 
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
+// Wrap the Express app in an HTTP server so Socket.io can share the port.
+const server = createServer(app);
+initRealtime(server);
+
+server.listen(env.PORT, () => {
   console.log(`temetro backend listening on ${env.BETTER_AUTH_URL}`);
   console.log(`  • auth:     /api/auth/*  (frontend origin: ${env.FRONTEND_URL})`);
   console.log(`  • patients: /api/patients`);
@@ -69,4 +80,6 @@ app.listen(env.PORT, () => {
   console.log(`  • tasks:    /api/tasks`);
   console.log(`  • activity: /api/activity`);
   console.log(`  • stats:    /api/analytics`);
+  console.log(`  • messages: /api/conversations  (+ Socket.io)`);
+  console.log(`  • notifs:   /api/notifications`);
 });

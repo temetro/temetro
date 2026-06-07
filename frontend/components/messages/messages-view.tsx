@@ -1,10 +1,24 @@
 "use client";
 
-import { Mail, SendHorizonal } from "lucide-react";
-import { type FormEvent, useMemo, useState } from "react";
+import { Mail, Plus, SendHorizonal } from "lucide-react";
+import {
+  type FormEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogDescription,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Empty,
   EmptyDescription,
@@ -13,132 +27,129 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
+import { authClient } from "@/lib/auth-client";
+import {
+  type ConversationMessage,
+  type ConversationSummary,
+  type Participant,
+  createConversation,
+  getMessages,
+  listClinicMembers,
+  listConversations,
+} from "@/lib/messages";
+import { getSocket } from "@/lib/socket";
+import { notify } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
-// All conversations here are mock/placeholder data — there is no messaging
-// backend. They illustrate the inbox + chat-thread timeline layout.
+// Up to two-letter initials from a display name.
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return (parts[0]![0]! + parts.at(-1)![0]!).toUpperCase();
+}
 
-type ChatMessage = {
-  id: string;
-  direction: "in" | "out";
-  text: string;
-  time: string;
-};
-
-type Conversation = {
-  id: string;
-  name: string;
-  initials: string;
-  role: string;
-  unread: boolean;
-  messages: ChatMessage[];
-};
-
-const seed: Conversation[] = [
-  {
-    id: "1",
-    name: "Dr. Stein",
-    initials: "DS",
-    role: "Endocrinology",
-    unread: true,
-    messages: [
-      {
-        id: "1a",
-        direction: "in",
-        text: "The lab results for Amina Yusuf are back — lipid panel and HbA1c are both in range.",
-        time: "10:24",
-      },
-      {
-        id: "1b",
-        direction: "in",
-        text: "Want me to adjust her plan before the follow-up?",
-        time: "10:25",
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "Dr. Okafor",
-    initials: "DO",
-    role: "Family medicine",
-    unread: true,
-    messages: [
-      {
-        id: "2a",
-        direction: "out",
-        text: "Sent over Daniel Mensah's intake notes — can you take a look?",
-        time: "08:50",
-      },
-      {
-        id: "2b",
-        direction: "in",
-        text: "Thanks! Added him to tomorrow at 10:00. Were his prior records imported?",
-        time: "09:12",
-      },
-    ],
-  },
-  {
-    id: "3",
-    name: "Care team",
-    initials: "CT",
-    role: "Clinic-wide",
-    unread: false,
-    messages: [
-      {
-        id: "3a",
-        direction: "in",
-        text: "Seasonal vaccine stock has been replenished — slots are open all week.",
-        time: "Yesterday",
-      },
-      {
-        id: "3b",
-        direction: "out",
-        text: "Great, I'll direct eligible patients to the front desk.",
-        time: "Yesterday",
-      },
-    ],
-  },
-  {
-    id: "4",
-    name: "Reception",
-    initials: "RC",
-    role: "Front desk",
-    unread: false,
-    messages: [
-      {
-        id: "4a",
-        direction: "in",
-        text: "Two Friday afternoon appointments were moved to next Monday at the patients' request.",
-        time: "Mon",
-      },
-    ],
-  },
-];
-
-const now = () =>
-  new Date().toLocaleTimeString("en-US", {
+// ISO timestamp -> "10:24" (24h).
+function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   });
+}
 
 export function MessagesView() {
-  const [conversations, setConversations] = useState<Conversation[]>(seed);
+  const { data: session } = authClient.useSession();
+  const myId = session?.user?.id ?? "";
+
+  const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [draft, setDraft] = useState("");
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [members, setMembers] = useState<Participant[]>([]);
+
+  // Refs so the socket handler (registered once) reads current values.
+  const selectedIdRef = useRef<string | null>(null);
+  const myIdRef = useRef<string>("");
+  myIdRef.current = myId;
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Initial conversation load.
+  useEffect(() => {
+    let active = true;
+    listConversations()
+      .then((data) => {
+        if (active) setConversations(data);
+      })
+      .catch(() => {
+        /* api-client redirects on 401 */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Realtime: append to the open thread and keep the inbox fresh.
+  useEffect(() => {
+    const socket = getSocket();
+    const onMessageNew = (msg: ConversationMessage) => {
+      setConversations((prev) => {
+        const existing = prev.find((c) => c.id === msg.conversationId);
+        if (!existing) {
+          listConversations().then(setConversations).catch(() => {});
+          return prev;
+        }
+        const isSelected = selectedIdRef.current === msg.conversationId;
+        const updated: ConversationSummary = {
+          ...existing,
+          lastMessage: msg,
+          updatedAt: msg.createdAt,
+          unread: msg.senderId !== myIdRef.current && !isSelected,
+        };
+        return [updated, ...prev.filter((c) => c.id !== msg.conversationId)];
+      });
+
+      if (selectedIdRef.current === msg.conversationId) {
+        setMessages((prev) =>
+          prev.some((m) => m.id === msg.id) ? prev : [...prev, msg],
+        );
+        socket.emit("message:read", msg.conversationId);
+      }
+    };
+    socket.on("message:new", onMessageNew);
+    return () => {
+      socket.off("message:new", onMessageNew);
+    };
+  }, []);
+
+  // Auto-scroll the open thread to the latest message.
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+  }, [messages]);
 
   const unreadCount = conversations.filter((c) => c.unread).length;
   const selected = conversations.find((c) => c.id === selectedId) ?? null;
 
   const visible = useMemo(
-    () => (showUnreadOnly ? conversations.filter((c) => c.unread) : conversations),
+    () =>
+      showUnreadOnly ? conversations.filter((c) => c.unread) : conversations,
     [conversations, showUnreadOnly],
   );
 
   const open = (id: string) => {
     setSelectedId(id);
+    selectedIdRef.current = id;
     setDraft("");
+    setMessages([]);
+    getMessages(id)
+      .then(setMessages)
+      .catch(() => {});
+    const socket = getSocket();
+    socket.emit("conversation:join", id);
+    socket.emit("message:read", id);
     setConversations((prev) =>
       prev.map((c) => (c.id === id ? { ...c, unread: false } : c)),
     );
@@ -148,20 +159,31 @@ export function MessagesView() {
     event.preventDefault();
     const text = draft.trim();
     if (!(text && selected)) return;
-    const message: ChatMessage = {
-      id: `${selected.id}-${Date.now()}`,
-      direction: "out",
-      text,
-      time: now(),
-    };
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === selected.id
-          ? { ...c, messages: [...c.messages, message] }
-          : c,
-      ),
-    );
+    getSocket().emit("message:send", {
+      conversationId: selected.id,
+      body: text,
+    });
     setDraft("");
+  };
+
+  const openCompose = () => {
+    setComposeOpen(true);
+    listClinicMembers()
+      .then(setMembers)
+      .catch(() => setMembers([]));
+  };
+
+  const startConversation = async (memberId: string) => {
+    try {
+      const conv = await createConversation({ participantIds: [memberId] });
+      setConversations((prev) =>
+        prev.some((c) => c.id === conv.id) ? prev : [conv, ...prev],
+      );
+      setComposeOpen(false);
+      open(conv.id);
+    } catch {
+      notify.error("Couldn't start conversation", "Please try again.");
+    }
   };
 
   return (
@@ -170,24 +192,35 @@ export function MessagesView() {
       <aside className="flex w-72 shrink-0 flex-col overflow-hidden rounded-2xl border bg-card/30">
         <div className="flex items-center justify-between gap-2 border-border border-b px-4 py-3">
           <h1 className="font-semibold text-base tracking-tight">Inbox</h1>
-          <Button
-            aria-pressed={showUnreadOnly}
-            onClick={() => setShowUnreadOnly((v) => !v)}
-            size="sm"
-            type="button"
-            variant={showUnreadOnly ? "secondary" : "ghost"}
-          >
-            Unread · {unreadCount}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              aria-pressed={showUnreadOnly}
+              onClick={() => setShowUnreadOnly((v) => !v)}
+              size="sm"
+              type="button"
+              variant={showUnreadOnly ? "secondary" : "ghost"}
+            >
+              Unread · {unreadCount}
+            </Button>
+            <Button
+              aria-label="New message"
+              onClick={openCompose}
+              size="icon-sm"
+              type="button"
+              variant="ghost"
+            >
+              <Plus className="size-4" />
+            </Button>
+          </div>
         </div>
         <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
           {visible.length === 0 ? (
             <p className="px-2 py-1.5 text-muted-foreground text-sm">
-              No unread messages.
+              {showUnreadOnly ? "No unread messages." : "No conversations yet."}
             </p>
           ) : (
             visible.map((c) => {
-              const last = c.messages.at(-1);
+              const last = c.lastMessage;
               return (
                 <button
                   className={cn(
@@ -213,12 +246,12 @@ export function MessagesView() {
                       {c.name}
                     </span>
                     <span className="shrink-0 text-muted-foreground text-xs">
-                      {last?.time}
+                      {last ? formatTime(last.createdAt) : ""}
                     </span>
                   </div>
                   <span className="w-full truncate text-muted-foreground text-xs">
-                    {last?.direction === "out" && "You: "}
-                    {last?.text}
+                    {last?.senderId === myId && "You: "}
+                    {last?.body}
                   </span>
                 </button>
               );
@@ -233,43 +266,56 @@ export function MessagesView() {
           <div className="flex h-full flex-col gap-4">
             <div className="flex items-center gap-3 rounded-2xl border bg-card/30 p-4">
               <Avatar className="size-9">
-                <AvatarFallback>{selected.initials}</AvatarFallback>
+                <AvatarFallback>{initials(selected.name)}</AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 flex-col">
                 <span className="truncate font-medium text-foreground text-sm">
                   {selected.name}
                 </span>
                 <span className="text-muted-foreground text-xs">
-                  {selected.role}
+                  {selected.isGroup
+                    ? `${selected.participants.length} people`
+                    : "Direct message"}
                 </span>
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border bg-card/30 p-4">
+            <div
+              className="min-h-0 flex-1 overflow-y-auto rounded-2xl border bg-card/30 p-4"
+              ref={scrollRef}
+            >
               <div className="flex flex-col gap-3">
-                {selected.messages.map((m) => (
-                  <div
-                    className={cn(
-                      "flex flex-col gap-1",
-                      m.direction === "out" ? "items-end" : "items-start",
-                    )}
-                    key={m.id}
-                  >
+                {messages.map((m) => {
+                  const out = m.senderId === myId;
+                  return (
                     <div
                       className={cn(
-                        "max-w-[75%] rounded-2xl px-3 py-2 text-sm",
-                        m.direction === "out"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-foreground",
+                        "flex flex-col gap-1",
+                        out ? "items-end" : "items-start",
                       )}
+                      key={m.id}
                     >
-                      {m.text}
+                      {selected.isGroup && !out && (
+                        <span className="px-1 text-muted-foreground text-[11px]">
+                          {m.senderName}
+                        </span>
+                      )}
+                      <div
+                        className={cn(
+                          "max-w-[75%] rounded-2xl px-3 py-2 text-sm",
+                          out
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-foreground",
+                        )}
+                      >
+                        {m.body}
+                      </div>
+                      <span className="px-1 text-muted-foreground text-[11px]">
+                        {formatTime(m.createdAt)}
+                      </span>
                     </div>
-                    <span className="px-1 text-muted-foreground text-[11px]">
-                      {m.time}
-                    </span>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -303,13 +349,49 @@ export function MessagesView() {
                 </EmptyMedia>
                 <EmptyTitle>No conversation selected</EmptyTitle>
                 <EmptyDescription>
-                  Choose a conversation from the inbox to read and reply.
+                  Choose a conversation from the inbox, or start a new one.
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
           </div>
         )}
       </div>
+
+      {/* Compose: pick a clinic member to message */}
+      <Dialog onOpenChange={setComposeOpen} open={composeOpen}>
+        <DialogPopup className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>New message</DialogTitle>
+            <DialogDescription>
+              Start a conversation with a member of your clinic.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogPanel className="flex flex-col gap-1">
+            {members.length === 0 ? (
+              <p className="px-1 py-4 text-center text-muted-foreground text-sm">
+                No other clinic members yet. Invite colleagues from Settings →
+                Care team.
+              </p>
+            ) : (
+              members.map((m) => (
+                <button
+                  className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
+                  key={m.id}
+                  onClick={() => startConversation(m.id)}
+                  type="button"
+                >
+                  <Avatar className="size-8">
+                    <AvatarFallback>{initials(m.name)}</AvatarFallback>
+                  </Avatar>
+                  <span className="truncate text-foreground text-sm">
+                    {m.name}
+                  </span>
+                </button>
+              ))
+            )}
+          </DialogPanel>
+        </DialogPopup>
+      </Dialog>
     </div>
   );
 }

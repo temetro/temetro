@@ -28,6 +28,7 @@
     "nanoid": "^5.1.11",
     "nodemailer": "^8.0.10",
     "pg": "^8.21.0",
+    "socket.io": "^4.8.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {

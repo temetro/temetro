@@ -43,6 +43,13 @@
       "when": 1780850717058,
       "tag": "0005_true_gwen_stacy",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780856647280,
+      "tag": "0006_square_wither",
+      "breakpoints": true
     }
   ]
 }

@@ -5,3 +5,5 @@ export * from "./appointments.js";
 export * from "./prescriptions.js";
 export * from "./tasks.js";
 export * from "./activity.js";
+export * from "./messaging.js";
+export * from "./notifications.js";
