@@ -5,7 +5,7 @@ import type { NextFunction, Request, Response } from "express";
 import { auth } from "../auth.js";
 import { db } from "../db/index.js";
 import { member } from "../db/schema/auth.js";
-import { roles } from "../lib/access.js";
+import { roles, type statements } from "../lib/access.js";
 import { HttpError } from "../lib/http-error.js";
 
 // Validates the Better Auth session cookie and attaches the user + session.
@@ -61,8 +61,12 @@ export async function requireOrg(
   }
 }
 
-type PatientAction = "read" | "write" | "delete";
-type PermissionRequest = { patient?: PatientAction[] };
+// A permission request maps clinic resources (patient / appointment / … defined
+// in src/lib/access.ts) to the actions required on them. Mirrors the shape Better
+// Auth's `role.authorize` accepts.
+type PermissionRequest = Partial<{
+  [R in keyof typeof statements]: ((typeof statements)[R][number])[];
+}>;
 
 // Gates a route on a clinic permission, evaluated against the caller's role(s)
 // using the shared access-control definitions. Must run after requireOrg.

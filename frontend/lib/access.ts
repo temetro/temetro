@@ -11,6 +11,9 @@ import {
 export const statements = {
   ...defaultStatements,
   patient: ["read", "write", "delete"],
+  appointment: ["read", "write", "delete"],
+  prescription: ["read", "write", "delete"],
+  task: ["read", "write", "delete"],
 } as const;
 
 export const ac = createAccessControl(statements);
@@ -18,20 +21,32 @@ export const ac = createAccessControl(statements);
 export const owner = ac.newRole({
   ...ownerAc.statements,
   patient: ["read", "write", "delete"],
+  appointment: ["read", "write", "delete"],
+  prescription: ["read", "write", "delete"],
+  task: ["read", "write", "delete"],
 });
 
 export const admin = ac.newRole({
   ...adminAc.statements,
   patient: ["read", "write", "delete"],
+  appointment: ["read", "write", "delete"],
+  prescription: ["read", "write", "delete"],
+  task: ["read", "write", "delete"],
 });
 
 export const member = ac.newRole({
   ...memberAc.statements,
   patient: ["read", "write"],
+  appointment: ["read", "write", "delete"],
+  prescription: ["read", "write", "delete"],
+  task: ["read", "write", "delete"],
 });
 
 export const viewer = ac.newRole({
   patient: ["read"],
+  appointment: ["read"],
+  prescription: ["read"],
+  task: ["read"],
 });
 
 export const roles = { owner, admin, member, viewer };
