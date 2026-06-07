@@ -1,0 +1,72 @@
+// Canonical patient shape — mirrors frontend/lib/patients.ts so API responses
+// can be consumed by the chat record cards without any reshaping on the client.
+
+export type AllergySeverity = "mild" | "moderate" | "severe";
+export type LabFlag = "normal" | "high" | "low" | "critical";
+export type Sex = "M" | "F";
+export type PatientStatus = "active" | "inpatient" | "discharged";
+
+export type Allergy = {
+  substance: string;
+  reaction: string;
+  severity: AllergySeverity;
+};
+
+export type Medication = {
+  name: string;
+  dose: string;
+  frequency: string;
+};
+
+export type Problem = {
+  label: string;
+  since: string;
+};
+
+export type Vitals = {
+  bp: string;
+  hr: string;
+  temp: string;
+  spo2: string;
+  takenAt: string;
+};
+
+export type Lab = {
+  name: string;
+  value: string;
+  flag: LabFlag;
+  takenAt: string;
+};
+
+export type Encounter = {
+  date: string;
+  type: string;
+  provider: string;
+  summary: string;
+};
+
+// A short series for a sparkline; `points` are most-recent-last.
+export type Trend = {
+  label: string;
+  unit: string;
+  points: number[];
+};
+
+export type Patient = {
+  fileNumber: string; // MRN / file number, e.g. "10293"
+  name: string;
+  age: number;
+  sex: Sex;
+  pcp: string; // primary care provider
+  status: PatientStatus;
+  initials: string; // for AvatarFallback
+  allergies: Allergy[];
+  alerts: string[];
+  medications: Medication[];
+  problems: Problem[];
+  vitals: Vitals;
+  vitalsTrend: Trend; // headline vital plotted as a sparkline
+  labs: Lab[];
+  labTrend: Trend; // headline lab plotted as a sparkline
+  encounters: Encounter[];
+};
