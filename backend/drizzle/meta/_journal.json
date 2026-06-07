@@ -36,6 +36,13 @@
       "when": 1780850364853,
       "tag": "0004_dizzy_scarlet_spider",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780850717058,
+      "tag": "0005_true_gwen_stacy",
+      "breakpoints": true
     }
   ]
 }

@@ -7,6 +7,7 @@ import {
   requireOrg,
   requirePermission,
 } from "../middleware/auth.js";
+import { recordActivity } from "../services/activity.js";
 import * as service from "../services/prescriptions.js";
 
 export const prescriptionsRouter = Router();
@@ -38,6 +39,15 @@ prescriptionsRouter.post(
         req.user!.id,
         input,
       );
+      await recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: `Prescribed ${created.medication} for ${created.name}`,
+        entityType: "prescription",
+        entityId: created.id,
+        patientName: created.name,
+        patientFileNumber: created.fileNumber || null,
+      });
       res.status(201).json(created);
     } catch (err) {
       next(err);
@@ -58,6 +68,15 @@ prescriptionsRouter.put(
         input,
       );
       if (!updated) throw new HttpError(404, "Prescription not found.");
+      await recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: `Updated prescription — ${updated.medication}`,
+        entityType: "prescription",
+        entityId: updated.id,
+        patientName: updated.name,
+        patientFileNumber: updated.fileNumber || null,
+      });
       res.json(updated);
     } catch (err) {
       next(err);
@@ -75,6 +94,13 @@ prescriptionsRouter.delete(
         req.params.id as string,
       );
       if (!ok) throw new HttpError(404, "Prescription not found.");
+      await recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: "Deleted prescription",
+        entityType: "prescription",
+        entityId: req.params.id as string,
+      });
       res.status(204).end();
     } catch (err) {
       next(err);

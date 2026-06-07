@@ -5,6 +5,7 @@ import express from "express";
 import { auth } from "./auth.js";
 import { env } from "./env.js";
 import { errorHandler, notFound } from "./middleware/error.js";
+import { activityRouter } from "./routes/activity.js";
 import { appointmentsRouter } from "./routes/appointments.js";
 import { notesRouter } from "./routes/notes.js";
 import { patientsRouter } from "./routes/patients.js";
@@ -51,6 +52,7 @@ app.use("/api/notes", notesRouter);
 app.use("/api/appointments", appointmentsRouter);
 app.use("/api/prescriptions", prescriptionsRouter);
 app.use("/api/tasks", tasksRouter);
+app.use("/api/activity", activityRouter);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -63,4 +65,5 @@ app.listen(env.PORT, () => {
   console.log(`  • appts:    /api/appointments`);
   console.log(`  • rx:       /api/prescriptions`);
   console.log(`  • tasks:    /api/tasks`);
+  console.log(`  • activity: /api/activity`);
 });

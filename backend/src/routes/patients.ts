@@ -7,6 +7,7 @@ import {
   requireOrg,
   requirePermission,
 } from "../middleware/auth.js";
+import { recordActivity } from "../services/activity.js";
 import * as service from "../services/patients.js";
 
 export const patientsRouter = Router();
@@ -54,6 +55,15 @@ patientsRouter.post(
         req.user!.id,
         input,
       );
+      await recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: `Created patient ${created.name}`,
+        entityType: "patient",
+        entityId: created.fileNumber,
+        patientName: created.name,
+        patientFileNumber: created.fileNumber,
+      });
       res.status(201).json(created);
     } catch (err) {
       next(err);
@@ -73,6 +83,15 @@ patientsRouter.put(
         input,
       );
       if (!updated) throw new HttpError(404, "Patient not found.");
+      await recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: `Updated patient ${updated.name}`,
+        entityType: "patient",
+        entityId: updated.fileNumber,
+        patientName: updated.name,
+        patientFileNumber: updated.fileNumber,
+      });
       res.json(updated);
     } catch (err) {
       next(err);
@@ -90,6 +109,14 @@ patientsRouter.delete(
         req.params.fileNumber as string,
       );
       if (!ok) throw new HttpError(404, "Patient not found.");
+      await recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: `Deleted patient #${req.params.fileNumber}`,
+        entityType: "patient",
+        entityId: req.params.fileNumber as string,
+        patientFileNumber: req.params.fileNumber as string,
+      });
       res.status(204).end();
     } catch (err) {
       next(err);
