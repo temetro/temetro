@@ -23,30 +23,6 @@ import DashboardNavigation from "@/components/sidebar-02/nav-main";
 import { NotificationsPopover } from "@/components/sidebar-02/nav-notifications";
 import { NavUser } from "@/components/sidebar-02/nav-user";
 
-const sampleNotifications = [
-  {
-    id: "1",
-    avatar: "/avatars/01.png",
-    fallback: "LR",
-    text: "New lab results are available.",
-    time: "10m ago",
-  },
-  {
-    id: "2",
-    avatar: "/avatars/02.png",
-    fallback: "PC",
-    text: "A patient chart was updated.",
-    time: "1h ago",
-  },
-  {
-    id: "3",
-    avatar: "/avatars/03.png",
-    fallback: "CT",
-    text: "New message from the care team.",
-    time: "2h ago",
-  },
-];
-
 export function DashboardSidebar() {
   const { state } = useSidebar();
   const { t } = useTranslation();
@@ -106,7 +82,7 @@ export function DashboardSidebar() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
         >
-          <NotificationsPopover notifications={sampleNotifications} />
+          <NotificationsPopover />
           <SidebarTrigger />
         </motion.div>
       </SidebarHeader>

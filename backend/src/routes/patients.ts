@@ -7,10 +7,40 @@ import {
   requireOrg,
   requirePermission,
 } from "../middleware/auth.js";
+import { emitToUser } from "../realtime.js";
 import { recordActivity } from "../services/activity.js";
+import { listClinicMembers } from "../services/messaging.js";
+import { createNotification } from "../services/notifications.js";
 import * as service from "../services/patients.js";
 
 export const patientsRouter = Router();
+
+// Notify the rest of the clinic about a patient record change (best-effort,
+// pushed live over the socket).
+async function notifyClinic(
+  orgId: string,
+  actor: { id: string; name: string },
+  text: string,
+  fileNumber: string,
+): Promise<void> {
+  try {
+    const members = await listClinicMembers(orgId, actor.id);
+    for (const m of members) {
+      const notification = await createNotification({
+        orgId,
+        userId: m.id,
+        type: "record_change",
+        text,
+        entityType: "patient",
+        entityId: fileNumber,
+        actorName: actor.name,
+      });
+      if (notification) emitToUser(m.id, "notification:new", notification);
+    }
+  } catch (err) {
+    console.error("Failed to notify clinic:", err);
+  }
+}
 
 // Every patient route requires a signed-in user with an active clinic.
 patientsRouter.use(requireAuth, requireOrg);
@@ -64,6 +94,12 @@ patientsRouter.post(
         patientName: created.name,
         patientFileNumber: created.fileNumber,
       });
+      await notifyClinic(
+        req.organizationId!,
+        { id: req.user!.id, name: req.user!.name },
+        `${req.user!.name} added patient ${created.name}`,
+        created.fileNumber,
+      );
       res.status(201).json(created);
     } catch (err) {
       next(err);
@@ -92,6 +128,12 @@ patientsRouter.put(
         patientName: updated.name,
         patientFileNumber: updated.fileNumber,
       });
+      await notifyClinic(
+        req.organizationId!,
+        { id: req.user!.id, name: req.user!.name },
+        `${req.user!.name} updated ${updated.name}'s record`,
+        updated.fileNumber,
+      );
       res.json(updated);
     } catch (err) {
       next(err);

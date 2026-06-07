@@ -56,7 +56,7 @@
     "activity": "Activity",
     "settings": "Settings",
     "notifications": "Notifications",
-    "viewAllNotifications": "View all notifications",
+    "notificationsEmpty": "You're all caught up.",
     "quickNav": "Quick nav",
     "commandGroup": "Go to",
     "commandPlaceholder": "Search pages…",
