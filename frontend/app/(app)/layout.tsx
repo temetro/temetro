@@ -1,0 +1,23 @@
+import { AppAuthGuard } from "@/components/auth/app-auth-guard";
+import { CommandPaletteProvider } from "@/components/command-palette";
+import { DashboardSidebar } from "@/components/sidebar-02/app-sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
+
+export default function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <AppAuthGuard>
+      <CommandPaletteProvider>
+        <SidebarProvider>
+          <div className="relative flex h-dvh w-full">
+            <DashboardSidebar />
+            {children}
+          </div>
+        </SidebarProvider>
+      </CommandPaletteProvider>
+    </AppAuthGuard>
+  );
+}
