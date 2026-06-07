@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleCheck, Clock, Pill, Plus } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import {
   AddPrescriptionDialog,
@@ -12,25 +12,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  type Prescription,
+  type RxStatus,
+  createPrescription,
+  formatPrescribedAt,
+  listPrescriptions,
+} from "@/lib/prescriptions";
+import { notify } from "@/lib/toast";
 
-// All figures here are mock/placeholder data — there is no prescriptions backend.
-// They illustrate the Prescriptions layout.
-
-export type RxStatus = "active" | "completed" | "expired";
-
-export type Prescription = {
-  fileNumber: string;
-  name: string;
-  initials: string;
-  medication: string;
-  dose: string;
-  frequency: string;
-  prescriber: string;
-  date: string;
-  status: RxStatus;
-  duration?: string;
-  notes?: string;
-};
+export type { Prescription, RxStatus } from "@/lib/prescriptions";
 
 const statusVariant: Record<
   RxStatus,
@@ -46,70 +37,6 @@ const statusLabel: Record<RxStatus, string> = {
   completed: "Completed",
   expired: "Expired",
 };
-
-const kpis = [
-  { label: "Active", value: "8", icon: Pill },
-  { label: "Due refill", value: "3", icon: Clock },
-  { label: "Completed", value: "27", icon: CircleCheck },
-];
-
-const initial: Prescription[] = [
-  {
-    fileNumber: "10293",
-    name: "Amina Yusuf",
-    initials: "AY",
-    medication: "Lisinopril",
-    dose: "10 mg",
-    frequency: "Once daily",
-    prescriber: "Dr. Okafor",
-    date: "Jun 5, 2026",
-    status: "active",
-  },
-  {
-    fileNumber: "10311",
-    name: "Daniel Mensah",
-    initials: "DM",
-    medication: "Metformin",
-    dose: "500 mg",
-    frequency: "Twice daily",
-    prescriber: "Dr. Okafor",
-    date: "Jun 4, 2026",
-    status: "active",
-  },
-  {
-    fileNumber: "10342",
-    name: "Leila Haddad",
-    initials: "LH",
-    medication: "Amoxicillin",
-    dose: "500 mg",
-    frequency: "Three times daily",
-    prescriber: "Dr. Stein",
-    date: "May 28, 2026",
-    status: "completed",
-  },
-  {
-    fileNumber: "10358",
-    name: "Carlos Rivera",
-    initials: "CR",
-    medication: "Atorvastatin",
-    dose: "20 mg",
-    frequency: "Once daily",
-    prescriber: "Dr. Okafor",
-    date: "May 12, 2026",
-    status: "expired",
-  },
-  {
-    fileNumber: "10377",
-    name: "Priya Nair",
-    initials: "PN",
-    medication: "Salbutamol inhaler",
-    dose: "100 mcg",
-    frequency: "As needed",
-    prescriber: "Dr. Stein",
-    date: "Jun 1, 2026",
-    status: "active",
-  },
-];
 
 function Kpi({
   label,
@@ -165,7 +92,9 @@ function RxRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void }) {
       </div>
       <div className="hidden min-w-0 flex-col items-end sm:flex">
         <span className="truncate text-foreground text-xs">{rx.prescriber}</span>
-        <span className="text-muted-foreground text-xs">{rx.date}</span>
+        <span className="text-muted-foreground text-xs">
+          {formatPrescribedAt(rx.prescribedAt)}
+        </span>
       </div>
       <Badge variant={statusVariant[rx.status]}>{statusLabel[rx.status]}</Badge>
     </div>
@@ -196,38 +125,68 @@ function Section({
 
 export function PrescriptionsView() {
   const [addOpen, setAddOpen] = useState(false);
-  const [list, setList] = useState<Prescription[]>(initial);
+  const [list, setList] = useState<Prescription[]>([]);
   const [selected, setSelected] = useState<Prescription | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    listPrescriptions()
+      .then((data) => {
+        if (active) setList(data);
+      })
+      .catch(() => {
+        /* api-client redirects on 401; otherwise leave the list empty */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const openRx = (rx: Prescription) => {
     setSelected(rx);
     setSheetOpen(true);
   };
 
-  // Insert a new (mock) prescription at the top of the list, marked active.
-  const addPrescription = (rx: NewPrescription) => {
-    setList((prev) => [
-      {
+  // Persist a new prescription, then add the saved record to the top of the list.
+  const addPrescription = async (rx: NewPrescription) => {
+    try {
+      const created = await createPrescription({
         fileNumber: rx.fileNumber,
         name: rx.name,
         initials: rx.initials,
         medication: rx.medication,
         dose: rx.dose,
         frequency: rx.frequency,
-        duration: rx.duration || undefined,
-        notes: rx.notes || undefined,
-        prescriber: "Dr. Okafor",
-        date: new Date().toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
-        status: "active" as const,
-      },
-      ...prev,
-    ]);
+        duration: rx.duration || null,
+        notes: rx.notes || null,
+      });
+      setList((prev) => [created, ...prev]);
+    } catch {
+      notify.error("Couldn't add prescription", "Please try again.");
+    }
   };
+
+  const kpis = useMemo(
+    () => [
+      {
+        label: "Active",
+        value: String(list.filter((r) => r.status === "active").length),
+        icon: Pill,
+      },
+      {
+        label: "Completed",
+        value: String(list.filter((r) => r.status === "completed").length),
+        icon: CircleCheck,
+      },
+      {
+        label: "Expired",
+        value: String(list.filter((r) => r.status === "expired").length),
+        icon: Clock,
+      },
+    ],
+    [list],
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-10">
@@ -235,7 +194,7 @@ export function PrescriptionsView() {
         <div>
           <h1 className="font-semibold text-2xl tracking-tight">Prescriptions</h1>
           <p className="text-muted-foreground text-sm">
-            Medications prescribed across the clinic. Sample data.
+            Medications prescribed across the clinic.
           </p>
         </div>
         <Button
@@ -257,11 +216,7 @@ export function PrescriptionsView() {
       <Section description="Most recent first" title="Recent prescriptions">
         <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
           {list.map((rx) => (
-            <RxRow
-              key={rx.fileNumber + rx.medication + rx.date}
-              onOpen={() => openRx(rx)}
-              rx={rx}
-            />
+            <RxRow key={rx.id} onOpen={() => openRx(rx)} rx={rx} />
           ))}
         </div>
       </Section>

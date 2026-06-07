@@ -111,8 +111,8 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 
 // Compact "New prescription" dialog. The patient is chosen via a quick search by
 // name or file number (same pattern as the appointment dialog); the rest is the
-// medication detail. Prescriptions are mock-only, so the new entry is handed back
-// to the page via onAdd.
+// medication detail. The new entry is handed back to the page via onAdd, which
+// persists it through the prescriptions API.
 export function AddPrescriptionDialog({
   open,
   onOpenChange,

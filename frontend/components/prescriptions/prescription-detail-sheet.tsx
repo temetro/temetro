@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import type { Prescription, RxStatus } from "@/components/prescriptions/prescriptions-view";
+import { formatPrescribedAt } from "@/lib/prescriptions";
 
 const statusVariant: Record<
   RxStatus,
@@ -28,7 +29,7 @@ const statusLabel: Record<RxStatus, string> = {
 
 // Right-side Sheet showing one prescription's full detail, opened by clicking a
 // row in the Prescriptions list (mirrors the Patients table → side Sheet
-// pattern). Prescriptions live in local state, so the record is passed in.
+// pattern). The selected record is passed in from the page.
 export function PrescriptionDetailSheet({
   rx,
   open,
@@ -82,7 +83,9 @@ export function PrescriptionDetailSheet({
                 <dt className="text-muted-foreground">Prescriber</dt>
                 <dd className="text-foreground">{rx.prescriber}</dd>
                 <dt className="text-muted-foreground">Date</dt>
-                <dd className="text-foreground">{rx.date}</dd>
+                <dd className="text-foreground">
+                  {formatPrescribedAt(rx.prescribedAt)}
+                </dd>
                 <dt className="text-muted-foreground">Status</dt>
                 <dd className="text-foreground">{statusLabel[rx.status]}</dd>
               </dl>
