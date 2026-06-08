@@ -402,6 +402,13 @@
       "description": "Care-team workload",
       "open": "Open",
       "completed": "Completed"
+    },
+    "charts": {
+      "patientGrowthTitle": "Patient growth",
+      "patientGrowthDescription": "New patients per month over the last 6 months",
+      "weeklyAppointmentsTitle": "Appointments this week",
+      "weeklyAppointmentsDescription": "Bookings per day for the current week",
+      "empty": "No data yet"
     }
   },
   "activity": {

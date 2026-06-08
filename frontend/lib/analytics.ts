@@ -2,6 +2,8 @@ import { apiFetch } from "@/lib/api-client";
 
 // Server-computed clinic analytics. Mirrors the backend `src/types/analytics.ts`.
 // All figures are aggregates over the active clinic's real data.
+export type TrendPoint = { label: string; count: number };
+
 export type Analytics = {
   patients: {
     total: number;
@@ -21,6 +23,10 @@ export type Analytics = {
   tasks: {
     open: number;
     done: number;
+  };
+  trends: {
+    patientsByMonth: TrendPoint[];
+    appointmentsByWeekday: TrendPoint[];
   };
 };
 

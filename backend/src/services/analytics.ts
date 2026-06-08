@@ -17,6 +17,22 @@ async function countWhere(table: PgTable, where: SQL): Promise<number> {
   return row?.value ?? 0;
 }
 
+const MONTH_LABELS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 export async function getAnalytics(orgId: string): Promise<Analytics> {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -103,6 +119,65 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
     ),
   ]);
 
+  // New patients per month over the last 6 months (oldest → newest). One query,
+  // bucketed in JS by the patient's createdAt month.
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const months = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    return {
+      key: `${d.getFullYear()}-${pad(d.getMonth() + 1)}`,
+      label: MONTH_LABELS[d.getMonth()]!,
+    };
+  });
+  const patientRows = await db
+    .select({ createdAt: patients.createdAt })
+    .from(patients)
+    .where(
+      and(
+        eq(patients.organizationId, orgId),
+        gte(patients.createdAt, sixMonthsAgo),
+      )!,
+    );
+  const monthCounts = new Map(months.map((m) => [m.key, 0]));
+  for (const r of patientRows) {
+    const d = r.createdAt;
+    const key = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+    if (monthCounts.has(key)) monthCounts.set(key, monthCounts.get(key)! + 1);
+  }
+  const patientsByMonth = months.map((m) => ({
+    label: m.label,
+    count: monthCounts.get(m.key) ?? 0,
+  }));
+
+  // Appointments per day across the current week (Sun → Sat). One query,
+  // bucketed in JS by the appointment's date key.
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(
+      startOfWeek.getFullYear(),
+      startOfWeek.getMonth(),
+      startOfWeek.getDate() + i,
+    );
+    return { key: keyOf(d), label: WEEKDAY_LABELS[d.getDay()]! };
+  });
+  const apptRows = await db
+    .select({ date: appointments.date })
+    .from(appointments)
+    .where(
+      and(
+        eq(appointments.organizationId, orgId),
+        gte(appointments.date, weekStartKey),
+        lte(appointments.date, weekEndKey),
+      )!,
+    );
+  const dayCounts = new Map(weekDays.map((d) => [d.key, 0]));
+  for (const r of apptRows) {
+    if (dayCounts.has(r.date)) dayCounts.set(r.date, dayCounts.get(r.date)! + 1);
+  }
+  const appointmentsByWeekday = weekDays.map((d) => ({
+    label: d.label,
+    count: dayCounts.get(d.key) ?? 0,
+  }));
+
   return {
     patients: {
       total: patientsTotal,
@@ -117,5 +192,6 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
     },
     prescriptions: { total: rxTotal, active: rxActive },
     tasks: { open: tasksOpen, done: tasksDone },
+    trends: { patientsByMonth, appointmentsByWeekday },
   };
 }

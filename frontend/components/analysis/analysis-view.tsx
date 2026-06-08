@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { BarChart } from "@/components/analysis/bar-chart";
 import { Card } from "@/components/ui/card";
 import { type Analytics, getAnalytics } from "@/lib/analytics";
 
@@ -41,6 +42,27 @@ function Section({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {children}
       </div>
+    </section>
+  );
+}
+
+// A full-width section that frames a single chart in a card.
+function ChartSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      <div>
+        <h2 className="font-semibold text-lg tracking-tight">{title}</h2>
+        <p className="text-muted-foreground text-sm">{description}</p>
+      </div>
+      <Card className="p-5">{children}</Card>
     </section>
   );
 }
@@ -92,6 +114,16 @@ export function AnalysisView() {
         />
       </Section>
 
+      <ChartSection
+        description={t("analysis.charts.patientGrowthDescription")}
+        title={t("analysis.charts.patientGrowthTitle")}
+      >
+        <BarChart
+          data={data?.trends.patientsByMonth ?? []}
+          emptyLabel={t("analysis.charts.empty")}
+        />
+      </ChartSection>
+
       <Section
         description={t("analysis.appointments.description")}
         title={t("analysis.appointments.title")}
@@ -113,6 +145,16 @@ export function AnalysisView() {
           value={n(data?.appointments.cancelled)}
         />
       </Section>
+
+      <ChartSection
+        description={t("analysis.charts.weeklyAppointmentsDescription")}
+        title={t("analysis.charts.weeklyAppointmentsTitle")}
+      >
+        <BarChart
+          data={data?.trends.appointmentsByWeekday ?? []}
+          emptyLabel={t("analysis.charts.empty")}
+        />
+      </ChartSection>
 
       <Section
         description={t("analysis.prescriptions.description")}
