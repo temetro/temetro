@@ -57,6 +57,13 @@
       "when": 1780933857005,
       "tag": "0007_skinny_bloodstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1780937195597,
+      "tag": "0008_luxuriant_blue_blade",
+      "breakpoints": true
     }
   ]
 }

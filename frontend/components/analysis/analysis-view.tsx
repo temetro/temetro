@@ -3,7 +3,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { BarChart } from "@/components/analysis/bar-chart";
+import { TrendCard } from "@/components/analysis/trend-card";
 import { Card } from "@/components/ui/card";
 import { type Analytics, getAnalytics } from "@/lib/analytics";
 
@@ -46,26 +46,6 @@ function Section({
   );
 }
 
-// A full-width section that frames a single chart in a card.
-function ChartSection({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="flex flex-col gap-3">
-      <div>
-        <h2 className="font-semibold text-lg tracking-tight">{title}</h2>
-        <p className="text-muted-foreground text-sm">{description}</p>
-      </div>
-      <Card className="p-5">{children}</Card>
-    </section>
-  );
-}
 
 export function AnalysisView() {
   const { t } = useTranslation();
@@ -114,15 +94,32 @@ export function AnalysisView() {
         />
       </Section>
 
-      <ChartSection
-        description={t("analysis.charts.patientGrowthDescription")}
-        title={t("analysis.charts.patientGrowthTitle")}
-      >
-        <BarChart
-          data={data?.trends.patientsByMonth ?? []}
-          emptyLabel={t("analysis.charts.empty")}
-        />
-      </ChartSection>
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-semibold text-lg tracking-tight">
+            {t("analysis.charts.title")}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {t("analysis.charts.subtitle")}
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <TrendCard
+            description={t("analysis.charts.patientGrowthDescription")}
+            detailsLabel={t("analysis.charts.viewDetails")}
+            emptyLabel={t("analysis.charts.empty")}
+            points={data?.trends.patientsByMonth ?? []}
+            title={t("analysis.charts.patientGrowthTitle")}
+          />
+          <TrendCard
+            description={t("analysis.charts.weeklyAppointmentsDescription")}
+            detailsLabel={t("analysis.charts.viewDetails")}
+            emptyLabel={t("analysis.charts.empty")}
+            points={data?.trends.appointmentsByWeekday ?? []}
+            title={t("analysis.charts.weeklyAppointmentsTitle")}
+          />
+        </div>
+      </section>
 
       <Section
         description={t("analysis.appointments.description")}
@@ -145,16 +142,6 @@ export function AnalysisView() {
           value={n(data?.appointments.cancelled)}
         />
       </Section>
-
-      <ChartSection
-        description={t("analysis.charts.weeklyAppointmentsDescription")}
-        title={t("analysis.charts.weeklyAppointmentsTitle")}
-      >
-        <BarChart
-          data={data?.trends.appointmentsByWeekday ?? []}
-          emptyLabel={t("analysis.charts.empty")}
-        />
-      </ChartSection>
 
       <Section
         description={t("analysis.prescriptions.description")}

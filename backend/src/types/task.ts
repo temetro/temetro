@@ -7,11 +7,15 @@ export type Task = {
   id: string;
   title: string;
   assignee: string;
+  // Department (member role) the task is assigned to; null = personal task.
+  assigneeRole: string | null;
   due: string;
   priority: TaskPriority;
   patient: string | null;
   notes: string | null;
   done: boolean;
+  createdById: string | null;
+  createdByName: string | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -322,12 +322,19 @@
       "details": "Details — what needs to be done",
       "detailsPlaceholder": "Describe what needs to happen, any context, links…",
       "assignee": "Assignee",
-      "assigneePlaceholder": "e.g. Dr. Okafor",
+      "assigneeSelf": "Myself",
+      "assigneeOther": "Other",
+      "department": "Department",
       "due": "Due",
       "duePlaceholder": "e.g. Today",
       "priorityLabel": "Priority",
       "cancel": "Cancel",
       "add": "Add task"
+    },
+    "list": {
+      "forDept": "For {{dept}}",
+      "personal": "Personal",
+      "byCreator": "by {{name}}"
     },
     "detail": {
       "fallbackTitle": "Task",
@@ -335,7 +342,10 @@
       "status": "Status",
       "completed": "Completed",
       "open": "Open",
-      "assignee": "Assignee",
+      "assignedTo": "Assigned to",
+      "createdBy": "Created by",
+      "deptTeam": "{{dept}} team",
+      "personal": "Personal task",
       "due": "Due",
       "patient": "Patient",
       "details": "Details",
@@ -404,7 +414,10 @@
       "completed": "Completed"
     },
     "charts": {
-      "patientGrowthTitle": "Patient growth",
+      "title": "Trends",
+      "subtitle": "Tap a card for the full breakdown.",
+      "viewDetails": "Tap for details",
+      "patientGrowthTitle": "New patients",
       "patientGrowthDescription": "New patients per month over the last 6 months",
       "weeklyAppointmentsTitle": "Appointments this week",
       "weeklyAppointmentsDescription": "Bookings per day for the current week",
@@ -712,6 +725,18 @@
       "you": "(you)",
       "addMember": "Add team member",
       "removeMember": "Remove member",
+      "remove": {
+        "title": "Remove team member?",
+        "description": "{{name}} will lose access to this clinic. This can't be undone.",
+        "thisMember": "This member",
+        "cancel": "Cancel",
+        "confirm": "Remove",
+        "removing": "Removing…",
+        "removedTitle": "Member removed",
+        "removedBody": "{{name}} no longer has access.",
+        "failedTitle": "Couldn't remove member",
+        "failedBody": "Please try again."
+      },
       "add": {
         "title": "Add team member",
         "step1Description": "Who are you adding, and what can they do?",
@@ -722,7 +747,9 @@
         "roleLabel": "Role",
         "usernameLabel": "Username",
         "usernamePlaceholder": "jokafor",
+        "usernameHint": "Letters, numbers, dots and underscores — no spaces.",
         "usernameTooShort": "Username must be at least {{count}} characters.",
+        "usernameInvalid": "Username can't contain spaces. Use letters, numbers, dots or underscores.",
         "passwordLabel": "Password",
         "passwordHint": "Must be at least {{count}} characters long.",
         "passwordTooShort": "Password must be at least {{count}} characters.",

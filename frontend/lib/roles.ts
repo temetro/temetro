@@ -17,6 +17,10 @@ export const PROVISIONABLE_ROLES: RoleKey[] = [
   "viewer",
 ];
 
+// Departments a task can be assigned to (member roles). Mirrors the backend's
+// TASK_DEPARTMENTS in lib/task-validation.ts.
+export const DEPARTMENTS = ["admin", "doctor", "reception"] as const;
+
 // The current user's role in the active clinic (null while loading or if they
 // aren't a member). Re-fetches when the active organization changes.
 export function useActiveRole(): string | null {

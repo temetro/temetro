@@ -49,6 +49,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
+import { useActiveRole } from "@/lib/roles";
 import { notify } from "@/lib/toast";
 
 // Open-source repo (placeholder).
@@ -91,6 +92,10 @@ export function NavUser() {
   const { open: openCommand } = useCommandPalette();
   const { data: orgs } = authClient.useListOrganizations();
   const { data: activeOrg } = authClient.useActiveOrganization();
+  const role = useActiveRole();
+  // Only clinic owners/admins may spin up additional clinics. New users with no
+  // clinic still onboard via /onboarding (a separate flow).
+  const canCreateClinic = role === "owner" || role === "admin";
 
   const [createOpen, setCreateOpen] = useState(false);
 
@@ -231,11 +236,18 @@ export function NavUser() {
                     </MenuItem>
                   ))}
                 </MenuGroup>
-                <MenuSeparator />
-                <MenuItem className="gap-2" onClick={() => setCreateOpen(true)}>
-                  <Plus />
-                  {t("userMenu.createClinic")}
-                </MenuItem>
+                {canCreateClinic && (
+                  <>
+                    <MenuSeparator />
+                    <MenuItem
+                      className="gap-2"
+                      onClick={() => setCreateOpen(true)}
+                    >
+                      <Plus />
+                      {t("userMenu.createClinic")}
+                    </MenuItem>
+                  </>
+                )}
               </MenuSubPopup>
             </MenuSub>
 

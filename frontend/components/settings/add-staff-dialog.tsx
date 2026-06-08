@@ -23,6 +23,9 @@ import { notify } from "@/lib/toast";
 
 const MIN_PASSWORD = 12;
 const MIN_USERNAME = 3;
+// Mirrors the backend rule (backend/src/routes/staff.ts): letters, numbers,
+// dots and underscores only — notably no spaces.
+const USERNAME_RE = /^[a-zA-Z0-9_.]+$/;
 
 const selectClass =
   "h-9 w-full rounded-3xl border border-transparent bg-input/50 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30";
@@ -77,8 +80,13 @@ export function AddStaffDialog({ open, onOpenChange, onCreated }: Props) {
     }
 
     // Step 2 → create the account.
-    if (username.trim().length < MIN_USERNAME) {
+    const trimmedUsername = username.trim();
+    if (trimmedUsername.length < MIN_USERNAME) {
       setError(t("settings.careTeam.add.usernameTooShort", { count: MIN_USERNAME }));
+      return;
+    }
+    if (!USERNAME_RE.test(trimmedUsername)) {
+      setError(t("settings.careTeam.add.usernameInvalid"));
       return;
     }
     if (password.length < MIN_PASSWORD) {
@@ -93,7 +101,7 @@ export function AddStaffDialog({ open, onOpenChange, onCreated }: Props) {
         body: JSON.stringify({
           name: name.trim(),
           role,
-          username: username.trim(),
+          username: trimmedUsername,
           password,
         }),
       });
@@ -101,7 +109,7 @@ export function AddStaffDialog({ open, onOpenChange, onCreated }: Props) {
         t("settings.careTeam.add.createdTitle"),
         t("settings.careTeam.add.createdBody", {
           name: name.trim(),
-          username: username.trim().toLowerCase(),
+          username: trimmedUsername.toLowerCase(),
         }),
       );
       onCreated?.();
@@ -183,6 +191,9 @@ export function AddStaffDialog({ open, onOpenChange, onCreated }: Props) {
                     required
                     value={username}
                   />
+                  <FieldDescription>
+                    {t("settings.careTeam.add.usernameHint")}
+                  </FieldDescription>
                 </Field>
                 <Field className="w-full">
                   <FieldLabel htmlFor="staff-password">

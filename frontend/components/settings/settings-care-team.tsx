@@ -12,9 +12,19 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ROLE_LABELS } from "@/lib/access";
 import { apiFetch } from "@/lib/api-client";
 import { authClient } from "@/lib/auth-client";
+import { notify } from "@/lib/toast";
 
 // One row of /api/staff — clinic members joined to their user record (incl. the
 // username admin-provisioned staff sign in with).
@@ -52,6 +62,8 @@ export function CareTeamPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [pendingRemove, setPendingRemove] = useState<StaffMember | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -75,8 +87,27 @@ export function CareTeamPanel() {
   const myRole = members.find((m) => m.userId === session?.user?.id)?.role;
   const canManage = myRole === "owner" || myRole === "admin";
 
-  const removeMember = async (memberId: string) => {
-    await authClient.organization.removeMember({ memberIdOrEmail: memberId });
+  const confirmRemove = async () => {
+    if (!pendingRemove || removing) return;
+    setRemoving(true);
+    const { error: err } = await authClient.organization.removeMember({
+      memberIdOrEmail: pendingRemove.id,
+    });
+    setRemoving(false);
+    if (err) {
+      notify.error(
+        t("settings.careTeam.remove.failedTitle"),
+        err.message ?? t("settings.careTeam.remove.failedBody"),
+      );
+      return;
+    }
+    notify.success(
+      t("settings.careTeam.remove.removedTitle"),
+      t("settings.careTeam.remove.removedBody", {
+        name: pendingRemove.name ?? pendingRemove.email ?? "",
+      }),
+    );
+    setPendingRemove(null);
     void load();
   };
 
@@ -139,7 +170,7 @@ export function CareTeamPanel() {
                 {canManage && !isSelf && m.role !== "owner" && (
                   <Button
                     aria-label={t("settings.careTeam.removeMember")}
-                    onClick={() => removeMember(m.id)}
+                    onClick={() => setPendingRemove(m)}
                     size="icon-sm"
                     type="button"
                     variant="ghost"
@@ -160,6 +191,41 @@ export function CareTeamPanel() {
           open={adding}
         />
       )}
+
+      {/* Confirm before removing a member — destructive and not reversible. */}
+      <Dialog
+        onOpenChange={(o) => !o && setPendingRemove(null)}
+        open={pendingRemove !== null}
+      >
+        <DialogPopup className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("settings.careTeam.remove.title")}</DialogTitle>
+            <DialogDescription>
+              {t("settings.careTeam.remove.description", {
+                name:
+                  pendingRemove?.name ??
+                  pendingRemove?.email ??
+                  t("settings.careTeam.remove.thisMember"),
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button type="button" variant="outline" />}>
+              {t("settings.careTeam.remove.cancel")}
+            </DialogClose>
+            <Button
+              disabled={removing}
+              onClick={confirmRemove}
+              type="button"
+              variant="destructive"
+            >
+              {removing
+                ? t("settings.careTeam.remove.removing")
+                : t("settings.careTeam.remove.confirm")}
+            </Button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
     </SettingsSection>
   );
 }

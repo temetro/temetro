@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ROLE_LABELS } from "@/lib/access";
+import { DEPARTMENTS } from "@/lib/roles";
 import {
   type Priority,
   type Task,
@@ -35,6 +37,12 @@ import {
 } from "@/lib/tasks";
 import { notify } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+
+type AssigneeMode = "self" | "other";
+
+function deptLabel(role: string): string {
+  return (ROLE_LABELS as Record<string, string>)[role] ?? role;
+}
 
 export type { Priority, Task } from "@/lib/tasks";
 
@@ -98,14 +106,16 @@ function AddTaskDialog({
   const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
-  const [assignee, setAssignee] = useState("");
+  const [assigneeMode, setAssigneeMode] = useState<AssigneeMode>("self");
+  const [department, setDepartment] = useState<string>("reception");
   const [due, setDue] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
 
   const reset = () => {
     setTitle("");
     setNotes("");
-    setAssignee("");
+    setAssigneeMode("self");
+    setDepartment("reception");
     setDue("");
     setPriority("medium");
   };
@@ -122,7 +132,8 @@ function AddTaskDialog({
     onAdd({
       title: title.trim(),
       notes: notes.trim() || undefined,
-      assignee: assignee.trim() || "Unassigned",
+      // "Myself" → personal task (no department); "Other" → a department.
+      assigneeRole: assigneeMode === "self" ? null : department,
       due: due.trim() || "No due date",
       priority,
     });
@@ -163,14 +174,47 @@ function AddTaskDialog({
                 value={notes}
               />
             </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={t("tasks.dialog.assignee")}>
-                <Input
-                  onChange={(e) => setAssignee(e.target.value)}
-                  placeholder={t("tasks.dialog.assigneePlaceholder")}
-                  value={assignee}
-                />
+            <div className="flex flex-col gap-1.5">
+              <span className="text-muted-foreground text-xs">
+                {t("tasks.dialog.assignee")}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  className="flex-1"
+                  onClick={() => setAssigneeMode("self")}
+                  size="sm"
+                  type="button"
+                  variant={assigneeMode === "self" ? "secondary" : "outline"}
+                >
+                  {t("tasks.dialog.assigneeSelf")}
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => setAssigneeMode("other")}
+                  size="sm"
+                  type="button"
+                  variant={assigneeMode === "other" ? "secondary" : "outline"}
+                >
+                  {t("tasks.dialog.assigneeOther")}
+                </Button>
+              </div>
+            </div>
+            {assigneeMode === "other" && (
+              <Field label={t("tasks.dialog.department")}>
+                <select
+                  className={controlClass}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  value={department}
+                >
+                  {DEPARTMENTS.map((d) => (
+                    <option key={d} value={d}>
+                      {ROLE_LABELS[d]}
+                    </option>
+                  ))}
+                </select>
               </Field>
+            )}
+            <div className="grid grid-cols-2 gap-3">
               <Field label={t("tasks.dialog.due")}>
                 <Input
                   onChange={(e) => setDue(e.target.value)}
@@ -178,18 +222,18 @@ function AddTaskDialog({
                   value={due}
                 />
               </Field>
+              <Field label={t("tasks.dialog.priorityLabel")}>
+                <select
+                  className={controlClass}
+                  onChange={(e) => setPriority(e.target.value as Priority)}
+                  value={priority}
+                >
+                  <option value="high">{t("tasks.priority.high")}</option>
+                  <option value="medium">{t("tasks.priority.medium")}</option>
+                  <option value="low">{t("tasks.priority.low")}</option>
+                </select>
+              </Field>
             </div>
-            <Field label={t("tasks.dialog.priorityLabel")}>
-              <select
-                className={controlClass}
-                onChange={(e) => setPriority(e.target.value as Priority)}
-                value={priority}
-              >
-                <option value="high">{t("tasks.priority.high")}</option>
-                <option value="medium">{t("tasks.priority.medium")}</option>
-                <option value="low">{t("tasks.priority.low")}</option>
-              </select>
-            </Field>
           </DialogPanel>
 
           <DialogFooter>
@@ -337,7 +381,14 @@ export function TasksView() {
                   {task.title}
                 </span>
                 <span className="truncate text-muted-foreground text-xs">
-                  {task.assignee} · {task.due}
+                  {task.assigneeRole
+                    ? t("tasks.list.forDept", {
+                        dept: deptLabel(task.assigneeRole),
+                      })
+                    : t("tasks.list.personal")}
+                  {task.createdByName
+                    ? ` · ${t("tasks.list.byCreator", { name: task.createdByName })}`
+                    : ""}
                 </span>
               </button>
               <Badge

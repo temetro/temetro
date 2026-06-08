@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, or } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { tasks } from "../db/schema/tasks.js";
@@ -11,33 +11,58 @@ type TaskRow = typeof tasks.$inferSelect;
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+function rolesOf(role: string): string[] {
+  return String(role ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function toTask(row: TaskRow): Task {
   return {
     id: row.id,
     title: row.title,
     assignee: row.assignee,
+    assigneeRole: row.assigneeRole,
     due: row.due,
     priority: row.priority,
     patient: row.patient,
     notes: row.notes,
     done: row.done,
+    createdById: row.createdBy,
+    createdByName: row.createdByName,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
 }
 
-export async function listTasks(orgId: string): Promise<Task[]> {
+// A member sees a task if they created it or it's assigned to their department.
+// Owners/admins see every task in the clinic.
+export async function listTasks(
+  orgId: string,
+  viewer: { userId: string; role: string },
+): Promise<Task[]> {
+  const roles = rolesOf(viewer.role);
+  const isAdmin = roles.some((r) => r === "owner" || r === "admin");
+
+  let where = eq(tasks.organizationId, orgId);
+  if (!isAdmin) {
+    const visible = [eq(tasks.createdBy, viewer.userId)];
+    if (roles.length) visible.push(inArray(tasks.assigneeRole, roles));
+    where = and(where, or(...visible))!;
+  }
+
   const rows = await db
     .select()
     .from(tasks)
-    .where(eq(tasks.organizationId, orgId))
+    .where(where)
     .orderBy(desc(tasks.createdAt));
   return rows.map(toTask);
 }
 
 export async function createTask(
   orgId: string,
-  userId: string,
+  creator: { id: string; name: string },
   input: TaskInput,
 ): Promise<Task> {
   const [row] = await db
@@ -46,11 +71,13 @@ export async function createTask(
       organizationId: orgId,
       title: input.title,
       assignee: input.assignee,
+      assigneeRole: input.assigneeRole ?? null,
       due: input.due,
       priority: input.priority,
       patient: input.patient ?? null,
       notes: input.notes ?? null,
-      createdBy: userId,
+      createdBy: creator.id,
+      createdByName: creator.name,
     })
     .returning();
   return toTask(row!);
@@ -67,6 +94,8 @@ export async function updateTask(
   const set: Partial<typeof tasks.$inferInsert> = {};
   if (patch.title !== undefined) set.title = patch.title;
   if (patch.assignee !== undefined) set.assignee = patch.assignee;
+  if (patch.assigneeRole !== undefined)
+    set.assigneeRole = patch.assigneeRole ?? null;
   if (patch.due !== undefined) set.due = patch.due;
   if (patch.priority !== undefined) set.priority = patch.priority;
   if (patch.patient !== undefined) set.patient = patch.patient ?? null;

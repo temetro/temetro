@@ -19,7 +19,12 @@ tasksRouter.get(
   requirePermission({ task: ["read"] }),
   async (req, res, next) => {
     try {
-      res.json(await service.listTasks(req.organizationId!));
+      res.json(
+        await service.listTasks(req.organizationId!, {
+          userId: req.user!.id,
+          role: req.memberRole ?? "",
+        }),
+      );
     } catch (err) {
       next(err);
     }
@@ -34,7 +39,7 @@ tasksRouter.post(
       const input = taskInputSchema.parse(req.body);
       const created = await service.createTask(
         req.organizationId!,
-        req.user!.id,
+        { id: req.user!.id, name: req.user!.name },
         input,
       );
       await recordActivity({

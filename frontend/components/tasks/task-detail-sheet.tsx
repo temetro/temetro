@@ -11,6 +11,7 @@ import {
   SheetPopup,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { ROLE_LABELS } from "@/lib/access";
 import { cn } from "@/lib/utils";
 import type { Priority, Task } from "@/components/tasks/tasks-view";
 
@@ -20,6 +21,10 @@ const priorityVariant: Record<Priority, "destructive" | "secondary" | "outline">
     medium: "secondary",
     low: "outline",
   };
+
+function deptLabel(role: string): string {
+  return (ROLE_LABELS as Record<string, string>)[role] ?? role;
+}
 
 // Right-side Sheet showing a single task's full detail, opened from the Tasks
 // list (mirrors the Patients table → PatientDetailSheet pattern). The task is
@@ -67,9 +72,19 @@ export function TaskDetailSheet({
                     : t("tasks.detail.open")}
                 </dd>
                 <dt className="text-muted-foreground">
-                  {t("tasks.detail.assignee")}
+                  {t("tasks.detail.assignedTo")}
                 </dt>
-                <dd className="text-foreground">{task.assignee}</dd>
+                <dd className="text-foreground">
+                  {task.assigneeRole
+                    ? t("tasks.detail.deptTeam", {
+                        dept: deptLabel(task.assigneeRole),
+                      })
+                    : t("tasks.detail.personal")}
+                </dd>
+                <dt className="text-muted-foreground">
+                  {t("tasks.detail.createdBy")}
+                </dt>
+                <dd className="text-foreground">{task.createdByName ?? "—"}</dd>
                 <dt className="text-muted-foreground">
                   {t("tasks.detail.due")}
                 </dt>

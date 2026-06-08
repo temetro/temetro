@@ -22,6 +22,9 @@ export const tasks = pgTable(
       .references(() => organization.id, { onDelete: "cascade" }),
     title: text("title").notNull(),
     assignee: text("assignee").notNull().default("Unassigned"),
+    // The department (member role) a task is assigned to, e.g. "reception".
+    // Null means a personal task belonging to its creator. Drives who sees it.
+    assigneeRole: text("assignee_role"),
     due: text("due").notNull().default("No due date"),
     priority: text("priority").$type<TaskPriority>().notNull(),
     patient: text("patient"),
@@ -30,6 +33,9 @@ export const tasks = pgTable(
     createdBy: text("created_by").references(() => user.id, {
       onDelete: "set null",
     }),
+    // Denormalised creator name so "created by …" survives even if the user is
+    // later removed (createdBy is set null on delete).
+    createdByName: text("created_by_name"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

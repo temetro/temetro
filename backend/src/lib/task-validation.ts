@@ -1,9 +1,14 @@
 import { z } from "zod";
 
+// Departments a task can be assigned to (member roles). Null = a personal task
+// that belongs to its creator.
+export const TASK_DEPARTMENTS = ["admin", "doctor", "reception"] as const;
+
 // Payload accepted by POST /api/tasks (full create).
 export const taskInputSchema = z.object({
   title: z.string().trim().min(1, "A task subject is required.").max(200),
   assignee: z.string().trim().max(200).default("Unassigned"),
+  assigneeRole: z.enum(TASK_DEPARTMENTS).nullish(),
   due: z.string().trim().max(120).default("No due date"),
   priority: z.enum(["high", "medium", "low"]).default("medium"),
   patient: z.string().trim().max(200).nullish(),
