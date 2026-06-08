@@ -11,6 +11,7 @@ import {
 import { SigningPanel } from "@/components/settings/settings-billing";
 import { CareTeamPanel } from "@/components/settings/settings-care-team";
 import { ProfilePanel } from "@/components/settings/settings-preferences";
+import { useActiveRole } from "@/lib/roles";
 
 const TABS = [
   { id: "profile", labelKey: "settings.tabs.profile" },
@@ -41,20 +42,27 @@ function PlaceholderPanel({
 
 export function SettingsView() {
   const { t } = useTranslation();
+  const role = useActiveRole();
   const [tab, setTab] = useState<Tab>("profile");
+
+  // Only clinic owners/admins manage clinic-wide settings (care team, records,
+  // signing, developers). Everyone else gets their own profile only.
+  const isAdmin = role === "owner" || role === "admin";
+  const visibleTabs = isAdmin ? TABS : TABS.filter((item) => item.id === "profile");
+  const activeTab = visibleTabs.some((item) => item.id === tab) ? tab : "profile";
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-10">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">
-          {t(`settings.tabs.${tab}`)}
+          {t(`settings.tabs.${activeTab}`)}
         </h1>
         <nav className="flex flex-wrap items-center gap-1">
-          {TABS.map((item) => (
+          {visibleTabs.map((item) => (
             <button
               className={cn(
                 "rounded-lg px-3 py-1.5 text-sm transition-colors",
-                tab === item.id
+                activeTab === item.id
                   ? "bg-muted text-foreground"
                   : "text-muted-foreground hover:text-foreground"
               )}
@@ -69,16 +77,16 @@ export function SettingsView() {
       </div>
 
       <div className="mt-10 space-y-12">
-        {tab === "profile" && <ProfilePanel />}
-        {tab === "records" && (
+        {activeTab === "profile" && <ProfilePanel />}
+        {activeTab === "records" && (
           <PlaceholderPanel
             description={t("settings.records.description")}
             title={t("settings.tabs.records")}
           />
         )}
-        {tab === "signing" && <SigningPanel />}
-        {tab === "careTeam" && <CareTeamPanel />}
-        {tab === "developers" && (
+        {activeTab === "signing" && <SigningPanel />}
+        {activeTab === "careTeam" && <CareTeamPanel />}
+        {activeTab === "developers" && (
           <PlaceholderPanel
             description={t("settings.developers.description")}
             title={t("settings.tabs.developers")}

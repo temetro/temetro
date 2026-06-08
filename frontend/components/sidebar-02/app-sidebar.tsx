@@ -14,7 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { navItems } from "@/lib/nav";
+import { useActiveRole, visibleNavItems } from "@/lib/roles";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
@@ -26,9 +26,11 @@ import { NavUser } from "@/components/sidebar-02/nav-user";
 export function DashboardSidebar() {
   const { state } = useSidebar();
   const { t } = useTranslation();
+  const role = useActiveRole();
   const isCollapsed = state === "collapsed";
 
-  const dashboardRoutes: Route[] = navItems.map((item) => ({
+  // Hide clinical nav from non-clinical roles (e.g. reception). See lib/roles.ts.
+  const dashboardRoutes: Route[] = visibleNavItems(role).map((item) => ({
     id: item.id,
     title: t(item.labelKey),
     icon: <item.icon className="size-4" />,

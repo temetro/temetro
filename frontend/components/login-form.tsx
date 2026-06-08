@@ -15,9 +15,12 @@ import {
 } from "@/components/ui/card";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTab } from "@/components/ui/tabs";
 import { authClient } from "@/lib/auth-client";
 import { notify } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+
+type Mode = "email" | "username";
 
 export function LoginForm({
   className,
@@ -25,7 +28,10 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const { t } = useTranslation();
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  // Staff provisioned by an admin sign in with a username; clinic owners sign in
+  // with the email they signed up with. The tab picks which credential to use.
+  const [mode, setMode] = useState<Mode>("email");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -36,11 +42,19 @@ export function LoginForm({
     setSubmitting(true);
     setError(null);
 
-    const { error: err } = await authClient.signIn.email({
-      email: email.trim(),
-      password,
-      callbackURL: `${window.location.origin}/`,
-    });
+    const callbackURL = `${window.location.origin}/`;
+    const { error: err } =
+      mode === "email"
+        ? await authClient.signIn.email({
+            email: identifier.trim(),
+            password,
+            callbackURL,
+          })
+        : await authClient.signIn.username({
+            username: identifier.trim(),
+            password,
+            callbackURL,
+          });
 
     if (err) {
       const message = err.message ?? t("auth.login.error");
@@ -68,18 +82,40 @@ export function LoginForm({
                   {error}
                 </p>
               )}
+              <Tabs
+                onValueChange={(value) => {
+                  setMode(value as Mode);
+                  setError(null);
+                }}
+                value={mode}
+              >
+                <TabsList className="w-full">
+                  <TabsTab className="flex-1" value="email">
+                    {t("auth.login.tabEmail")}
+                  </TabsTab>
+                  <TabsTab className="flex-1" value="username">
+                    {t("auth.login.tabUsername")}
+                  </TabsTab>
+                </TabsList>
+              </Tabs>
               <Field>
-                <FieldLabel htmlFor="email">
-                  {t("auth.login.emailLabel")}
+                <FieldLabel htmlFor="identifier">
+                  {mode === "email"
+                    ? t("auth.login.emailLabel")
+                    : t("auth.login.usernameLabel")}
                 </FieldLabel>
                 <Input
-                  autoComplete="email"
-                  id="email"
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder={t("auth.login.emailPlaceholder")}
+                  autoComplete={mode === "email" ? "email" : "username"}
+                  id="identifier"
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder={
+                    mode === "email"
+                      ? t("auth.login.emailPlaceholder")
+                      : t("auth.login.usernamePlaceholder")
+                  }
                   required
-                  type="email"
-                  value={email}
+                  type={mode === "email" ? "email" : "text"}
+                  value={identifier}
                 />
               </Field>
               <Field className="w-full">

@@ -51,6 +51,29 @@ export const member = ac.newRole({
   task: ["read", "write", "delete"],
 });
 
+// doctor (clinician): same clinical access as `member` — the role we provision
+// for physicians. Kept distinct from `member` so the UI can label/treat it as
+// "Doctor" and so reception can be a sibling role with narrower access.
+export const doctor = ac.newRole({
+  ...memberAc.statements,
+  patient: ["read", "write"],
+  appointment: ["read", "write", "delete"],
+  prescription: ["read", "write", "delete"],
+  task: ["read", "write", "delete"],
+});
+
+// reception (front desk): scheduling + patient registration only. Can manage
+// appointments and register/edit patient demographics, but has NO access to
+// clinical records (no prescription statement at all) — least-privilege per
+// EHR RBAC guidance. The patients service additionally redacts clinical fields
+// for this role so demographics-only is enforced server-side, not just in UI.
+export const reception = ac.newRole({
+  ...memberAc.statements,
+  patient: ["read", "write"],
+  appointment: ["read", "write", "delete"],
+  task: ["read", "write"],
+});
+
 // viewer: read-only access to clinical records.
 export const viewer = ac.newRole({
   patient: ["read"],
@@ -59,4 +82,4 @@ export const viewer = ac.newRole({
   task: ["read"],
 });
 
-export const roles = { owner, admin, member, viewer };
+export const roles = { owner, admin, doctor, reception, member, viewer };

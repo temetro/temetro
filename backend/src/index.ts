@@ -16,6 +16,7 @@ import { notesRouter } from "./routes/notes.js";
 import { notificationsRouter } from "./routes/notifications.js";
 import { patientsRouter } from "./routes/patients.js";
 import { prescriptionsRouter } from "./routes/prescriptions.js";
+import { staffRouter } from "./routes/staff.js";
 import { tasksRouter } from "./routes/tasks.js";
 
 const app = express();
@@ -58,6 +59,7 @@ app.use("/api/notes", notesRouter);
 app.use("/api/appointments", appointmentsRouter);
 app.use("/api/prescriptions", prescriptionsRouter);
 app.use("/api/tasks", tasksRouter);
+app.use("/api/staff", staffRouter);
 app.use("/api/activity", activityRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/conversations", conversationsRouter);
@@ -78,6 +80,7 @@ server.listen(env.PORT, () => {
   console.log(`  • appts:    /api/appointments`);
   console.log(`  • rx:       /api/prescriptions`);
   console.log(`  • tasks:    /api/tasks`);
+  console.log(`  • staff:    /api/staff`);
   console.log(`  • activity: /api/activity`);
   console.log(`  • stats:    /api/analytics`);
   console.log(`  • messages: /api/conversations  (+ Socket.io)`);

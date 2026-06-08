@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
+import { username } from "better-auth/plugins/username";
 import { eq } from "drizzle-orm";
 
 import { db } from "./db/index.js";
@@ -55,6 +56,13 @@ export const auth = betterAuth({
   },
 
   plugins: [
+    // Lets staff sign in with a username (in addition to email). Admin-created
+    // staff accounts (see src/routes/staff.ts) set a username + password the
+    // employee uses to log in. Adds `username` + `displayUsername` to `user`.
+    username({
+      minUsernameLength: 3,
+      maxUsernameLength: 32,
+    }),
     organization({
       ac,
       roles,

@@ -27,10 +27,21 @@ No test runner is configured. Verify by running the stack (`docker compose up`) 
 
 ## Architecture
 
-- **`src/auth.ts`** — the Better Auth config (the CLI auto-discovers it). Email/password,
-  organization plugin (clinics) with custom RBAC from **`src/lib/access.ts`**
-  (`owner`/`admin`/`member`/`viewer` + a `patient` resource). Mounted in `src/index.ts` via
-  `toNodeHandler(auth)` at `/api/auth/*`.
+- **`src/auth.ts`** — the Better Auth config (the CLI auto-discovers it). Email/password +
+  **username** plugin (staff sign in by username) and the organization plugin (clinics) with custom
+  RBAC from **`src/lib/access.ts`** (`owner`/`admin`/`doctor`/`reception`/`member`/`viewer` over
+  `patient`/`appointment`/`prescription`/`task` resources). `reception` has no `prescription`
+  statement — it's scoped to scheduling + registration, and `src/services/patients.ts` redacts
+  clinical fields for it. Mounted in `src/index.ts` via `toNodeHandler(auth)` at `/api/auth/*`.
+- **`src/routes/staff.ts`** — admin-provisioned staff: `POST /api/staff` creates a user
+  (`auth.api.signUpEmail`) + attaches them to the clinic (`auth.api.addMember`); `GET /api/staff`
+  lists members with usernames. Replaces the old email-invitation flow. Gated by
+  `requirePermission({ member: ["create"] })`.
+- **Better Auth = the single source of RBAC.** Manage all permissions through Better Auth, not a
+  custom layer. Authoritative references live as repo skills under
+  `.claude/skills/{better-auth-best-practices,organization-best-practices,
+  email-and-password-best-practices,better-auth-security-best-practices}` — consult them before
+  changing `auth.ts`, `src/lib/access.ts`, or the auth schema.
 - **`src/db/`** — `index.ts` is the Drizzle client (no schema passed; we use the core query builder).
   `schema/auth.ts` is **generated** by the Better Auth CLI; `schema/patients.ts` is hand-written and
   references the generated `organization`/`user` tables.

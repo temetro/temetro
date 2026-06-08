@@ -18,6 +18,7 @@ import type {
   Medication,
   Patient,
   Problem,
+  Trend,
 } from "../types/patient.js";
 
 type PatientRow = typeof patients.$inferSelect;
@@ -65,6 +66,27 @@ function toPatient(row: PatientRow, children: Children): Patient {
   };
 }
 
+const EMPTY_TREND: Trend = { label: "", unit: "", points: [] };
+
+// Strip every clinical section, leaving only registration/demographic fields.
+// Used for the `reception` role, which is scoped to scheduling + registration
+// and must never receive PHI (labs, meds, problems, vitals, encounters). This
+// enforces least-privilege server-side rather than relying on the UI to hide it.
+function redactClinical(patient: Patient): Patient {
+  return {
+    ...patient,
+    allergies: [],
+    alerts: [],
+    medications: [],
+    problems: [],
+    vitals: { bp: "", hr: "", temp: "", spo2: "", takenAt: "" },
+    vitalsTrend: EMPTY_TREND,
+    labs: [],
+    labTrend: EMPTY_TREND,
+    encounters: [],
+  };
+}
+
 // Input children are already in the canonical Patient sub-shapes.
 function childrenFromInput(input: PatientInput): Children {
   return {
@@ -95,6 +117,49 @@ function patientColumns(orgId: string, input: PatientInput, createdBy?: string) 
     vitalsTrend: input.vitalsTrend,
     labTrend: input.labTrend,
     ...(createdBy ? { createdBy } : {}),
+  };
+}
+
+// Registration columns only — clinical columns get empty values (they are
+// NOT NULL). Used when the `reception` role creates a patient so they can never
+// write PHI even if the request body contains clinical fields.
+function demographicColumns(
+  orgId: string,
+  input: PatientInput,
+  createdBy?: string,
+) {
+  return {
+    organizationId: orgId,
+    fileNumber: input.fileNumber,
+    name: input.name,
+    age: input.age,
+    sex: input.sex,
+    pcp: input.pcp,
+    status: input.status,
+    initials: input.initials,
+    alerts: [] as string[],
+    vitalsBp: "",
+    vitalsHr: "",
+    vitalsTemp: "",
+    vitalsSpo2: "",
+    vitalsTakenAt: "",
+    vitalsTrend: EMPTY_TREND,
+    labTrend: EMPTY_TREND,
+    ...(createdBy ? { createdBy } : {}),
+  };
+}
+
+// The demographic subset for a `reception` update — never touches clinical
+// columns or child tables, so an existing record's PHI is preserved.
+function demographicUpdateColumns(input: PatientInput) {
+  return {
+    fileNumber: input.fileNumber,
+    name: input.name,
+    age: input.age,
+    sex: input.sex,
+    pcp: input.pcp,
+    status: input.status,
+    initials: input.initials,
   };
 }
 
@@ -212,19 +277,26 @@ function isUniqueViolation(err: unknown): boolean {
   );
 }
 
-export async function listPatients(orgId: string): Promise<Patient[]> {
+export async function listPatients(
+  orgId: string,
+  demographicsOnly = false,
+): Promise<Patient[]> {
   const rows = await db
     .select()
     .from(patients)
     .where(eq(patients.organizationId, orgId))
     .orderBy(asc(patients.name));
   const children = await loadChildren(rows.map((r) => r.id));
-  return rows.map((r) => toPatient(r, children.get(r.id) ?? emptyChildren()));
+  return rows.map((r) => {
+    const patient = toPatient(r, children.get(r.id) ?? emptyChildren());
+    return demographicsOnly ? redactClinical(patient) : patient;
+  });
 }
 
 export async function getPatient(
   orgId: string,
   fileNumber: string,
+  demographicsOnly = false,
 ): Promise<Patient | null> {
   const [row] = await db
     .select()
@@ -237,16 +309,27 @@ export async function getPatient(
     );
   if (!row) return null;
   const children = await loadChildren([row.id]);
-  return toPatient(row, children.get(row.id) ?? emptyChildren());
+  const patient = toPatient(row, children.get(row.id) ?? emptyChildren());
+  return demographicsOnly ? redactClinical(patient) : patient;
 }
 
 export async function createPatient(
   orgId: string,
   userId: string,
   input: PatientInput,
+  demographicsOnly = false,
 ): Promise<Patient> {
   try {
     return await db.transaction(async (tx) => {
+      // Reception registers demographics only — clinical input is ignored and
+      // no child (clinical) rows are written.
+      if (demographicsOnly) {
+        const [row] = await tx
+          .insert(patients)
+          .values(demographicColumns(orgId, input, userId))
+          .returning();
+        return toPatient(row!, emptyChildren());
+      }
       const [row] = await tx
         .insert(patients)
         .values(patientColumns(orgId, input, userId))
@@ -269,6 +352,7 @@ export async function updatePatient(
   orgId: string,
   fileNumber: string,
   input: PatientInput,
+  demographicsOnly = false,
 ): Promise<Patient | null> {
   try {
     return await db.transaction(async (tx) => {
@@ -282,6 +366,21 @@ export async function updatePatient(
           ),
         );
       if (!existing) return null;
+
+      // Reception edits demographics only: update the registration columns and
+      // leave clinical columns + child tables (existing PHI) untouched, then
+      // return a redacted record.
+      if (demographicsOnly) {
+        const [row] = await tx
+          .update(patients)
+          .set(demographicUpdateColumns(input))
+          .where(eq(patients.id, existing.id))
+          .returning();
+        const children = await loadChildren([existing.id]);
+        return redactClinical(
+          toPatient(row!, children.get(existing.id) ?? emptyChildren()),
+        );
+      }
 
       const [row] = await tx
         .update(patients)

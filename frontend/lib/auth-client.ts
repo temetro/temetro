@@ -1,4 +1,7 @@
-import { organizationClient } from "better-auth/client/plugins";
+import {
+  organizationClient,
+  usernameClient,
+} from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
 import { ac, roles } from "@/lib/access";
@@ -8,7 +11,9 @@ import { ac, roles } from "@/lib/access";
 // cookie set by the backend is included on every request.
 export const authClient = createAuthClient({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000",
-  plugins: [organizationClient({ ac, roles })],
+  // usernameClient enables signIn.username(...) so admin-provisioned staff can
+  // log in with a username; organizationClient powers clinics + RBAC.
+  plugins: [usernameClient(), organizationClient({ ac, roles })],
 });
 
 export const {

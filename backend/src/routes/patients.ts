@@ -15,6 +15,18 @@ import * as service from "../services/patients.js";
 
 export const patientsRouter = Router();
 
+// The `reception` role is scoped to scheduling + registration: it sees and
+// writes patient demographics only, never clinical PHI. True only when the
+// caller's role set is reception without any clinical-capable role.
+function isReceptionOnly(memberRole?: string): boolean {
+  const names = String(memberRole ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!names.includes("reception")) return false;
+  return !names.some((r) => ["owner", "admin", "doctor", "member"].includes(r));
+}
+
 // Notify the rest of the clinic about a patient record change (best-effort,
 // pushed live over the socket).
 async function notifyClinic(
@@ -50,7 +62,12 @@ patientsRouter.get(
   requirePermission({ patient: ["read"] }),
   async (req, res, next) => {
     try {
-      res.json(await service.listPatients(req.organizationId!));
+      res.json(
+        await service.listPatients(
+          req.organizationId!,
+          isReceptionOnly(req.memberRole),
+        ),
+      );
     } catch (err) {
       next(err);
     }
@@ -65,6 +82,7 @@ patientsRouter.get(
       const patient = await service.getPatient(
         req.organizationId!,
         req.params.fileNumber as string,
+        isReceptionOnly(req.memberRole),
       );
       if (!patient) throw new HttpError(404, "Patient not found.");
       res.json(patient);
@@ -84,6 +102,7 @@ patientsRouter.post(
         req.organizationId!,
         req.user!.id,
         input,
+        isReceptionOnly(req.memberRole),
       );
       await recordActivity({
         orgId: req.organizationId!,
@@ -117,6 +136,7 @@ patientsRouter.put(
         req.organizationId!,
         req.params.fileNumber as string,
         input,
+        isReceptionOnly(req.memberRole),
       );
       if (!updated) throw new HttpError(404, "Patient not found.");
       await recordActivity({

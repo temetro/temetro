@@ -31,6 +31,7 @@ import {
   type Patient,
   updatePatient,
 } from "@/lib/patients";
+import { hasClinicalAccess, useActiveRole } from "@/lib/roles";
 import { notify } from "@/lib/toast";
 
 type PatientFormDialogProps = {
@@ -203,6 +204,11 @@ export function PatientFormDialog({
 }: PatientFormDialogProps) {
   const { t } = useTranslation();
   const isEdit = mode === "edit";
+  // Reception registers demographics only — clinical sections are hidden (the
+  // backend also redacts/ignores clinical data for this role). Show everything
+  // while the role is still loading to avoid a flash for clinical users.
+  const role = useActiveRole();
+  const showClinical = role == null || hasClinicalAccess(role);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -416,6 +422,8 @@ export function PatientFormDialog({
               />
             </Field>
 
+            {showClinical && (
+              <>
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 {t("patientForm.currentVitals")}
@@ -615,6 +623,8 @@ export function PatientFormDialog({
               )}
               rows={visits}
             />
+              </>
+            )}
           </DialogPanel>
 
           <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center">

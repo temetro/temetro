@@ -27,7 +27,7 @@ import {
   CommandPanel,
 } from "@/components/ui/command";
 import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { navItems } from "@/lib/nav";
+import { useActiveRole, visibleNavItems } from "@/lib/roles";
 
 type CommandPaletteContextValue = { open: () => void };
 
@@ -50,6 +50,7 @@ export function useCommandPalette(): CommandPaletteContextValue {
 export function CommandPaletteProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { t } = useTranslation();
+  const role = useActiveRole();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -70,7 +71,8 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
         value: "pages",
         label: t("nav.commandGroup"),
         // Flatten sub-pages so e.g. "Appointments & Schedule" is reachable.
-        items: navItems.flatMap((item) =>
+        // Filtered by role so reception can't jump to clinical pages.
+        items: visibleNavItems(role).flatMap((item) =>
           item.subs?.length
             ? item.subs.map((sub) => ({
                 id: sub.id,
@@ -89,7 +91,7 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
         ),
       },
     ],
-    [t],
+    [t, role],
   );
 
   type Group = (typeof groups)[number];
