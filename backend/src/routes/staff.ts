@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { Router } from "express";
 import { z } from "zod";
 
@@ -44,6 +44,36 @@ const staffInputSchema = z.object({
 });
 
 staffRouter.use(requireAuth, requireOrg);
+
+// Clinical-capable roles that can be a patient's primary provider. Reception
+// (front desk) and viewer (read-only) are excluded.
+const PROVIDER_ROLES = ["owner", "admin", "doctor", "member"] as const;
+
+// List clinicians who can be assigned as a patient's primary provider. Readable
+// by ANY clinic member (no `member:create` gate) so doctors and reception can
+// pick a provider when registering/transferring a patient. Returns user ids.
+staffRouter.get("/providers", async (req, res, next) => {
+  try {
+    const rows = await db
+      .select({
+        userId: member.userId,
+        name: user.name,
+        role: member.role,
+      })
+      .from(member)
+      .innerJoin(user, eq(user.id, member.userId))
+      .where(
+        and(
+          eq(member.organizationId, req.organizationId!),
+          inArray(member.role, PROVIDER_ROLES as unknown as string[]),
+        ),
+      )
+      .orderBy(asc(user.name));
+    res.json(rows);
+  } catch (err) {
+    next(err);
+  }
+});
 
 // List the clinic's members with their usernames (the org client's
 // getFullOrganization doesn't expose username). Owner/admin only.

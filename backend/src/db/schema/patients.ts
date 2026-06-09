@@ -44,6 +44,12 @@ export const patients = pgTable(
     vitalsTakenAt: text("vitals_taken_at").notNull(),
     vitalsTrend: jsonb("vitals_trend").$type<Trend>().notNull(),
     labTrend: jsonb("lab_trend").$type<Trend>().notNull(),
+    // The clinician responsible for this chart (the patient's "PCP"). Used to
+    // scope what each doctor sees and to transfer a patient between providers.
+    // Nullable: legacy/unassigned rows and patients registered by reception.
+    primaryProviderId: text("primary_provider_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
     createdBy: text("created_by").references(() => user.id, {
       onDelete: "set null",
     }),

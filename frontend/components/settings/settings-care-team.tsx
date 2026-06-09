@@ -1,10 +1,14 @@
 "use client";
 
-import { UserPlus, X } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AddStaffDialog } from "@/components/settings/add-staff-dialog";
+import {
+  EmployeeDetailDialog,
+  type StaffMember,
+} from "@/components/settings/employee-detail-dialog";
 import {
   SettingsCard,
   SettingsSection,
@@ -25,17 +29,6 @@ import { ROLE_LABELS } from "@/lib/access";
 import { apiFetch } from "@/lib/api-client";
 import { authClient } from "@/lib/auth-client";
 import { notify } from "@/lib/toast";
-
-// One row of /api/staff — clinic members joined to their user record (incl. the
-// username admin-provisioned staff sign in with).
-type StaffMember = {
-  id: string;
-  userId: string;
-  role: string;
-  name: string | null;
-  email: string | null;
-  username: string | null;
-};
 
 function roleLabel(role?: string | null): string {
   if (!role) return ROLE_LABELS.member;
@@ -62,6 +55,7 @@ export function CareTeamPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [selected, setSelected] = useState<StaffMember | null>(null);
   const [pendingRemove, setPendingRemove] = useState<StaffMember | null>(null);
   const [removing, setRemoving] = useState(false);
 
@@ -142,14 +136,14 @@ export function CareTeamPanel() {
             // Prefer the login username; fall back to email for owners who
             // signed up by email.
             const secondary = m.username ? `@${m.username}` : m.email;
-            return (
-              <div className="flex items-center gap-3 px-4 py-3" key={m.id}>
+            const body = (
+              <>
                 <Avatar className="size-8">
                   <AvatarFallback>
                     {initials(m.name, m.email)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 text-left">
                   <p className="truncate text-sm font-medium">
                     {m.name || m.email || m.userId}
                     {isSelf && (
@@ -167,17 +161,22 @@ export function CareTeamPanel() {
                 <Badge className="capitalize" variant="secondary">
                   {roleLabel(m.role)}
                 </Badge>
-                {canManage && !isSelf && m.role !== "owner" && (
-                  <Button
-                    aria-label={t("settings.careTeam.removeMember")}
-                    onClick={() => setPendingRemove(m)}
-                    size="icon-sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    <X className="size-4" />
-                  </Button>
-                )}
+              </>
+            );
+            // Admins click a row to open the employee detail dialog (view
+            // permissions, change role, remove). Non-managers see a static row.
+            return canManage ? (
+              <button
+                className="flex w-full items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/50"
+                key={m.id}
+                onClick={() => setSelected(m)}
+                type="button"
+              >
+                {body}
+              </button>
+            ) : (
+              <div className="flex items-center gap-3 px-4 py-3" key={m.id}>
+                {body}
               </div>
             );
           })
@@ -191,6 +190,23 @@ export function CareTeamPanel() {
           open={adding}
         />
       )}
+
+      {/* Click a member to view details, change role, or remove. */}
+      <EmployeeDetailDialog
+        editable={
+          canManage &&
+          selected?.userId !== session?.user?.id &&
+          selected?.role !== "owner"
+        }
+        member={selected}
+        onChanged={() => void load()}
+        onOpenChange={(o) => !o && setSelected(null)}
+        onRemove={(m) => {
+          setSelected(null);
+          setPendingRemove(m);
+        }}
+        open={selected !== null}
+      />
 
       {/* Confirm before removing a member — destructive and not reversible. */}
       <Dialog

@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { ArrowLeftRight, Pencil } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -81,9 +81,11 @@ function TrendBlock({ trend }: { trend: Trend }) {
 export function PatientDetail({
   patient,
   onEdit,
+  onTransfer,
 }: {
   patient: Patient;
   onEdit?: () => void;
+  onTransfer?: () => void;
 }) {
   const { t } = useTranslation();
   const sex = t(`patientCard.sex.${patient.sex}`);
@@ -115,12 +117,25 @@ export function PatientDetail({
             </div>
           )}
         </div>
-        {onEdit && (
-          <Button onClick={onEdit} size="sm" type="button" variant="outline">
-            <Pencil className="size-4" />
-            {t("patientCard.edit")}
-          </Button>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {onTransfer && (
+            <Button
+              onClick={onTransfer}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <ArrowLeftRight className="size-4" />
+              {t("patients.transfer.action")}
+            </Button>
+          )}
+          {onEdit && (
+            <Button onClick={onEdit} size="sm" type="button" variant="outline">
+              <Pencil className="size-4" />
+              {t("patientCard.edit")}
+            </Button>
+          )}
+        </div>
       </div>
 
       <Section title={t("patientCard.overview")}>

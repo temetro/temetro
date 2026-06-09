@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarIcon, Plus, RefreshCw, X } from "lucide-react";
-import { type FormEvent, type ReactNode, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ROLE_LABELS } from "@/lib/access";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import {
   type AllergySeverity,
@@ -32,6 +34,7 @@ import {
   updatePatient,
 } from "@/lib/patients";
 import { hasClinicalAccess, useActiveRole } from "@/lib/roles";
+import { listProviders, type Provider } from "@/lib/staff";
 import { notify } from "@/lib/toast";
 
 type PatientFormDialogProps = {
@@ -209,6 +212,8 @@ export function PatientFormDialog({
   // while the role is still loading to avoid a flash for clinical users.
   const role = useActiveRole();
   const showClinical = role == null || hasClinicalAccess(role);
+  const { data: session } = authClient.useSession();
+  const myId = session?.user?.id;
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -222,7 +227,10 @@ export function PatientFormDialog({
   const [status, setStatus] = useState<Patient["status"]>(
     patient?.status ?? "active"
   );
-  const [pcp, setPcp] = useState(patient?.pcp ?? "");
+  // Primary care provider is picked from the clinic's clinicians (drives
+  // per-doctor visibility), not free text. `providerId` is the selected user id.
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [providerId, setProviderId] = useState(patient?.primaryProviderId ?? "");
   const [bp, setBp] = useState(patient?.vitals.bp ?? "");
   const [hr, setHr] = useState(patient?.vitals.hr ?? "");
   const [temp, setTemp] = useState(patient?.vitals.temp ?? "");
@@ -249,18 +257,45 @@ export function PatientFormDialog({
       })) ?? []
   );
 
+  // Load the clinic's clinicians for the PCP picker. When creating, default the
+  // PCP to the current user if they're a provider (a doctor registering their
+  // own patient).
+  useEffect(() => {
+    let active = true;
+    listProviders()
+      .then((list) => {
+        if (!active) return;
+        setProviders(list);
+        if (!isEdit && myId && list.some((p) => p.userId === myId)) {
+          setProviderId((cur) => cur || myId);
+        }
+      })
+      .catch(() => {
+        /* leave the picker empty; PCP just stays unassigned */
+      });
+    return () => {
+      active = false;
+    };
+  }, [isEdit, myId]);
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!name.trim() || submitting) {
       return;
     }
 
+    const selectedProvider = providers.find((p) => p.userId === providerId);
+    // Display name follows the selected provider; preserve any existing label
+    // when nothing is selected so legacy free-text PCPs aren't wiped on edit.
+    const pcpName = selectedProvider?.name ?? (patient?.pcp || "—");
+
     const built: Patient = {
       fileNumber,
       name: name.trim(),
       age: Number(age) || 0,
       sex,
-      pcp: pcp.trim() || "—",
+      pcp: pcpName,
+      primaryProviderId: providerId || null,
       status,
       initials: initialsFromName(name),
       allergies: allergies.filter((a) => a.substance.trim()),
@@ -415,11 +450,20 @@ export function PatientFormDialog({
             </div>
 
             <Field label={t("patientForm.primaryCare")}>
-              <Input
-                onChange={(event) => setPcp(event.target.value)}
-                placeholder={t("patientForm.primaryCarePlaceholder")}
-                value={pcp}
-              />
+              <select
+                className={controlClass}
+                onChange={(event) => setProviderId(event.target.value)}
+                value={providerId}
+              >
+                <option value="">
+                  {t("patientForm.primaryCareUnassigned")}
+                </option>
+                {providers.map((p) => (
+                  <option key={p.userId} value={p.userId}>
+                    {p.name} · {ROLE_LABELS[p.role as keyof typeof ROLE_LABELS] ?? p.role}
+                  </option>
+                ))}
+              </select>
             </Field>
 
             {showClinical && (

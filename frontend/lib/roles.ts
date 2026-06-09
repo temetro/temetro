@@ -45,6 +45,42 @@ export function useActiveRole(): string | null {
   return role;
 }
 
+// The clinical resources + actions we surface in the Care Team permissions
+// summary. Mirrors the statements in lib/access.ts.
+export const CLINICAL_RESOURCES = [
+  "patient",
+  "appointment",
+  "prescription",
+  "task",
+] as const;
+const RESOURCE_ACTIONS = ["read", "write", "delete"] as const;
+
+type PermissionArg = Parameters<
+  typeof authClient.organization.checkRolePermission
+>[0]["permissions"];
+
+// For a given role, the allowed actions on each clinical resource — computed
+// from Better Auth so it stays in lock-step with lib/access.ts. Used by the
+// Care Team employee dialog to show what a role can do.
+export function rolePermissionSummary(
+  role: string | null | undefined,
+): { resource: (typeof CLINICAL_RESOURCES)[number]; actions: string[] }[] {
+  if (!role) return [];
+  return CLINICAL_RESOURCES.map((resource) => {
+    const actions = RESOURCE_ACTIONS.filter((action) => {
+      try {
+        return authClient.organization.checkRolePermission({
+          role: role as RoleKey,
+          permissions: { [resource]: [action] } as PermissionArg,
+        });
+      } catch {
+        return false;
+      }
+    });
+    return { resource, actions };
+  });
+}
+
 // Whether a role may see clinical records (AI lookup, prescriptions, notes,
 // analysis). Driven by Better Auth permissions so it stays in lock-step with
 // lib/access.ts: the `reception` role has no `prescription` statement, so this

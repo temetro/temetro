@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import { PatientDetail } from "@/components/patients/patient-detail";
+import { TransferPatientDialog } from "@/components/patients/transfer-patient-dialog";
 import {
   Sheet,
   SheetHeader,
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getPatient, type Patient } from "@/lib/patients";
+import { hasClinicalAccess, useActiveRole } from "@/lib/roles";
 
 type Status = "loading" | "ready" | "not-found";
 
@@ -54,9 +56,13 @@ export function PatientDetailSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation();
+  const role = useActiveRole();
+  // Clinical roles can reassign a chart; show optimistically while role loads.
+  const canTransfer = role == null || hasClinicalAccess(role);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [status, setStatus] = useState<Status>("loading");
   const [editOpen, setEditOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
   // Bumped on open so the editor remounts with the latest patient data.
   const [editKey, setEditKey] = useState(0);
 
@@ -106,6 +112,9 @@ export function PatientDetailSheet({
                   setEditKey((k) => k + 1);
                   setEditOpen(true);
                 }}
+                onTransfer={
+                  canTransfer ? () => setTransferOpen(true) : undefined
+                }
                 patient={patient}
               />
             )}
@@ -120,6 +129,15 @@ export function PatientDetailSheet({
           onOpenChange={setEditOpen}
           onSaved={(updated) => setPatient(updated)}
           open={editOpen}
+          patient={patient}
+        />
+      )}
+
+      {patient && (
+        <TransferPatientDialog
+          onOpenChange={setTransferOpen}
+          onTransferred={(updated) => setPatient(updated)}
+          open={transferOpen}
           patient={patient}
         />
       )}

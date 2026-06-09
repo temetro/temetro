@@ -55,6 +55,11 @@ export const patientInputSchema = z.object({
   age: z.number().int().min(0).max(150),
   sex: z.enum(["M", "F"]),
   pcp: z.string(),
+  // Optional link to the responsible clinician (user id). Empty string ⇒ null.
+  primaryProviderId: z.preprocess(
+    (v) => (v === "" ? null : v),
+    z.string().nullable().optional(),
+  ),
   status: z.enum(["active", "inpatient", "discharged"]),
   initials: z.string().trim().min(1).max(4),
   allergies: z.array(allergySchema).default([]),

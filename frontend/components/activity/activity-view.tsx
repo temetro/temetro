@@ -18,6 +18,17 @@ import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import {
+  Dialog,
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import {
   type ActivityEntityType,
   type ActivityEntry,
   listActivity,
@@ -56,6 +67,14 @@ function formatTime(iso: string): string {
   return `${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}, ${time}`;
 }
 
+// Full, unambiguous timestamp for the detail dialog.
+function formatFullTime(iso: string): string {
+  return new Date(iso).toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
 function Kpi({
   label,
   value,
@@ -80,9 +99,19 @@ function Kpi({
   );
 }
 
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <span className="shrink-0 text-muted-foreground text-xs">{label}</span>
+      <span className="text-right text-foreground text-sm">{value}</span>
+    </div>
+  );
+}
+
 export function ActivityView() {
   const { t } = useTranslation();
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
+  const [selected, setSelected] = useState<ActivityEntry | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -166,7 +195,14 @@ export function ActivityView() {
                   {!isLast && <div className="mt-1 w-px flex-1 bg-border" />}
                 </div>
 
-                <div className={cn("flex-1", isLast ? "pb-0" : "pb-6")}>
+                <button
+                  className={cn(
+                    "-mx-2 flex-1 rounded-lg px-2 py-1 text-left transition-colors hover:bg-accent/40",
+                    isLast ? "pb-1" : "mb-5",
+                  )}
+                  onClick={() => setSelected(entry)}
+                  type="button"
+                >
                   <span className="font-medium text-foreground text-sm">
                     {entry.action}
                   </span>
@@ -185,12 +221,63 @@ export function ActivityView() {
                   <div className="mt-2 text-muted-foreground text-xs">
                     {formatTime(entry.createdAt)}
                   </div>
-                </div>
+                </button>
               </li>
             );
           })}
         </ol>
       )}
+
+      <Dialog
+        onOpenChange={(o) => !o && setSelected(null)}
+        open={selected !== null}
+      >
+        <DialogPopup className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("activity.detail.title")}</DialogTitle>
+            <DialogDescription>{selected?.action}</DialogDescription>
+          </DialogHeader>
+          <DialogPanel className="flex flex-col gap-2.5">
+            <DetailRow
+              label={t("activity.detail.person")}
+              value={selected?.actorName ?? ""}
+            />
+            <DetailRow
+              label={t("activity.detail.record")}
+              value={
+                selected
+                  ? t(`activity.detail.entityTypes.${selected.entityType}`)
+                  : ""
+              }
+            />
+            {selected?.patientName && (
+              <DetailRow
+                label={t("activity.detail.patient")}
+                value={`${selected.patientName}${
+                  selected.patientFileNumber
+                    ? ` (#${selected.patientFileNumber})`
+                    : ""
+                }`}
+              />
+            )}
+            {selected?.entityId && !selected?.patientFileNumber && (
+              <DetailRow
+                label={t("activity.detail.reference")}
+                value={selected.entityId}
+              />
+            )}
+            <DetailRow
+              label={t("activity.detail.time")}
+              value={selected ? formatFullTime(selected.createdAt) : ""}
+            />
+          </DialogPanel>
+          <DialogFooter>
+            <DialogClose render={<Button type="button" variant="outline" />}>
+              {t("activity.detail.close")}
+            </DialogClose>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
     </div>
   );
 }
