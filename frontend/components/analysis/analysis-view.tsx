@@ -24,13 +24,24 @@ function StatCard({ label, value }: Metric) {
   );
 }
 
+// Each section's grid fills its row evenly: the column count matches the number
+// of cards so there's never an orphan card on its own row. Static class strings
+// (no interpolation) so Tailwind can see them.
+const GRID_BY_COLUMNS: Record<2 | 3 | 4, string> = {
+  2: "grid grid-cols-1 gap-4 sm:grid-cols-2",
+  3: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
+  4: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4",
+};
+
 function Section({
   title,
   description,
+  columns,
   children,
 }: {
   title: string;
   description: string;
+  columns: 2 | 3 | 4;
   children: ReactNode;
 }) {
   return (
@@ -39,9 +50,7 @@ function Section({
         <h2 className="font-semibold text-lg tracking-tight">{title}</h2>
         <p className="text-muted-foreground text-sm">{description}</p>
       </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {children}
-      </div>
+      <div className={GRID_BY_COLUMNS[columns]}>{children}</div>
     </section>
   );
 }
@@ -77,6 +86,7 @@ export function AnalysisView() {
       </div>
 
       <Section
+        columns={3}
         description={t("analysis.patientVolume.description")}
         title={t("analysis.patientVolume.title")}
       >
@@ -122,6 +132,7 @@ export function AnalysisView() {
       </section>
 
       <Section
+        columns={4}
         description={t("analysis.appointments.description")}
         title={t("analysis.appointments.title")}
       >
@@ -144,6 +155,7 @@ export function AnalysisView() {
       </Section>
 
       <Section
+        columns={2}
         description={t("analysis.prescriptions.description")}
         title={t("analysis.prescriptions.title")}
       >
@@ -158,6 +170,7 @@ export function AnalysisView() {
       </Section>
 
       <Section
+        columns={2}
         description={t("analysis.tasks.description")}
         title={t("analysis.tasks.title")}
       >

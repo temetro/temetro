@@ -187,6 +187,20 @@
       "notFound": "Patient not found",
       "loading": "Loading patient…",
       "noPatientForFile": "No patient found for file #{{number}}."
+    },
+    "transfer": {
+      "action": "Transfer",
+      "title": "Transfer patient",
+      "description": "Reassign {{name}} to another clinician. They become this patient's primary provider.",
+      "providerLabel": "New primary provider",
+      "choose": "Choose a provider…",
+      "cancel": "Cancel",
+      "confirm": "Transfer patient",
+      "transferring": "Transferring…",
+      "successTitle": "Patient transferred",
+      "successBody": "{{name}} is now with {{provider}}.",
+      "errorTitle": "Couldn't transfer patient",
+      "error": "Please try again."
     }
   },
   "appointments": {
@@ -366,6 +380,8 @@
     "inbox": "Inbox",
     "unread": "Unread · {{count}}",
     "newMessage": "New message",
+    "searchPlaceholder": "Search conversations",
+    "noMatches": "No conversations match your search.",
     "noUnread": "No unread messages.",
     "noConversations": "No conversations yet.",
     "you": "You: ",
@@ -378,6 +394,8 @@
     "compose": {
       "title": "New message",
       "description": "Start a conversation with a member of your clinic.",
+      "searchPlaceholder": "Search people",
+      "noMatches": "No people match your search.",
       "noMembers": "No other clinic members yet. Invite colleagues from Settings → Care team."
     },
     "startFailedTitle": "Couldn't start conversation",
@@ -430,7 +448,23 @@
     "changesToday": "Changes today",
     "thisWeek": "This week",
     "totalRecorded": "Total recorded",
-    "empty": "No activity yet. Changes to patients, notes, appointments, prescriptions and tasks will appear here."
+    "empty": "No activity yet. Changes to patients, notes, appointments, prescriptions and tasks will appear here.",
+    "detail": {
+      "title": "Activity detail",
+      "person": "Performed by",
+      "record": "Record type",
+      "patient": "Patient",
+      "reference": "Reference",
+      "time": "Time",
+      "close": "Close",
+      "entityTypes": {
+        "patient": "Patient",
+        "note": "Note",
+        "appointment": "Appointment",
+        "prescription": "Prescription",
+        "task": "Task"
+      }
+    }
   },
   "notes": {
     "title": "Notes",
@@ -603,6 +637,7 @@
     "status": "Status",
     "primaryCare": "Primary care",
     "primaryCarePlaceholder": "e.g. Dr. Lena Ortiz",
+    "primaryCareUnassigned": "Unassigned",
     "currentVitals": "Current vitals",
     "bp": "Blood pressure",
     "hr": "Heart rate",
@@ -725,6 +760,32 @@
       "you": "(you)",
       "addMember": "Add team member",
       "removeMember": "Remove member",
+      "employee": {
+        "title": "Team member",
+        "description": "View this member's access, change their role, or remove them.",
+        "permissions": "Permissions",
+        "noAccess": "No access",
+        "changeRole": "Change role",
+        "save": "Save",
+        "saving": "Saving…",
+        "remove": "Remove employee",
+        "close": "Close",
+        "roleUpdatedTitle": "Role updated",
+        "roleUpdatedBody": "{{name}} is now {{role}}.",
+        "roleFailedTitle": "Couldn't update role",
+        "roleFailedBody": "Please try again.",
+        "resources": {
+          "patient": "Patients",
+          "appointment": "Appointments",
+          "prescription": "Prescriptions",
+          "task": "Tasks"
+        },
+        "actions": {
+          "read": "View",
+          "write": "Edit",
+          "delete": "Delete"
+        }
+      },
       "remove": {
         "title": "Remove team member?",
         "description": "{{name}} will lose access to this clinic. This can't be undone.",

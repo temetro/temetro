@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, Plus, SendHorizonal } from "lucide-react";
+import { Mail, Plus, Search, SendHorizonal } from "lucide-react";
 import {
   type FormEvent,
   useEffect,
@@ -68,9 +68,11 @@ export function MessagesView() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
+  const [inboxQuery, setInboxQuery] = useState("");
   const [draft, setDraft] = useState("");
   const [composeOpen, setComposeOpen] = useState(false);
   const [members, setMembers] = useState<Participant[]>([]);
+  const [memberQuery, setMemberQuery] = useState("");
 
   // Refs so the socket handler (registered once) reads current values.
   const selectedIdRef = useRef<string | null>(null);
@@ -135,11 +137,22 @@ export function MessagesView() {
   const unreadCount = conversations.filter((c) => c.unread).length;
   const selected = conversations.find((c) => c.id === selectedId) ?? null;
 
-  const visible = useMemo(
-    () =>
-      showUnreadOnly ? conversations.filter((c) => c.unread) : conversations,
-    [conversations, showUnreadOnly],
-  );
+  const visible = useMemo(() => {
+    const q = inboxQuery.trim().toLowerCase();
+    return conversations.filter((c) => {
+      if (showUnreadOnly && !c.unread) return false;
+      if (!q) return true;
+      return (
+        c.name.toLowerCase().includes(q) ||
+        (c.lastMessage?.body.toLowerCase().includes(q) ?? false)
+      );
+    });
+  }, [conversations, showUnreadOnly, inboxQuery]);
+
+  const visibleMembers = useMemo(() => {
+    const q = memberQuery.trim().toLowerCase();
+    return q ? members.filter((m) => m.name.toLowerCase().includes(q)) : members;
+  }, [members, memberQuery]);
 
   const open = (id: string) => {
     setSelectedId(id);
@@ -170,6 +183,7 @@ export function MessagesView() {
 
   const openCompose = () => {
     setComposeOpen(true);
+    setMemberQuery("");
     listClinicMembers()
       .then(setMembers)
       .catch(() => setMembers([]));
@@ -220,12 +234,27 @@ export function MessagesView() {
             </Button>
           </div>
         </div>
+        <div className="border-border border-b px-3 py-2">
+          <div className="relative">
+            <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+            <Input
+              aria-label={t("messages.searchPlaceholder")}
+              className="pl-9"
+              onChange={(e) => setInboxQuery(e.target.value)}
+              placeholder={t("messages.searchPlaceholder")}
+              size="sm"
+              value={inboxQuery}
+            />
+          </div>
+        </div>
         <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
           {visible.length === 0 ? (
             <p className="px-2 py-1.5 text-muted-foreground text-sm">
-              {showUnreadOnly
-                ? t("messages.noUnread")
-                : t("messages.noConversations")}
+              {inboxQuery.trim()
+                ? t("messages.noMatches")
+                : showUnreadOnly
+                  ? t("messages.noUnread")
+                  : t("messages.noConversations")}
             </p>
           ) : (
             visible.map((c) => {
@@ -379,28 +408,45 @@ export function MessagesView() {
               {t("messages.compose.description")}
             </DialogDescription>
           </DialogHeader>
-          <DialogPanel className="flex flex-col gap-1">
-            {members.length === 0 ? (
-              <p className="px-1 py-4 text-center text-muted-foreground text-sm">
-                {t("messages.compose.noMembers")}
-              </p>
-            ) : (
-              members.map((m) => (
-                <button
-                  className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
-                  key={m.id}
-                  onClick={() => startConversation(m.id)}
-                  type="button"
-                >
-                  <Avatar className="size-8">
-                    <AvatarFallback>{initials(m.name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="truncate text-foreground text-sm">
-                    {m.name}
-                  </span>
-                </button>
-              ))
-            )}
+          <DialogPanel className="flex flex-col gap-2">
+            <div className="relative">
+              <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+              <Input
+                aria-label={t("messages.compose.searchPlaceholder")}
+                className="pl-9"
+                onChange={(e) => setMemberQuery(e.target.value)}
+                placeholder={t("messages.compose.searchPlaceholder")}
+                size="sm"
+                value={memberQuery}
+              />
+            </div>
+            <div className="flex max-h-72 flex-col gap-1 overflow-y-auto">
+              {members.length === 0 ? (
+                <p className="px-1 py-4 text-center text-muted-foreground text-sm">
+                  {t("messages.compose.noMembers")}
+                </p>
+              ) : visibleMembers.length === 0 ? (
+                <p className="px-1 py-4 text-center text-muted-foreground text-sm">
+                  {t("messages.compose.noMatches")}
+                </p>
+              ) : (
+                visibleMembers.map((m) => (
+                  <button
+                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
+                    key={m.id}
+                    onClick={() => startConversation(m.id)}
+                    type="button"
+                  >
+                    <Avatar className="size-8">
+                      <AvatarFallback>{initials(m.name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="truncate text-foreground text-sm">
+                      {m.name}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
           </DialogPanel>
         </DialogPopup>
       </Dialog>

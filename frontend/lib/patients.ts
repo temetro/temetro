@@ -62,7 +62,8 @@ export type Patient = {
   name: string;
   age: number;
   sex: "M" | "F";
-  pcp: string; // primary care provider
+  pcp: string; // primary care provider (display name)
+  primaryProviderId?: string | null; // user id of the responsible clinician
   status: "active" | "inpatient" | "discharged";
   initials: string; // for AvatarFallback
   allergies: Allergy[];
@@ -108,6 +109,20 @@ export async function updatePatient(patient: Patient): Promise<Patient> {
     {
       method: "PUT",
       body: JSON.stringify(patient),
+    },
+  );
+}
+
+// Reassign a patient to another clinician (sets their primary provider + PCP).
+export async function transferPatient(
+  fileNumber: string,
+  providerId: string,
+): Promise<Patient> {
+  return apiFetch<Patient>(
+    `/api/patients/${encodeURIComponent(fileNumber)}/transfer`,
+    {
+      method: "POST",
+      body: JSON.stringify({ providerId }),
     },
   );
 }
