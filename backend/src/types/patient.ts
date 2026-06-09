@@ -57,7 +57,8 @@ export type Patient = {
   name: string;
   age: number;
   sex: Sex;
-  pcp: string; // primary care provider
+  pcp: string; // primary care provider (display name)
+  primaryProviderId?: string | null; // user id of the responsible clinician
   status: PatientStatus;
   initials: string; // for AvatarFallback
   allergies: Allergy[];

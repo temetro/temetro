@@ -1,5 +1,9 @@
+import { and, eq } from "drizzle-orm";
 import { Router } from "express";
+import { z } from "zod";
 
+import { db } from "../db/index.js";
+import { member, user } from "../db/schema/auth.js";
 import { HttpError } from "../lib/http-error.js";
 import { patientInputSchema } from "../lib/patient-validation.js";
 import {
@@ -14,6 +18,29 @@ import { createNotification } from "../services/notifications.js";
 import * as service from "../services/patients.js";
 
 export const patientsRouter = Router();
+
+const transferInputSchema = z.object({
+  providerId: z.string().trim().min(1),
+});
+
+// Only the `doctor` role is scoped to its own panel of patients. Any elevated
+// clinical role (owner / admin / member) sees the whole clinic, so scoping never
+// applies when the caller also holds one of those. Returns the user id to scope
+// by, or undefined for "see everything".
+function providerScope(
+  memberRole: string | undefined,
+  userId: string,
+): string | undefined {
+  const names = String(memberRole ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!names.includes("doctor")) return undefined;
+  if (names.some((r) => ["owner", "admin", "member"].includes(r))) {
+    return undefined;
+  }
+  return userId;
+}
 
 // The `reception` role is scoped to scheduling + registration: it sees and
 // writes patient demographics only, never clinical PHI. True only when the
@@ -66,6 +93,7 @@ patientsRouter.get(
         await service.listPatients(
           req.organizationId!,
           isReceptionOnly(req.memberRole),
+          providerScope(req.memberRole, req.user!.id),
         ),
       );
     } catch (err) {
@@ -83,6 +111,7 @@ patientsRouter.get(
         req.organizationId!,
         req.params.fileNumber as string,
         isReceptionOnly(req.memberRole),
+        providerScope(req.memberRole, req.user!.id),
       );
       if (!patient) throw new HttpError(404, "Patient not found.");
       res.json(patient);
@@ -152,6 +181,59 @@ patientsRouter.put(
         req.organizationId!,
         { id: req.user!.id, name: req.user!.name },
         `${req.user!.name} updated ${updated.name}'s record`,
+        updated.fileNumber,
+      );
+      res.json(updated);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// Reassign a patient to another clinician ("transfer"). Gated on patient:write
+// like any edit; the new provider must be a member of the same clinic.
+patientsRouter.post(
+  "/:fileNumber/transfer",
+  requirePermission({ patient: ["write"] }),
+  async (req, res, next) => {
+    try {
+      const { providerId } = transferInputSchema.parse(req.body);
+      const [provider] = await db
+        .select({ name: user.name })
+        .from(member)
+        .innerJoin(user, eq(user.id, member.userId))
+        .where(
+          and(
+            eq(member.organizationId, req.organizationId!),
+            eq(member.userId, providerId),
+          ),
+        );
+      if (!provider) {
+        throw new HttpError(400, "Selected provider is not a member of this clinic.");
+      }
+
+      const updated = await service.transferPatient(
+        req.organizationId!,
+        req.params.fileNumber as string,
+        providerId,
+        provider.name,
+        providerScope(req.memberRole, req.user!.id),
+      );
+      if (!updated) throw new HttpError(404, "Patient not found.");
+
+      await recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: `Transferred patient ${updated.name} to ${provider.name}`,
+        entityType: "patient",
+        entityId: updated.fileNumber,
+        patientName: updated.name,
+        patientFileNumber: updated.fileNumber,
+      });
+      await notifyClinic(
+        req.organizationId!,
+        { id: req.user!.id, name: req.user!.name },
+        `${req.user!.name} transferred ${updated.name} to ${provider.name}`,
         updated.fileNumber,
       );
       res.json(updated);

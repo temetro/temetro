@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { activityLog } from "../db/schema/activity.js";
@@ -54,14 +54,25 @@ export async function recordActivity(params: {
   }
 }
 
+// Lists the clinic's audit feed. When `actorId` is given, only that user's own
+// actions are returned (each employee sees their own activity); admins/owners
+// call without it to see the whole clinic.
 export async function listActivity(
   orgId: string,
-  limit = 100,
+  options: { actorId?: string; limit?: number } = {},
 ): Promise<ActivityEntry[]> {
+  const { actorId, limit = 100 } = options;
   const rows = await db
     .select()
     .from(activityLog)
-    .where(eq(activityLog.organizationId, orgId))
+    .where(
+      actorId
+        ? and(
+            eq(activityLog.organizationId, orgId),
+            eq(activityLog.actorId, actorId),
+          )
+        : eq(activityLog.organizationId, orgId),
+    )
     .orderBy(desc(activityLog.createdAt))
     .limit(limit);
   return rows.map(toEntry);

@@ -1,4 +1,5 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, or } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import {
@@ -46,6 +47,7 @@ function toPatient(row: PatientRow, children: Children): Patient {
     age: row.age,
     sex: row.sex,
     pcp: row.pcp,
+    primaryProviderId: row.primaryProviderId,
     status: row.status,
     initials: row.initials,
     allergies: children.allergies,
@@ -106,6 +108,7 @@ function patientColumns(orgId: string, input: PatientInput, createdBy?: string) 
     age: input.age,
     sex: input.sex,
     pcp: input.pcp,
+    primaryProviderId: input.primaryProviderId ?? null,
     status: input.status,
     initials: input.initials,
     alerts: input.alerts,
@@ -135,6 +138,7 @@ function demographicColumns(
     age: input.age,
     sex: input.sex,
     pcp: input.pcp,
+    primaryProviderId: input.primaryProviderId ?? null,
     status: input.status,
     initials: input.initials,
     alerts: [] as string[],
@@ -158,9 +162,21 @@ function demographicUpdateColumns(input: PatientInput) {
     age: input.age,
     sex: input.sex,
     pcp: input.pcp,
+    primaryProviderId: input.primaryProviderId ?? null,
     status: input.status,
     initials: input.initials,
   };
+}
+
+// Scope clinical reads to a single provider's panel: their own patients plus any
+// legacy/unassigned rows they created (so a freshly scoped doctor isn't left
+// with an empty list). Returns undefined when no scoping should apply.
+function providerScopeFilter(providerId?: string): SQL | undefined {
+  if (!providerId) return undefined;
+  return or(
+    eq(patients.primaryProviderId, providerId),
+    and(isNull(patients.primaryProviderId), eq(patients.createdBy, providerId)),
+  );
 }
 
 // Loads and groups child rows for a set of patients in one round-trip each.
@@ -280,11 +296,15 @@ function isUniqueViolation(err: unknown): boolean {
 export async function listPatients(
   orgId: string,
   demographicsOnly = false,
+  providerId?: string,
 ): Promise<Patient[]> {
+  const scope = providerScopeFilter(providerId);
   const rows = await db
     .select()
     .from(patients)
-    .where(eq(patients.organizationId, orgId))
+    .where(
+      scope ? and(eq(patients.organizationId, orgId), scope) : eq(patients.organizationId, orgId),
+    )
     .orderBy(asc(patients.name));
   const children = await loadChildren(rows.map((r) => r.id));
   return rows.map((r) => {
@@ -297,7 +317,9 @@ export async function getPatient(
   orgId: string,
   fileNumber: string,
   demographicsOnly = false,
+  providerId?: string,
 ): Promise<Patient | null> {
+  const scope = providerScopeFilter(providerId);
   const [row] = await db
     .select()
     .from(patients)
@@ -305,12 +327,40 @@ export async function getPatient(
       and(
         eq(patients.organizationId, orgId),
         eq(patients.fileNumber, fileNumber),
+        ...(scope ? [scope] : []),
       ),
     );
   if (!row) return null;
   const children = await loadChildren([row.id]);
   const patient = toPatient(row, children.get(row.id) ?? emptyChildren());
   return demographicsOnly ? redactClinical(patient) : patient;
+}
+
+// Reassign a patient to another clinician. Updates both the machine link
+// (primaryProviderId — drives per-doctor visibility) and the display string
+// (pcp). Org-scoped; returns null when the patient isn't in this clinic.
+export async function transferPatient(
+  orgId: string,
+  fileNumber: string,
+  providerId: string,
+  providerName: string,
+  scopeProviderId?: string,
+): Promise<Patient | null> {
+  const scope = providerScopeFilter(scopeProviderId);
+  const [row] = await db
+    .update(patients)
+    .set({ primaryProviderId: providerId, pcp: providerName })
+    .where(
+      and(
+        eq(patients.organizationId, orgId),
+        eq(patients.fileNumber, fileNumber),
+        ...(scope ? [scope] : []),
+      ),
+    )
+    .returning();
+  if (!row) return null;
+  const children = await loadChildren([row.id]);
+  return toPatient(row, children.get(row.id) ?? emptyChildren());
 }
 
 export async function createPatient(
