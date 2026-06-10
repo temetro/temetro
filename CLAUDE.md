@@ -44,6 +44,19 @@ in its own separate repo** (`temetro-landing`), not here.
 `frontend/` and `backend/` are **independent apps**, each with its own `package.json` /
 `node_modules`. Run `npm` commands from inside the relevant app directory, not from this root.
 
+## Documentation (very important)
+
+The **project documentation lives outside this repo**, in the sibling Desktop folder
+`../temetro/docs` (`/Users/khalidabdi/Desktop/temetro/docs`) — a Fumadocs (Next.js) site with
+user guides (`content/docs/guides/`), an API reference (`content/docs/api/`), admin docs, and a
+roadmap (`content/docs/roadmap.mdx`). It is its own git repository.
+
+**Whenever you make a significant change here — a new feature, endpoint, page, or behavior
+change — update the affected docs pages in the same work session** so the documentation stays
+accurate (e.g. a new backend route needs an `content/docs/api/*.mdx` entry; a UI feature belongs
+in the matching guide; status changes belong in the roadmap). Commit docs changes inside that
+repo, separately from this one.
+
 ## Running the stack
 
 From `backend/`: ensure a `.env` exists (`cp .env.example .env`, then set `BETTER_AUTH_SECRET` via
