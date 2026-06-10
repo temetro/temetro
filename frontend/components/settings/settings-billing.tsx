@@ -55,6 +55,46 @@ export function SigningPanel() {
       </SettingsSection>
 
       <SettingsSection
+        description={t("settings.signing.howItWorksDescription")}
+        title={t("settings.signing.howItWorksTitle")}
+      >
+        <SettingsCard className="divide-y divide-border">
+          {(["sign", "approve", "verify"] as const).map((step, index) => (
+            <div className="flex items-start gap-3 px-4 py-3.5" key={step}>
+              <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                {index + 1}
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">
+                  {t(`settings.signing.steps.${step}`)}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {t(`settings.signing.steps.${step}Desc`)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </SettingsCard>
+      </SettingsSection>
+
+      <SettingsSection
+        description={t("settings.signing.backupDescription")}
+        title={t("settings.signing.backupTitle")}
+      >
+        <SettingsCard className="flex items-center justify-between gap-4 p-4">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">
+              {t("settings.signing.backupLabel")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {t("settings.signing.backupDesc")}
+            </p>
+          </div>
+          <Badge variant="secondary">{t("settings.signing.comingSoon")}</Badge>
+        </SettingsCard>
+      </SettingsSection>
+
+      <SettingsSection
         description={t("settings.signing.signedRecordsDescription")}
         title={t("settings.signing.signedRecordsTitle")}
       >

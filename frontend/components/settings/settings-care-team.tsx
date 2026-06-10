@@ -1,6 +1,6 @@
 "use client";
 
-import { UserPlus } from "lucide-react";
+import { Info, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -117,7 +117,11 @@ export function CareTeamPanel() {
       )}
 
       {canManage && (
-        <div className="flex justify-end">
+        <div className="flex items-center justify-between gap-4">
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Info className="size-3.5 shrink-0" />
+            {t("settings.careTeam.clickHint")}
+          </p>
           <Button onClick={() => setAdding(true)} type="button">
             <UserPlus className="size-4" />
             {t("settings.careTeam.addMember")}

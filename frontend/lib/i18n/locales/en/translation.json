@@ -697,10 +697,41 @@
     "copy": "Copy",
     "copied": "Copied",
     "records": {
-      "description": "How patient records are sourced, stored, and displayed"
+      "description": "How patient records are sourced, stored, and displayed",
+      "comingSoon": "Coming soon",
+      "connected": "Connected",
+      "sourcesTitle": "Data sources",
+      "sourcesDescription": "Where the patient records shown in temetro come from",
+      "clinicDb": "Clinic database",
+      "clinicDbDesc": "Patient records are stored in your clinic's own database and scoped to this clinic.",
+      "patientStorage": "Patient-owned storage",
+      "patientStorageDesc": "Read and write records directly on the patient's device once the companion app ships.",
+      "importExportTitle": "Import & export",
+      "importExportDescription": "Move records in and out of temetro",
+      "export": "Export records",
+      "exportDesc": "Download every patient record in this clinic as a single archive.",
+      "import": "Import an existing database",
+      "importDesc": "Connect an existing patient database and browse it in the same card UI.",
+      "retentionTitle": "Retention",
+      "retentionDescription": "How long records are kept",
+      "retentionBody": "Records are kept for as long as your clinic exists. Deleting a patient permanently removes their chart from the clinic database, and the activity log keeps an audit trail of every change — who made it and when."
     },
     "developers": {
-      "description": "Access tokens for the temetro API"
+      "description": "Access tokens for the temetro API",
+      "comingSoon": "Coming soon",
+      "apiTitle": "API access",
+      "apiDescription": "Build on the same REST API the temetro app uses",
+      "baseUrlLabel": "API base URL",
+      "baseUrlDescription": "All endpoints live under this origin (e.g. /api/patients)",
+      "authLabel": "Authentication",
+      "authDescription": "Requests authenticate with your temetro session cookie. Scoped personal access tokens for server-to-server use are planned.",
+      "tokensTitle": "Personal access tokens",
+      "tokensDescription": "Long-lived tokens for scripts and integrations",
+      "noTokens": "No tokens yet.",
+      "generateToken": "Generate token",
+      "resourcesTitle": "Resources",
+      "resourcesDescription": "Where to learn more",
+      "resourcesBody": "The API reference — covering patients, appointments, prescriptions, tasks, messaging, activity and analytics — lives in the project documentation under docs/api. temetro is open source, so the route handlers in backend/src/routes are the authoritative spec."
     },
     "profile": {
       "sectionTitle": "Clinician profile",
@@ -776,6 +807,7 @@
       "loadError": "Could not load the care team.",
       "loading": "Loading care team…",
       "you": "(you)",
+      "clickHint": "Tip: click a team member to see their permissions and manage their role.",
       "addMember": "Add team member",
       "removeMember": "Remove member",
       "employee": {
@@ -855,7 +887,22 @@
       "fingerprintDescription": "Share or publish this fingerprint so patients can trust your changes",
       "signedRecordsTitle": "Signed records",
       "signedRecordsDescription": "Changes you've signed that are waiting on the patient's approval",
-      "noPending": "No pending signatures"
+      "noPending": "No pending signatures",
+      "comingSoon": "Coming soon",
+      "howItWorksTitle": "How signing works",
+      "howItWorksDescription": "The flow behind patient-approved records",
+      "steps": {
+        "sign": "You sign every change",
+        "signDesc": "Each edit you make to a patient record is signed with your private key before it's written.",
+        "approve": "The patient approves it",
+        "approveDesc": "Signed changes stay pending until the patient accepts them in the companion app.",
+        "verify": "Anyone can verify",
+        "verifyDesc": "Your public key fingerprint lets patients and other clinics verify a change really came from you."
+      },
+      "backupTitle": "Backup key",
+      "backupDescription": "Recover your signing identity if you lose this device",
+      "backupLabel": "Recovery phrase",
+      "backupDesc": "Export an encrypted backup of your signing key to restore it on a new device."
     }
   }
 }

@@ -1,6 +1,12 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import {
+  CalendarDays,
+  ListChecks,
+  Pill,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -17,10 +23,25 @@ import {
   DialogPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectItem,
+  SelectPopup,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ROLE_LABELS } from "@/lib/access";
 import { authClient } from "@/lib/auth-client";
 import { PROVISIONABLE_ROLES, rolePermissionSummary } from "@/lib/roles";
 import { notify } from "@/lib/toast";
+
+// Icon shown next to each permission resource row.
+const RESOURCE_ICONS: Record<string, React.ReactNode> = {
+  patient: <Users className="size-4" />,
+  appointment: <CalendarDays className="size-4" />,
+  prescription: <Pill className="size-4" />,
+  task: <ListChecks className="size-4" />,
+};
 
 // One row of /api/staff — shared with the Care Team panel.
 export type StaffMember = {
@@ -31,9 +52,6 @@ export type StaffMember = {
   email: string | null;
   username: string | null;
 };
-
-const selectClass =
-  "h-9 w-full rounded-3xl border border-transparent bg-input/50 px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30";
 
 function roleLabel(role?: string | null): string {
   if (!role) return ROLE_LABELS.member;
@@ -128,18 +146,18 @@ export function EmployeeDetailDialog({
         </DialogHeader>
 
         <DialogPanel className="flex flex-col gap-5">
-          <div className="flex items-center gap-3">
-            <Avatar className="size-10">
-              <AvatarFallback>
+          <div className="flex items-center gap-4 rounded-2xl border bg-card/30 p-4">
+            <Avatar className="size-12 rounded-xl">
+              <AvatarFallback className="rounded-xl bg-muted text-base font-medium">
                 {initials(member?.name, member?.email)}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">
+              <p className="truncate text-base font-semibold tracking-tight">
                 {member?.name || member?.email || member?.userId}
               </p>
               {secondary && (
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="truncate text-sm text-muted-foreground">
                   {secondary}
                 </p>
               )}
@@ -153,23 +171,33 @@ export function EmployeeDetailDialog({
             <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
               {t("settings.careTeam.employee.permissions")}
             </span>
-            <div className="flex flex-col gap-1.5 rounded-2xl border bg-card/30 px-3 py-2.5">
+            <div className="divide-y divide-border rounded-2xl border bg-card/30">
               {summary.map(({ resource, actions }) => (
                 <div
-                  className="flex items-center justify-between gap-3"
+                  className="flex items-center justify-between gap-3 px-3 py-2.5"
                   key={resource}
                 >
-                  <span className="text-sm text-foreground">
+                  <span className="flex items-center gap-2.5 text-sm text-foreground">
+                    <span className="flex size-7 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                      {RESOURCE_ICONS[resource]}
+                    </span>
                     {t(`settings.careTeam.employee.resources.${resource}`)}
                   </span>
-                  <span className="text-xs text-muted-foreground">
-                    {actions.length === 0
-                      ? t("settings.careTeam.employee.noAccess")
-                      : actions
-                          .map((a) =>
-                            t(`settings.careTeam.employee.actions.${a}`),
-                          )
-                          .join(" · ")}
+                  <span className="flex flex-wrap justify-end gap-1">
+                    {actions.length === 0 ? (
+                      <Badge
+                        className="text-muted-foreground"
+                        variant="outline"
+                      >
+                        {t("settings.careTeam.employee.noAccess")}
+                      </Badge>
+                    ) : (
+                      actions.map((a) => (
+                        <Badge key={a} variant="secondary">
+                          {t(`settings.careTeam.employee.actions.${a}`)}
+                        </Badge>
+                      ))
+                    )}
                   </span>
                 </div>
               ))}
@@ -182,18 +210,28 @@ export function EmployeeDetailDialog({
                 {t("settings.careTeam.employee.changeRole")}
               </span>
               <div className="flex items-center gap-2">
-                <select
-                  aria-label={t("settings.careTeam.employee.changeRole")}
-                  className={selectClass}
-                  onChange={(e) => setRole(e.target.value)}
+                <Select
+                  items={roleOptions.map((r) => ({
+                    value: r,
+                    label: roleLabel(r),
+                  }))}
+                  onValueChange={(value) => setRole(value as string)}
                   value={role}
                 >
-                  {roleOptions.map((r) => (
-                    <option key={r} value={r}>
-                      {roleLabel(r)}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    aria-label={t("settings.careTeam.employee.changeRole")}
+                    className="flex-1"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectPopup>
+                    {roleOptions.map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {roleLabel(r)}
+                      </SelectItem>
+                    ))}
+                  </SelectPopup>
+                </Select>
                 <Button
                   disabled={saving || role === member?.role}
                   onClick={changeRole}

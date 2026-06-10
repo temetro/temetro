@@ -4,13 +4,11 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
-import {
-  SettingsCard,
-  SettingsSection,
-} from "@/components/settings/settings-parts";
 import { SigningPanel } from "@/components/settings/settings-billing";
 import { CareTeamPanel } from "@/components/settings/settings-care-team";
+import { DevelopersPanel } from "@/components/settings/settings-developers";
 import { ProfilePanel } from "@/components/settings/settings-preferences";
+import { RecordsPanel } from "@/components/settings/settings-records";
 import { useActiveRole } from "@/lib/roles";
 
 const TABS = [
@@ -22,23 +20,6 @@ const TABS = [
 ] as const;
 
 type Tab = (typeof TABS)[number]["id"];
-
-function PlaceholderPanel({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  const { t } = useTranslation();
-  return (
-    <SettingsSection description={description} title={title}>
-      <SettingsCard className="flex items-center justify-center p-12">
-        <p className="text-sm text-muted-foreground">{t("settings.empty")}</p>
-      </SettingsCard>
-    </SettingsSection>
-  );
-}
 
 export function SettingsView() {
   const { t } = useTranslation();
@@ -78,20 +59,10 @@ export function SettingsView() {
 
       <div className="mt-10 space-y-12">
         {activeTab === "profile" && <ProfilePanel />}
-        {activeTab === "records" && (
-          <PlaceholderPanel
-            description={t("settings.records.description")}
-            title={t("settings.tabs.records")}
-          />
-        )}
+        {activeTab === "records" && <RecordsPanel />}
         {activeTab === "signing" && <SigningPanel />}
         {activeTab === "careTeam" && <CareTeamPanel />}
-        {activeTab === "developers" && (
-          <PlaceholderPanel
-            description={t("settings.developers.description")}
-            title={t("settings.tabs.developers")}
-          />
-        )}
+        {activeTab === "developers" && <DevelopersPanel />}
       </div>
     </div>
   );
