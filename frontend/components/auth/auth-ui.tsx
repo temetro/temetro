@@ -14,9 +14,10 @@ import { cn } from "@/lib/utils";
 export function AuthBrand() {
   return (
     <div className="flex items-center justify-center gap-3">
+      {/* White fox mark — inverted to black in light mode. */}
       <Image
         alt="temetro"
-        className="size-11"
+        className="size-11 invert dark:invert-0"
         height={44}
         priority
         src="/temetro-logo.png"

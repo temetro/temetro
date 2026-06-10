@@ -258,6 +258,9 @@
     "new": "New prescription",
     "recent": "Recent prescriptions",
     "recentDescription": "Most recent first",
+    "searchPlaceholder": "Search patient, medication, prescriber",
+    "noMatches": "No prescriptions match your search.",
+    "emptyList": "No prescriptions yet.",
     "addFailedTitle": "Couldn't add prescription",
     "addFailedBody": "Please try again.",
     "kpi": {

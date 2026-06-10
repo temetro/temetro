@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleCheck, Clock, Pill, Plus } from "lucide-react";
+import { CircleCheck, Clock, Pill, Plus, Search } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   type Prescription,
   type RxStatus,
@@ -127,6 +128,7 @@ export function PrescriptionsView() {
   const [list, setList] = useState<Prescription[]>([]);
   const [selected, setSelected] = useState<Prescription | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -169,6 +171,20 @@ export function PrescriptionsView() {
     }
   };
 
+  // Case-insensitive substring match, same pattern as the Patients page.
+  const search = query.trim().toLowerCase();
+  const filtered = useMemo(() => {
+    if (!search) return list;
+    return list.filter(
+      (rx) =>
+        rx.name.toLowerCase().includes(search) ||
+        rx.fileNumber.includes(search) ||
+        rx.medication.toLowerCase().includes(search) ||
+        rx.prescriber.toLowerCase().includes(search) ||
+        rx.status.toLowerCase().includes(search),
+    );
+  }, [list, search]);
+
   const kpis = useMemo(
     () => [
       {
@@ -201,14 +217,25 @@ export function PrescriptionsView() {
             {t("prescriptions.subtitle")}
           </p>
         </div>
-        <Button
-          className="rounded-3xl"
-          onClick={() => setAddOpen(true)}
-          type="button"
-        >
-          <Plus className="size-4" />
-          {t("prescriptions.new")}
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative">
+            <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+            <Input
+              className="w-full pl-9 sm:w-64"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("prescriptions.searchPlaceholder")}
+              value={query}
+            />
+          </div>
+          <Button
+            className="rounded-3xl"
+            onClick={() => setAddOpen(true)}
+            type="button"
+          >
+            <Plus className="size-4" />
+            {t("prescriptions.new")}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -222,9 +249,16 @@ export function PrescriptionsView() {
         title={t("prescriptions.recent")}
       >
         <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
-          {list.map((rx) => (
+          {filtered.map((rx) => (
             <RxRow key={rx.id} onOpen={() => openRx(rx)} rx={rx} />
           ))}
+          {filtered.length === 0 && (
+            <p className="p-6 text-center text-muted-foreground text-sm">
+              {search
+                ? t("prescriptions.noMatches")
+                : t("prescriptions.emptyList")}
+            </p>
+          )}
         </div>
       </Section>
 

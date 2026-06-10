@@ -60,9 +60,10 @@ export function DashboardSidebar() {
                 className="flex items-center justify-center"
                 href="#"
               >
+                {/* White fox mark — inverted to black in light mode. */}
                 <Image
                   alt="temetro"
-                  className="size-10 shrink-0"
+                  className="size-10 shrink-0 invert dark:invert-0"
                   height={40}
                   priority
                   src="/temetro-logo.png"
