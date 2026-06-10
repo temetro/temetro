@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ChevronDown, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
 import {
   CopyField,
   FieldLabel,
@@ -13,8 +15,15 @@ import {
   SettingsSection,
   ToggleRow,
 } from "@/components/settings/settings-parts";
+import { authClient } from "@/lib/auth-client";
+import {
+  getSettings,
+  saveSettings,
+  type UserPreferences,
+} from "@/lib/settings";
+import { notify } from "@/lib/toast";
 
-// Keys into settings.profile.notif.* — these toggles are illustrative.
+// Keys into settings.profile.notif.* — each maps to a persisted preference.
 const patientNotifications = [
   { titleKey: "newLab", descKey: "newLabDesc" },
   { titleKey: "recordUpdated", descKey: "recordUpdatedDesc" },
@@ -24,8 +33,100 @@ const patientNotifications = [
   { titleKey: "visitScheduled", descKey: "visitScheduledDesc" },
 ] as const;
 
+const accountNotifications = [
+  { titleKey: "pendingApprovals", descKey: "pendingApprovalsDesc" },
+  { titleKey: "recordsShared", descKey: "recordsSharedDesc" },
+] as const;
+
+// All notification toggles default to on; profile extras default to empty.
+const DEFAULT_PREFS: UserPreferences = {
+  "notif.newLab": true,
+  "notif.recordUpdated": true,
+  "notif.approvalRequested": true,
+  "notif.changeApproved": true,
+  "notif.newMessage": true,
+  "notif.visitScheduled": true,
+  "notif.pendingApprovals": true,
+  "notif.recordsShared": true,
+  clinic: "",
+  contactEmail: "",
+};
+
 export function ProfilePanel() {
   const { t } = useTranslation();
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+
+  const [prefs, setPrefs] = useState<UserPreferences>(DEFAULT_PREFS);
+  const [baseline, setBaseline] = useState<UserPreferences>(DEFAULT_PREFS);
+  const [name, setName] = useState("");
+  const [baselineName, setBaselineName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getSettings()
+      .then((stored) => {
+        if (cancelled) return;
+        const merged = { ...DEFAULT_PREFS, ...stored };
+        setPrefs(merged);
+        setBaseline(merged);
+      })
+      .catch(() => {
+        // Keep the defaults; the page still works and Save will retry.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Seed the display name from the session once it loads.
+  useEffect(() => {
+    if (user?.name) {
+      setName((prev) => prev || user.name);
+      setBaselineName((prev) => prev || user.name);
+    }
+  }, [user?.name]);
+
+  const setPref = (key: string, value: boolean | string) =>
+    setPrefs((prev) => ({ ...prev, [key]: value }));
+
+  const dirty =
+    name !== baselineName || JSON.stringify(prefs) !== JSON.stringify(baseline);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const saved = await saveSettings(prefs);
+      const trimmed = name.trim();
+      if (trimmed && trimmed !== baselineName) {
+        const { error } = await authClient.updateUser({ name: trimmed });
+        if (error) throw new Error(error.message ?? "updateUser failed");
+        setName(trimmed);
+        setBaselineName(trimmed);
+      }
+      const merged = { ...DEFAULT_PREFS, ...saved };
+      setPrefs(merged);
+      setBaseline(merged);
+      notify.success(
+        t("settings.profile.savedTitle"),
+        t("settings.profile.savedBody"),
+      );
+    } catch {
+      notify.error(
+        t("settings.profile.saveFailedTitle"),
+        t("settings.profile.saveFailedBody"),
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const initial = (name || user?.name || "?").trim().charAt(0).toUpperCase();
+  const username =
+    (user as { username?: string | null } | undefined)?.username ?? null;
+
   return (
     <>
       <SettingsSection title={t("settings.profile.sectionTitle")}>
@@ -33,12 +134,12 @@ export function ProfilePanel() {
           <CopyField
             description={t("settings.profile.clinicianIdDescription")}
             label={t("settings.profile.clinicianIdLabel")}
-            value="62a5278f-91c6-4912-b711-ee1c9c2f0a73"
+            value={user?.id ?? "—"}
           />
           <CopyField
             description={t("settings.profile.handleDescription")}
             label={t("settings.profile.handleLabel")}
-            value="dr-khalid"
+            value={username ?? user?.email ?? "—"}
           />
 
           <div className="flex items-end gap-4">
@@ -46,7 +147,7 @@ export function ProfilePanel() {
               <FieldLabel>{t("settings.profile.avatar")}</FieldLabel>
               <Avatar className="size-10 rounded-xl">
                 <AvatarFallback className="rounded-xl bg-muted text-sm font-medium">
-                  K
+                  {initial}
                 </AvatarFallback>
               </Avatar>
             </div>
@@ -54,7 +155,10 @@ export function ProfilePanel() {
               <FieldLabel required>
                 {t("settings.profile.displayName")}
               </FieldLabel>
-              <Input defaultValue="Dr. Khalid" />
+              <Input
+                onChange={(event) => setName(event.target.value)}
+                value={name}
+              />
             </div>
           </div>
 
@@ -72,14 +176,22 @@ export function ProfilePanel() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <FieldLabel>{t("settings.profile.clinic")}</FieldLabel>
-              <Input placeholder={t("settings.profile.clinicPlaceholder")} />
+              <Input
+                onChange={(event) => setPref("clinic", event.target.value)}
+                placeholder={t("settings.profile.clinicPlaceholder")}
+                value={String(prefs.clinic ?? "")}
+              />
             </div>
             <div className="space-y-1.5">
               <FieldLabel required>
                 {t("settings.profile.contactEmail")}
               </FieldLabel>
               <Input
+                onChange={(event) =>
+                  setPref("contactEmail", event.target.value)
+                }
                 placeholder={t("settings.profile.contactEmailPlaceholder")}
+                value={String(prefs.contactEmail ?? "")}
               />
             </div>
           </div>
@@ -106,9 +218,12 @@ export function ProfilePanel() {
         <div className="space-y-3">
           {patientNotifications.map((item) => (
             <ToggleRow
-              defaultChecked
+              checked={Boolean(prefs[`notif.${item.titleKey}`])}
               description={t(`settings.profile.notif.${item.descKey}`)}
               key={item.titleKey}
+              onCheckedChange={(checked) =>
+                setPref(`notif.${item.titleKey}`, checked)
+              }
               title={t(`settings.profile.notif.${item.titleKey}`)}
             />
           ))}
@@ -120,19 +235,21 @@ export function ProfilePanel() {
         title={t("settings.profile.accountNotifications")}
       >
         <div className="space-y-3">
-          <ToggleRow
-            defaultChecked
-            description={t("settings.profile.notif.pendingApprovalsDesc")}
-            title={t("settings.profile.notif.pendingApprovals")}
-          />
-          <ToggleRow
-            defaultChecked
-            description={t("settings.profile.notif.recordsSharedDesc")}
-            title={t("settings.profile.notif.recordsShared")}
-          />
+          {accountNotifications.map((item) => (
+            <ToggleRow
+              checked={Boolean(prefs[`notif.${item.titleKey}`])}
+              description={t(`settings.profile.notif.${item.descKey}`)}
+              key={item.titleKey}
+              onCheckedChange={(checked) =>
+                setPref(`notif.${item.titleKey}`, checked)
+              }
+              title={t(`settings.profile.notif.${item.titleKey}`)}
+            />
+          ))}
         </div>
       </SettingsSection>
 
+      {/* Future features — intentionally not wired to persistence yet. */}
       <SettingsSection
         description={t("settings.profile.featuresDescription")}
         title={t("settings.profile.features")}
@@ -162,9 +279,28 @@ export function ProfilePanel() {
               {t("settings.profile.deleteAccountDescription")}
             </p>
           </div>
-          <Button variant="destructive">{t("settings.profile.delete")}</Button>
+          <Button onClick={() => setDeleteOpen(true)} variant="destructive">
+            {t("settings.profile.delete")}
+          </Button>
         </SettingsCard>
       </SettingsSection>
+
+      <DeleteAccountDialog onOpenChange={setDeleteOpen} open={deleteOpen} />
+
+      {dirty ? (
+        <div className="sticky bottom-4 z-10">
+          <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-background/95 px-4 py-3 shadow-lg backdrop-blur">
+            <p className="text-sm text-muted-foreground">
+              {t("settings.profile.unsavedChanges")}
+            </p>
+            <Button disabled={saving} onClick={save} size="sm">
+              {saving
+                ? t("settings.profile.saving")
+                : t("settings.profile.saveChanges")}
+            </Button>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }

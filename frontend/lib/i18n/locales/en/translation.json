@@ -695,6 +695,7 @@
     },
     "empty": "Nothing here yet.",
     "copy": "Copy",
+    "copied": "Copied",
     "records": {
       "description": "How patient records are sourced, stored, and displayed"
     },
@@ -729,6 +730,23 @@
       "deleteAccount": "Delete account",
       "deleteAccountDescription": "Permanently delete your temetro account and any locally stored signing keys. This action cannot be undone.",
       "delete": "Delete",
+      "unsavedChanges": "You have unsaved changes",
+      "saveChanges": "Save changes",
+      "saving": "Saving…",
+      "savedTitle": "Settings saved",
+      "savedBody": "Your preferences are up to date.",
+      "saveFailedTitle": "Couldn't save settings",
+      "saveFailedBody": "Please try again.",
+      "deleteDialog": {
+        "title": "Delete your account?",
+        "description": "This permanently deletes your account, removes you from your clinics, and cannot be undone.",
+        "passwordLabel": "Confirm your password",
+        "passwordPlaceholder": "Your password",
+        "cancel": "Cancel",
+        "confirm": "Delete account",
+        "deleting": "Deleting…",
+        "failed": "Couldn't delete the account. Check your password and try again."
+      },
       "notif": {
         "newLab": "New lab result",
         "newLabDesc": "Sent when a new lab result is available on a patient's chart",

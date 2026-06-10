@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Copy } from "lucide-react";
+import { useState } from "react";
+import { Check, Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
@@ -52,10 +53,15 @@ export function ToggleRow({
   title,
   description,
   defaultChecked = false,
+  checked,
+  onCheckedChange,
 }: {
   title: string;
   description?: string;
   defaultChecked?: boolean;
+  /** Pass `checked` + `onCheckedChange` to make the switch controlled. */
+  checked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
 }) {
   return (
     <SettingsCard className="flex items-center justify-between gap-4 px-4 py-3.5">
@@ -65,7 +71,11 @@ export function ToggleRow({
           <p className="text-sm text-muted-foreground">{description}</p>
         ) : null}
       </div>
-      <Switch defaultChecked={defaultChecked} />
+      <Switch
+        checked={checked}
+        defaultChecked={checked === undefined ? defaultChecked : undefined}
+        onCheckedChange={onCheckedChange}
+      />
     </SettingsCard>
   );
 }
@@ -80,6 +90,16 @@ export function CopyField({
   value: string;
 }) {
   const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard unavailable (insecure context) — silently ignore.
+    }
+  };
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div className="space-y-0.5">
@@ -94,10 +114,15 @@ export function CopyField({
         </span>
         <button
           className="flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-accent"
+          onClick={copy}
           type="button"
         >
-          <Copy className="size-3.5" />
-          {t("settings.copy")}
+          {copied ? (
+            <Check className="size-3.5" />
+          ) : (
+            <Copy className="size-3.5" />
+          )}
+          {copied ? t("settings.copied") : t("settings.copy")}
         </button>
       </div>
     </div>
