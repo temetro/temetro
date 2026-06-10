@@ -71,6 +71,13 @@
       "when": 1781022080228,
       "tag": "0009_melted_puck",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1781111039837,
+      "tag": "0010_eager_hellfire_club",
+      "breakpoints": true
     }
   ]
 }

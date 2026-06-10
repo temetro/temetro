@@ -16,6 +16,7 @@ import { notesRouter } from "./routes/notes.js";
 import { notificationsRouter } from "./routes/notifications.js";
 import { patientsRouter } from "./routes/patients.js";
 import { prescriptionsRouter } from "./routes/prescriptions.js";
+import { settingsRouter } from "./routes/settings.js";
 import { staffRouter } from "./routes/staff.js";
 import { tasksRouter } from "./routes/tasks.js";
 
@@ -64,6 +65,7 @@ app.use("/api/activity", activityRouter);
 app.use("/api/analytics", analyticsRouter);
 app.use("/api/conversations", conversationsRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/settings", settingsRouter);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -85,4 +87,5 @@ server.listen(env.PORT, () => {
   console.log(`  • stats:    /api/analytics`);
   console.log(`  • messages: /api/conversations  (+ Socket.io)`);
   console.log(`  • notifs:   /api/notifications`);
+  console.log(`  • settings: /api/settings`);
 });

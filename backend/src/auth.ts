@@ -43,6 +43,14 @@ export const auth = betterAuth({
     },
   },
 
+  user: {
+    // Lets a signed-in user delete their own account from Settings. The
+    // frontend confirms with the user's password (authClient.deleteUser).
+    deleteUser: {
+      enabled: true,
+    },
+  },
+
   emailVerification: {
     sendOnSignUp: true,
     autoSignInAfterVerification: true,
