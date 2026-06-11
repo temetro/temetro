@@ -22,6 +22,8 @@ export type ConversationSummary = {
   participants: Participant[];
   lastMessage: ConversationMessage | null;
   unread: boolean;
+  // Messages from others newer than the caller's read pointer.
+  unreadCount: number;
   updatedAt: string;
 };
 

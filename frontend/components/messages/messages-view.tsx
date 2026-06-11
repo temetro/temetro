@@ -3,6 +3,7 @@
 import { Mail, Plus, Search, SendHorizonal } from "lucide-react";
 import {
   type FormEvent,
+  Fragment,
   useEffect,
   useMemo,
   useRef,
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   Empty,
+  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -59,10 +61,35 @@ function formatTime(iso: string): string {
   });
 }
 
+function sameDay(a: string, b: string): boolean {
+  return new Date(a).toDateString() === new Date(b).toDateString();
+}
+
+// Consecutive messages from one sender within this window render as a group:
+// one sender label, one timestamp, tighter spacing.
+const GROUP_WINDOW_MS = 5 * 60 * 1000;
+
 export function MessagesView() {
   const { t } = useTranslation();
   const { data: session } = authClient.useSession();
   const myId = session?.user?.id ?? "";
+
+  // "Today" / "Yesterday" / "Jun 9, 2026" for the thread's day separators.
+  const formatDay = (iso: string): string => {
+    const date = new Date(iso);
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (date.toDateString() === now.toDateString()) return t("messages.today");
+    if (date.toDateString() === yesterday.toDateString()) {
+      return t("messages.yesterday");
+    }
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
 
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -107,11 +134,13 @@ export function MessagesView() {
           return prev;
         }
         const isSelected = selectedIdRef.current === msg.conversationId;
+        const incoming = msg.senderId !== myIdRef.current && !isSelected;
         const updated: ConversationSummary = {
           ...existing,
           lastMessage: msg,
           updatedAt: msg.createdAt,
-          unread: msg.senderId !== myIdRef.current && !isSelected,
+          unread: incoming,
+          unreadCount: incoming ? existing.unreadCount + 1 : 0,
         };
         return [updated, ...prev.filter((c) => c.id !== msg.conversationId)];
       });
@@ -166,7 +195,9 @@ export function MessagesView() {
     socket.emit("conversation:join", id);
     socket.emit("message:read", id);
     setConversations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, unread: false } : c)),
+      prev.map((c) =>
+        c.id === id ? { ...c, unread: false, unreadCount: 0 } : c,
+      ),
     );
   };
 
@@ -262,35 +293,58 @@ export function MessagesView() {
               return (
                 <button
                   className={cn(
-                    "flex w-full flex-col gap-0.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent",
-                    selected?.id === c.id && "bg-accent",
+                    "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/50",
+                    selected?.id === c.id && "bg-accent hover:bg-accent",
                   )}
                   key={c.id}
                   onClick={() => open(c.id)}
                   type="button"
                 >
-                  <div className="flex w-full items-center gap-2">
-                    {c.unread && (
-                      <span className="size-2 shrink-0 rounded-full bg-primary" />
-                    )}
-                    <span
-                      className={cn(
-                        "min-w-0 flex-1 truncate text-sm",
-                        c.unread
-                          ? "font-semibold text-foreground"
-                          : "font-medium text-foreground",
+                  <Avatar className="size-9 shrink-0">
+                    <AvatarFallback>{initials(c.name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <div className="flex w-full items-center gap-2">
+                      <span
+                        className={cn(
+                          "min-w-0 flex-1 truncate text-sm",
+                          c.unread
+                            ? "font-semibold text-foreground"
+                            : "font-medium text-foreground",
+                        )}
+                      >
+                        {c.name}
+                      </span>
+                      <span
+                        className={cn(
+                          "shrink-0 text-xs",
+                          c.unread
+                            ? "font-medium text-primary"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {last ? formatTime(last.createdAt) : ""}
+                      </span>
+                    </div>
+                    <div className="flex w-full items-center gap-2">
+                      <span
+                        className={cn(
+                          "min-w-0 flex-1 truncate text-xs",
+                          c.unread
+                            ? "text-foreground/80"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {last?.senderId === myId && t("messages.you")}
+                        {last?.body}
+                      </span>
+                      {c.unreadCount > 0 && (
+                        <span className="flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-primary px-1 font-medium text-[10px] text-primary-foreground">
+                          {c.unreadCount > 99 ? "99+" : c.unreadCount}
+                        </span>
                       )}
-                    >
-                      {c.name}
-                    </span>
-                    <span className="shrink-0 text-muted-foreground text-xs">
-                      {last ? formatTime(last.createdAt) : ""}
-                    </span>
+                    </div>
                   </div>
-                  <span className="w-full truncate text-muted-foreground text-xs">
-                    {last?.senderId === myId && t("messages.you")}
-                    {last?.body}
-                  </span>
                 </button>
               );
             })
@@ -324,36 +378,75 @@ export function MessagesView() {
               className="min-h-0 flex-1 overflow-y-auto rounded-2xl border bg-card/30 p-4"
               ref={scrollRef}
             >
-              <div className="flex flex-col gap-3">
-                {messages.map((m) => {
+              <div className="flex flex-col">
+                {messages.map((m, i) => {
+                  const prev = messages[i - 1];
+                  const next = messages[i + 1];
                   const out = m.senderId === myId;
+                  const newDay = !prev || !sameDay(prev.createdAt, m.createdAt);
+                  // A bubble starts/ends a group at sender changes, day breaks
+                  // or >5 min gaps; the group shares one label + timestamp.
+                  const startsGroup =
+                    newDay ||
+                    !prev ||
+                    prev.senderId !== m.senderId ||
+                    +new Date(m.createdAt) - +new Date(prev.createdAt) >
+                      GROUP_WINDOW_MS;
+                  const endsGroup =
+                    !next ||
+                    next.senderId !== m.senderId ||
+                    !sameDay(m.createdAt, next.createdAt) ||
+                    +new Date(next.createdAt) - +new Date(m.createdAt) >
+                      GROUP_WINDOW_MS;
                   return (
-                    <div
-                      className={cn(
-                        "flex flex-col gap-1",
-                        out ? "items-end" : "items-start",
-                      )}
-                      key={m.id}
-                    >
-                      {selected.isGroup && !out && (
-                        <span className="px-1 text-muted-foreground text-[11px]">
-                          {m.senderName}
-                        </span>
+                    <Fragment key={m.id}>
+                      {newDay && (
+                        <div
+                          className={cn(
+                            "mb-3 flex items-center gap-3",
+                            i > 0 && "mt-5",
+                          )}
+                        >
+                          <div className="h-px flex-1 bg-border" />
+                          <span className="text-muted-foreground text-xs">
+                            {formatDay(m.createdAt)}
+                          </span>
+                          <div className="h-px flex-1 bg-border" />
+                        </div>
                       )}
                       <div
                         className={cn(
-                          "max-w-[75%] rounded-2xl px-3 py-2 text-sm",
-                          out
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted text-foreground",
+                          "flex flex-col gap-1",
+                          out ? "items-end" : "items-start",
+                          !newDay && (startsGroup ? "mt-4" : "mt-1"),
                         )}
                       >
-                        {m.body}
+                        {selected.isGroup && !out && startsGroup && (
+                          <span className="px-1 text-muted-foreground text-[11px]">
+                            {m.senderName}
+                          </span>
+                        )}
+                        <div
+                          className={cn(
+                            "max-w-[75%] rounded-2xl px-3 py-2 text-sm",
+                            out
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-foreground",
+                            !startsGroup &&
+                              (out ? "rounded-tr-md" : "rounded-tl-md"),
+                            !endsGroup &&
+                              (out ? "rounded-br-md" : "rounded-bl-md"),
+                          )}
+                        >
+                          {m.body}
+                        </div>
+                        {endsGroup && (
+                          <span className="px-1 text-muted-foreground text-[11px]">
+                            {formatTime(m.createdAt)}
+                          </span>
+                        )}
                       </div>
-                      <span className="px-1 text-muted-foreground text-[11px]">
-                        {formatTime(m.createdAt)}
-                      </span>
-                    </div>
+                    </Fragment>
                   );
                 })}
               </div>
@@ -394,6 +487,12 @@ export function MessagesView() {
                   {t("messages.emptyDescription")}
                 </EmptyDescription>
               </EmptyHeader>
+              <EmptyContent>
+                <Button onClick={openCompose} type="button" variant="outline">
+                  <Plus className="size-4" />
+                  {t("messages.startConversation")}
+                </Button>
+              </EmptyContent>
             </Empty>
           </div>
         )}
