@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ROLE_LABELS } from "@/lib/access";
 import { DEPARTMENTS } from "@/lib/roles";
@@ -178,42 +179,35 @@ function AddTaskDialog({
               <span className="text-muted-foreground text-xs">
                 {t("tasks.dialog.assignee")}
               </span>
-              <div className="flex gap-2">
-                <Button
-                  className="flex-1"
-                  onClick={() => setAssigneeMode("self")}
-                  size="sm"
-                  type="button"
-                  variant={assigneeMode === "self" ? "secondary" : "outline"}
-                >
-                  {t("tasks.dialog.assigneeSelf")}
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={() => setAssigneeMode("other")}
-                  size="sm"
-                  type="button"
-                  variant={assigneeMode === "other" ? "secondary" : "outline"}
-                >
-                  {t("tasks.dialog.assigneeOther")}
-                </Button>
-              </div>
+              <Tabs
+                onValueChange={(value) =>
+                  setAssigneeMode(value as AssigneeMode)
+                }
+                value={assigneeMode}
+              >
+                <TabsList className="w-full">
+                  <TabsTab value="self">{t("tasks.dialog.assigneeSelf")}</TabsTab>
+                  <TabsTab value="other">
+                    {t("tasks.dialog.assigneeOther")}
+                  </TabsTab>
+                </TabsList>
+                <TabsPanel value="other">
+                  <Field label={t("tasks.dialog.department")}>
+                    <select
+                      className={controlClass}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      value={department}
+                    >
+                      {DEPARTMENTS.map((d) => (
+                        <option key={d} value={d}>
+                          {ROLE_LABELS[d]}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </TabsPanel>
+              </Tabs>
             </div>
-            {assigneeMode === "other" && (
-              <Field label={t("tasks.dialog.department")}>
-                <select
-                  className={controlClass}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  value={department}
-                >
-                  {DEPARTMENTS.map((d) => (
-                    <option key={d} value={d}>
-                      {ROLE_LABELS[d]}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            )}
             <div className="grid grid-cols-2 gap-3">
               <Field label={t("tasks.dialog.due")}>
                 <Input
