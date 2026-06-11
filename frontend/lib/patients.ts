@@ -113,6 +113,22 @@ export async function updatePatient(patient: Patient): Promise<Patient> {
   );
 }
 
+// Append lab results to a patient's record without touching the rest of it.
+// Backed by POST /api/patients/:fileNumber/labs (gated by `lab:write`, so lab
+// staff can submit analyses without patient-edit rights).
+export async function appendLabs(
+  fileNumber: string,
+  labs: Lab[],
+): Promise<Patient> {
+  return apiFetch<Patient>(
+    `/api/patients/${encodeURIComponent(fileNumber.trim())}/labs`,
+    {
+      method: "POST",
+      body: JSON.stringify({ labs }),
+    },
+  );
+}
+
 // Reassign a patient to another clinician (sets their primary provider + PCP).
 export async function transferPatient(
   fileNumber: string,
