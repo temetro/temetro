@@ -1,6 +1,8 @@
 import {
   BarChart3,
   CalendarClock,
+  Cross,
+  FlaskConical,
   History,
   ListTodo,
   type LucideIcon,
@@ -12,14 +14,22 @@ import {
   Users,
 } from "lucide-react";
 
+// Access areas gate routes/nav by role capability (probed against the Better
+// Auth permissions in lib/access.ts — see canAccessArea in lib/roles.ts):
+// - "clinical": full clinicians only (owner/admin/doctor/member).
+// - "pharmacy": pharmacy + full clinicians.
+// - "lab": lab + full clinicians.
+// Defined here (not roles.ts) because roles.ts imports nav.ts.
+export type AccessArea = "clinical" | "pharmacy" | "lab";
+
 export type NavSubItem = {
   id: string;
   // i18n key resolved with t() at render time.
   labelKey: string;
   icon?: LucideIcon;
   link: string;
-  // Hidden from non-clinical roles (e.g. reception). See lib/roles.ts.
-  requiresClinical?: boolean;
+  // Hidden from roles outside this access area. See lib/roles.ts.
+  access?: AccessArea;
 };
 
 export type NavItem = {
@@ -30,8 +40,8 @@ export type NavItem = {
   link: string;
   // Optional sub-pages revealed under this item in the sidebar.
   subs?: NavSubItem[];
-  // Hidden from non-clinical roles (e.g. reception). See lib/roles.ts.
-  requiresClinical?: boolean;
+  // Hidden from roles outside this access area. See lib/roles.ts.
+  access?: AccessArea;
 };
 
 // Single source of truth for the primary navigation. Consumed by the sidebar
@@ -43,7 +53,7 @@ export const navItems: NavItem[] = [
     labelKey: "nav.newChat",
     icon: Plus,
     link: "/",
-    requiresClinical: true,
+    access: "clinical",
   },
   {
     id: "patients",
@@ -63,7 +73,7 @@ export const navItems: NavItem[] = [
         labelKey: "nav.prescriptions",
         icon: Pill,
         link: "/prescriptions",
-        requiresClinical: true,
+        access: "clinical",
       },
     ],
   },
@@ -72,7 +82,21 @@ export const navItems: NavItem[] = [
     labelKey: "nav.analysis",
     icon: BarChart3,
     link: "/analysis",
-    requiresClinical: true,
+    access: "clinical",
+  },
+  {
+    id: "pharmacy",
+    labelKey: "nav.pharmacy",
+    icon: Cross,
+    link: "/pharmacy",
+    access: "pharmacy",
+  },
+  {
+    id: "lab",
+    labelKey: "nav.lab",
+    icon: FlaskConical,
+    link: "/lab",
+    access: "lab",
   },
   { id: "messages", labelKey: "nav.messages", icon: Mail, link: "/messages" },
   {
@@ -80,7 +104,7 @@ export const navItems: NavItem[] = [
     labelKey: "nav.notes",
     icon: NotebookPen,
     link: "/notes",
-    requiresClinical: true,
+    access: "clinical",
   },
   { id: "tasks", labelKey: "nav.tasks", icon: ListTodo, link: "/tasks" },
   {
@@ -88,7 +112,7 @@ export const navItems: NavItem[] = [
     labelKey: "nav.activity",
     icon: History,
     link: "/activity",
-    requiresClinical: true,
+    access: "clinical",
   },
   { id: "settings", labelKey: "nav.settings", icon: Settings, link: "/settings" },
 ];

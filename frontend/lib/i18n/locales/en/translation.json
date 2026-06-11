@@ -114,6 +114,8 @@
     "appointments": "Appointments",
     "prescriptions": "Prescriptions",
     "analysis": "Analysis",
+    "pharmacy": "Pharmacy",
+    "lab": "Lab",
     "notes": "Notes",
     "messages": "Messages",
     "tasks": "Tasks",
@@ -314,6 +316,66 @@
       "addedTitle": "Prescription added"
     }
   },
+  "pharmacy": {
+    "title": "Pharmacy",
+    "subtitle": "Dispensing queue for the clinic's prescriptions.",
+    "searchPlaceholder": "Search prescriptions",
+    "kpi": {
+      "active": "Active prescriptions",
+      "expiring": "Expiring within 7 days",
+      "patients": "Patients on medication"
+    },
+    "queue": {
+      "title": "Dispensing queue",
+      "description": "Active prescriptions, oldest first. Mark a course completed once dispensed.",
+      "empty": "No active prescriptions.",
+      "noMatches": "No prescriptions match your search."
+    },
+    "expiringBadge": "Expiring",
+    "markCompleted": "Mark completed",
+    "completedTitle": "Prescription completed",
+    "completedBody": "{{medication}} for {{name}} marked as completed.",
+    "completeFailedTitle": "Couldn't update prescription",
+    "completeFailedBody": "Please try again."
+  },
+  "lab": {
+    "title": "Lab",
+    "subtitle": "The lab's work queue and analysis results.",
+    "queue": {
+      "title": "Work queue",
+      "description": "Tasks assigned to the Lab department.",
+      "empty": "No lab tasks right now."
+    },
+    "addResult": {
+      "button": "Add result",
+      "title": "Add analysis result",
+      "description": "Record an analysis performed in the lab on a patient's record.",
+      "patient": "Patient",
+      "patientPlaceholder": "Search by name or file number",
+      "noPatients": "No patients match your search.",
+      "changePatient": "Change",
+      "test": "Test",
+      "testPlaceholder": "e.g. Hemoglobin",
+      "value": "Value",
+      "valuePlaceholder": "e.g. 14.2 g/dL",
+      "flag": "Flag",
+      "takenAt": "Date",
+      "cancel": "Cancel",
+      "submit": "Add result",
+      "needPatientTitle": "Pick a patient",
+      "needPatientBody": "Search and select a patient first.",
+      "needFieldsTitle": "Missing details",
+      "needFieldsBody": "Enter the test name and its value.",
+      "addedTitle": "Result added",
+      "addedBody": "{{test}} added to {{name}}'s record.",
+      "failedTitle": "Couldn't add the result",
+      "failedBody": "Please try again."
+    },
+    "toast": {
+      "updateFailedTitle": "Couldn't update the task",
+      "updateFailedBody": "Please try again."
+    }
+  },
   "tasks": {
     "title": "Tasks",
     "subtitle": "Care-team to-dos. Click a task to see its details.",
@@ -394,6 +456,9 @@
     "send": "Send",
     "emptyTitle": "No conversation selected",
     "emptyDescription": "Choose a conversation from the inbox, or start a new one.",
+    "startConversation": "Start a conversation",
+    "today": "Today",
+    "yesterday": "Yesterday",
     "compose": {
       "title": "New message",
       "description": "Start a conversation with a member of your clinic.",

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { type roles } from "@/lib/access";
 import { authClient } from "@/lib/auth-client";
-import { type NavItem, navItems } from "@/lib/nav";
+import { type AccessArea, type NavItem, navItems } from "@/lib/nav";
 
 export type RoleKey = keyof typeof roles;
 
@@ -14,12 +14,19 @@ export const PROVISIONABLE_ROLES: RoleKey[] = [
   "admin",
   "doctor",
   "reception",
-  "viewer",
+  "pharmacy",
+  "lab",
 ];
 
 // Departments a task can be assigned to (member roles). Mirrors the backend's
 // TASK_DEPARTMENTS in lib/task-validation.ts.
-export const DEPARTMENTS = ["admin", "doctor", "reception"] as const;
+export const DEPARTMENTS = [
+  "admin",
+  "doctor",
+  "reception",
+  "pharmacy",
+  "lab",
+] as const;
 
 // The current user's role in the active clinic (null while loading or if they
 // aren't a member). Re-fetches when the active organization changes.
@@ -52,6 +59,7 @@ export const CLINICAL_RESOURCES = [
   "appointment",
   "prescription",
   "task",
+  "lab",
 ] as const;
 const RESOURCE_ACTIONS = ["read", "write", "delete"] as const;
 
@@ -81,37 +89,61 @@ export function rolePermissionSummary(
   });
 }
 
-// Whether a role may see clinical records (AI lookup, prescriptions, notes,
-// analysis). Driven by Better Auth permissions so it stays in lock-step with
-// lib/access.ts: the `reception` role has no `prescription` statement, so this
-// is false for them and true for every clinical role.
-export function hasClinicalAccess(role: string | null | undefined): boolean {
+// Permission probes per access area, all derived from lib/access.ts so route
+// gating can never drift from RBAC:
+// - clinical: `prescription:delete` is held ONLY by full clinicians
+//   (owner/admin/doctor/member) — pharmacy has read/write but not delete,
+//   reception/lab no prescription statement at all.
+// - pharmacy: `prescription:write` (pharmacy + full clinicians).
+// - lab: `lab:write` (lab + full clinicians).
+const AREA_PROBES: Record<AccessArea, PermissionArg> = {
+  clinical: { prescription: ["delete"] } as PermissionArg,
+  pharmacy: { prescription: ["write"] } as PermissionArg,
+  lab: { lab: ["write"] } as PermissionArg,
+};
+
+// Whether a role belongs to an access area (see AccessArea in lib/nav.ts).
+export function canAccessArea(
+  role: string | null | undefined,
+  area: AccessArea,
+): boolean {
   if (!role) return false;
   try {
     return authClient.organization.checkRolePermission({
       role: role as RoleKey,
-      permissions: { prescription: ["read"] },
+      permissions: AREA_PROBES[area],
     });
   } catch {
     return false;
   }
 }
 
-// Where a role lands after sign-in. Reception has no AI chat, so they start on
-// the appointments board; clinical roles start on the chat home.
-export function defaultLandingFor(role: string | null | undefined): string {
-  return hasClinicalAccess(role) ? "/" : "/appointments";
+// Whether a role may see clinical records (AI lookup, prescriptions, notes,
+// analysis) — true for full clinicians (owner/admin/doctor/member) only.
+export function hasClinicalAccess(role: string | null | undefined): boolean {
+  return canAccessArea(role, "clinical");
 }
 
-// Clinical-only routes — a non-clinical role (reception) is redirected away.
-// Keyed by path; "/" matches exactly, others match themselves + nested paths.
-const CLINICAL_ROUTES = [
-  "/",
-  "/prescriptions",
-  "/analysis",
-  "/notes",
-  "/activity",
-];
+// Where a role lands after sign-in: clinicians on the chat home, pharmacy/lab
+// on their department dashboards, reception on the appointments board.
+export function defaultLandingFor(role: string | null | undefined): string {
+  if (canAccessArea(role, "clinical")) return "/";
+  if (canAccessArea(role, "pharmacy")) return "/pharmacy";
+  if (canAccessArea(role, "lab")) return "/lab";
+  return "/appointments";
+}
+
+// Area-gated routes — a role outside the area is redirected away. Keyed by
+// path; "/" matches exactly, others match themselves + nested paths.
+const ROUTE_AREAS: Record<string, AccessArea> = {
+  "/": "clinical",
+  "/prescriptions": "clinical",
+  "/analysis": "clinical",
+  "/notes": "clinical",
+  "/activity": "clinical",
+  "/pharmacy": "pharmacy",
+  "/lab": "lab",
+};
 
 // Whether `path` is reachable by `role`. Returns true while the role is still
 // loading to avoid redirect flicker; the authoritative check is the backend's
@@ -121,22 +153,26 @@ export function canAccessRoute(
   role: string | null | undefined,
 ): boolean {
   if (role == null) return true;
-  if (hasClinicalAccess(role)) return true;
-  return !CLINICAL_ROUTES.some((r) =>
-    r === "/" ? path === "/" : path === r || path.startsWith(`${r}/`),
+  const match = Object.entries(ROUTE_AREAS).find(([route]) =>
+    route === "/" ? path === "/" : path === route || path.startsWith(`${route}/`),
   );
+  if (!match) return true;
+  return canAccessArea(role, match[1]);
 }
 
-// Nav items visible to a role, with clinical-only items (and sub-items) removed
-// for non-clinical roles. While the role is loading we optimistically show
+// Nav items visible to a role, with area-gated items (and sub-items) removed
+// for roles outside the area. While the role is loading we optimistically show
 // everything (clinical users are the common case) — the flash is sub-second.
+// Full clinicians pass every area probe, so they also see the Pharmacy and Lab
+// items (intentional oversight access).
 export function visibleNavItems(role: string | null | undefined): NavItem[] {
   if (role == null) return navItems;
-  const clinical = hasClinicalAccess(role);
   return navItems
-    .filter((item) => !item.requiresClinical || clinical)
+    .filter((item) => !item.access || canAccessArea(role, item.access))
     .map((item) => ({
       ...item,
-      subs: item.subs?.filter((sub) => !sub.requiresClinical || clinical),
+      subs: item.subs?.filter(
+        (sub) => !sub.access || canAccessArea(role, sub.access),
+      ),
     }));
 }

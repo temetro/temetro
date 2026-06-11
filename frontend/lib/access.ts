@@ -14,16 +14,21 @@ export const statements = {
   appointment: ["read", "write", "delete"],
   prescription: ["read", "write", "delete"],
   task: ["read", "write", "delete"],
+  lab: ["read", "write"],
 } as const;
 
 export const ac = createAccessControl(statements);
 
+// NOTE: `prescription: ["delete"]` doubles as the "full clinician" marker the
+// route gating in lib/roles.ts probes (owner/admin/doctor/member only) — don't
+// grant it to department roles like pharmacy.
 export const owner = ac.newRole({
   ...ownerAc.statements,
   patient: ["read", "write", "delete"],
   appointment: ["read", "write", "delete"],
   prescription: ["read", "write", "delete"],
   task: ["read", "write", "delete"],
+  lab: ["read", "write"],
 });
 
 export const admin = ac.newRole({
@@ -32,6 +37,7 @@ export const admin = ac.newRole({
   appointment: ["read", "write", "delete"],
   prescription: ["read", "write", "delete"],
   task: ["read", "write", "delete"],
+  lab: ["read", "write"],
 });
 
 export const member = ac.newRole({
@@ -40,6 +46,7 @@ export const member = ac.newRole({
   appointment: ["read", "write", "delete"],
   prescription: ["read", "write", "delete"],
   task: ["read", "write", "delete"],
+  lab: ["read", "write"],
 });
 
 // doctor (clinician): mirrors backend/src/lib/access.ts — same clinical access
@@ -50,6 +57,7 @@ export const doctor = ac.newRole({
   appointment: ["read", "write", "delete"],
   prescription: ["read", "write", "delete"],
   task: ["read", "write", "delete"],
+  lab: ["read", "write"],
 });
 
 // reception (front desk): scheduling + registration only, no clinical records.
@@ -60,14 +68,27 @@ export const reception = ac.newRole({
   task: ["read", "write"],
 });
 
-export const viewer = ac.newRole({
+// pharmacy (dispensing): read patients/appointments, read/write prescriptions
+// (status updates, NOT delete), and work the task queue.
+export const pharmacy = ac.newRole({
+  ...memberAc.statements,
   patient: ["read"],
   appointment: ["read"],
-  prescription: ["read"],
-  task: ["read"],
+  prescription: ["read", "write"],
+  task: ["read", "write"],
 });
 
-export const roles = { owner, admin, doctor, reception, member, viewer };
+// lab (analyses): submits lab results via the dedicated `lab` statement (no
+// patient:write) and works the lab task queue. No prescription statement.
+export const lab = ac.newRole({
+  ...memberAc.statements,
+  patient: ["read"],
+  appointment: ["read"],
+  task: ["read", "write"],
+  lab: ["read", "write"],
+});
+
+export const roles = { owner, admin, doctor, reception, pharmacy, lab, member };
 
 // Human-readable labels for the role keys used in the UI.
 export const ROLE_LABELS: Record<keyof typeof roles, string> = {
@@ -75,6 +96,7 @@ export const ROLE_LABELS: Record<keyof typeof roles, string> = {
   admin: "Admin",
   doctor: "Doctor",
   reception: "Reception",
+  pharmacy: "Pharmacy",
+  lab: "Lab",
   member: "Clinician",
-  viewer: "Viewer",
 };
