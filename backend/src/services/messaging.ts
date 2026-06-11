@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, ne } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { member, user } from "../db/schema/auth.js";
@@ -96,8 +96,9 @@ async function buildSummaries(
   }
 
   const lastByConv = new Map<string, ConversationMessage | null>();
+  const unreadByConv = new Map<string, number>();
   await Promise.all(
-    convIds.map(async (convId) => {
+    base.map(async (b) => {
       const [row] = await db
         .select({
           id: messages.id,
@@ -109,13 +110,25 @@ async function buildSummaries(
         })
         .from(messages)
         .innerJoin(user, eq(user.id, messages.senderId))
-        .where(eq(messages.conversationId, convId))
+        .where(eq(messages.conversationId, b.convId))
         .orderBy(desc(messages.createdAt))
         .limit(1);
       lastByConv.set(
-        convId,
+        b.convId,
         row ? { ...row, createdAt: row.createdAt.toISOString() } : null,
       );
+      // Messages from others newer than the caller's read pointer.
+      const [cnt] = await db
+        .select({ value: count() })
+        .from(messages)
+        .where(
+          and(
+            eq(messages.conversationId, b.convId),
+            ne(messages.senderId, userId),
+            b.lastReadAt ? gt(messages.createdAt, b.lastReadAt) : undefined,
+          ),
+        );
+      unreadByConv.set(b.convId, cnt?.value ?? 0);
     }),
   );
 
@@ -128,17 +141,15 @@ async function buildSummaries(
         ? others.map((p) => p.name).join(", ") || "Group"
         : (others[0]?.name ?? "Conversation"));
     const lastMessage = lastByConv.get(b.convId) ?? null;
-    const unread =
-      !!lastMessage &&
-      lastMessage.senderId !== userId &&
-      (!b.lastReadAt || new Date(lastMessage.createdAt) > b.lastReadAt);
+    const unreadCount = unreadByConv.get(b.convId) ?? 0;
     return {
       id: b.convId,
       name: displayName,
       isGroup: b.isGroup,
       participants,
       lastMessage,
-      unread,
+      unread: unreadCount > 0,
+      unreadCount,
       updatedAt: b.updatedAt.toISOString(),
     };
   });
