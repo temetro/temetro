@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull, or } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 
 import { db } from "../db/index.js";
@@ -459,6 +459,49 @@ export async function updatePatient(
     }
     throw err;
   }
+}
+
+// Append lab results without touching the rest of the record — lab staff hold
+// `lab:write`, not `patient:write`, so they must not go through updatePatient's
+// wholesale child replacement. Positions continue after the current max so the
+// new rows sort last.
+export async function appendLabs(
+  orgId: string,
+  fileNumber: string,
+  entries: Lab[],
+): Promise<Patient | null> {
+  const inserted = await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: patients.id })
+      .from(patients)
+      .where(
+        and(
+          eq(patients.organizationId, orgId),
+          eq(patients.fileNumber, fileNumber),
+        ),
+      );
+    if (!existing) return false;
+
+    const [pos] = await tx
+      .select({ max: sql<number>`coalesce(max(${labs.position}), -1)` })
+      .from(labs)
+      .where(eq(labs.patientId, existing.id));
+    await tx.insert(labs).values(
+      entries.map((lab, i) => ({
+        patientId: existing.id,
+        position: (pos?.max ?? -1) + 1 + i,
+        ...lab,
+      })),
+    );
+    await tx
+      .update(patients)
+      .set({ updatedAt: new Date() })
+      .where(eq(patients.id, existing.id));
+    return true;
+  });
+  if (!inserted) return null;
+  // Reload after commit — loadChildren queries via the non-tx `db` client.
+  return getPatient(orgId, fileNumber);
 }
 
 export async function deletePatient(

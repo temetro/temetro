@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "../db/index.js";
 import { member, user } from "../db/schema/auth.js";
 import { HttpError } from "../lib/http-error.js";
-import { patientInputSchema } from "../lib/patient-validation.js";
+import { labSchema, patientInputSchema } from "../lib/patient-validation.js";
 import {
   requireAuth,
   requireOrg,
@@ -21,6 +21,10 @@ export const patientsRouter = Router();
 
 const transferInputSchema = z.object({
   providerId: z.string().trim().min(1),
+});
+
+const labsAppendSchema = z.object({
+  labs: z.array(labSchema).min(1).max(50),
 });
 
 // Only the `doctor` role is scoped to its own panel of patients. Any elevated
@@ -237,6 +241,44 @@ patientsRouter.post(
         updated.fileNumber,
       );
       res.json(updated);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// Append lab results to a patient's record. Gated by the dedicated `lab`
+// statement (not patient:write) so lab staff can submit analyses without
+// being able to edit the rest of the record. Full clinicians also hold
+// lab:write.
+patientsRouter.post(
+  "/:fileNumber/labs",
+  requirePermission({ lab: ["write"] }),
+  async (req, res, next) => {
+    try {
+      const { labs } = labsAppendSchema.parse(req.body);
+      const updated = await service.appendLabs(
+        req.organizationId!,
+        req.params.fileNumber as string,
+        labs,
+      );
+      if (!updated) throw new HttpError(404, "Patient not found.");
+      await recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: `Added ${labs.length} lab result${labs.length === 1 ? "" : "s"} for ${updated.name}`,
+        entityType: "patient",
+        entityId: updated.fileNumber,
+        patientName: updated.name,
+        patientFileNumber: updated.fileNumber,
+      });
+      await notifyClinic(
+        req.organizationId!,
+        { id: req.user!.id, name: req.user!.name },
+        `${req.user!.name} added lab results for ${updated.name}`,
+        updated.fileNumber,
+      );
+      res.status(201).json(updated);
     } catch (err) {
       next(err);
     }
