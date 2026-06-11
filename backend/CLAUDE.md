@@ -29,10 +29,13 @@ No test runner is configured. Verify by running the stack (`docker compose up`) 
 
 - **`src/auth.ts`** — the Better Auth config (the CLI auto-discovers it). Email/password +
   **username** plugin (staff sign in by username) and the organization plugin (clinics) with custom
-  RBAC from **`src/lib/access.ts`** (`owner`/`admin`/`doctor`/`reception`/`member`/`viewer` over
-  `patient`/`appointment`/`prescription`/`task` resources). `reception` has no `prescription`
-  statement — it's scoped to scheduling + registration, and `src/services/patients.ts` redacts
-  clinical fields for it. Mounted in `src/index.ts` via `toNodeHandler(auth)` at `/api/auth/*`.
+  RBAC from **`src/lib/access.ts`** (`owner`/`admin`/`doctor`/`reception`/`pharmacy`/`lab`/`member`
+  over `patient`/`appointment`/`prescription`/`task`/`lab` resources). `reception` has no
+  `prescription` statement — it's scoped to scheduling + registration, and
+  `src/services/patients.ts` redacts clinical fields for it. `pharmacy` has `prescription`
+  read/write (no delete — `prescription:delete` is the full-clinician marker the frontend route
+  gating probes); `lab` submits results via the `lab` statement (`POST
+  /api/patients/:fileNumber/labs`) without `patient:write`. Mounted in `src/index.ts` via `toNodeHandler(auth)` at `/api/auth/*`.
 - **`src/routes/staff.ts`** — admin-provisioned staff: `POST /api/staff` creates a user
   (`auth.api.signUpEmail`) + attaches them to the clinic (`auth.api.addMember`); `GET /api/staff`
   lists members with usernames. Replaces the old email-invitation flow. Gated by

@@ -20,7 +20,13 @@ export const staffRouter = Router();
 
 // Roles an admin may assign — `owner` is intentionally excluded (the clinic
 // creator is the sole owner; transfer ownership via member-role updates).
-const PROVISIONABLE_ROLES = ["admin", "doctor", "reception", "viewer"] as const;
+const PROVISIONABLE_ROLES = [
+  "admin",
+  "doctor",
+  "reception",
+  "pharmacy",
+  "lab",
+] as const;
 
 const staffInputSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -45,8 +51,8 @@ const staffInputSchema = z.object({
 
 staffRouter.use(requireAuth, requireOrg);
 
-// Clinical-capable roles that can be a patient's primary provider. Reception
-// (front desk) and viewer (read-only) are excluded.
+// Clinical-capable roles that can be a patient's primary provider. Department
+// roles (reception, pharmacy, lab) are excluded.
 const PROVIDER_ROLES = ["owner", "admin", "doctor", "member"] as const;
 
 // List clinicians who can be assigned as a patient's primary provider. Readable

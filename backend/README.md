@@ -78,12 +78,14 @@ served by Better Auth under `/api/auth/*`.
 
 ### Roles
 
-| Role | Patient access | Clinic management |
-| --- | --- | --- |
-| `owner` | read / write / delete | full |
-| `admin` | read / write / delete | members, invitations, settings |
-| `member` (clinician) | read / write | — |
-| `viewer` | read | — |
+| Role | Patient access | Prescriptions | Lab results | Clinic management |
+| --- | --- | --- | --- | --- |
+| `owner` | read / write / delete | read / write / delete | read / write | full |
+| `admin` | read / write / delete | read / write / delete | read / write | members, invitations, settings |
+| `doctor` / `member` (clinician) | read / write | read / write / delete | read / write | — |
+| `reception` | read / write (demographics) | — | — | — |
+| `pharmacy` | read | read / write | — | — |
+| `lab` | read | — | read / write | — |
 
 ## Environment
 

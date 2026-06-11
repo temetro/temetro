@@ -2,7 +2,13 @@ import { z } from "zod";
 
 // Departments a task can be assigned to (member roles). Null = a personal task
 // that belongs to its creator.
-export const TASK_DEPARTMENTS = ["admin", "doctor", "reception"] as const;
+export const TASK_DEPARTMENTS = [
+  "admin",
+  "doctor",
+  "reception",
+  "pharmacy",
+  "lab",
+] as const;
 
 // Payload accepted by POST /api/tasks (full create).
 export const taskInputSchema = z.object({

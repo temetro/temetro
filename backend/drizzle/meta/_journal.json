@@ -78,6 +78,13 @@
       "when": 1781111039837,
       "tag": "0010_eager_hellfire_club",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1781196252617,
+      "tag": "0011_remap_viewer_to_member",
+      "breakpoints": true
     }
   ]
 }
