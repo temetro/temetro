@@ -212,7 +212,10 @@ export function CommandItem({
 }: React.ComponentProps<typeof AutocompleteItem>): React.ReactElement {
   return (
     <AutocompleteItem
-      className={cn("py-1.5", className)}
+      className={cn(
+        "gap-2 py-1.5 [&>svg:not([class*='size-'])]:size-4 [&>svg]:shrink-0",
+        className,
+      )}
       data-slot="command-item"
       {...props}
     />
