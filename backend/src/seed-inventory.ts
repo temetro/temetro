@@ -43,11 +43,11 @@ async function main() {
   const orgs = await db.select({ id: organization.id }).from(organization);
   let seeded = 0;
   for (const org of orgs) {
-    const [{ count }] = await db
+    const [row] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(inventory)
       .where(eq(inventory.organizationId, org.id));
-    if (count > 0) continue;
+    if ((row?.count ?? 0) > 0) continue;
     await db
       .insert(inventory)
       .values(DEMO_STOCK.map((s) => ({ ...s, organizationId: org.id })));
