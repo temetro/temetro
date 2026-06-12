@@ -142,6 +142,7 @@ const ROUTE_AREAS: Record<string, AccessArea> = {
   "/notes": "clinical",
   "/activity": "clinical",
   "/pharmacy": "pharmacy",
+  "/inventory": "pharmacy",
   "/lab": "lab",
 };
 

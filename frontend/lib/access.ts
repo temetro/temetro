@@ -13,6 +13,7 @@ export const statements = {
   patient: ["read", "write", "delete"],
   appointment: ["read", "write", "delete"],
   prescription: ["read", "write", "delete"],
+  inventory: ["read", "write", "delete"],
   task: ["read", "write", "delete"],
   lab: ["read", "write"],
 } as const;
@@ -27,6 +28,7 @@ export const owner = ac.newRole({
   patient: ["read", "write", "delete"],
   appointment: ["read", "write", "delete"],
   prescription: ["read", "write", "delete"],
+  inventory: ["read", "write", "delete"],
   task: ["read", "write", "delete"],
   lab: ["read", "write"],
 });
@@ -36,6 +38,7 @@ export const admin = ac.newRole({
   patient: ["read", "write", "delete"],
   appointment: ["read", "write", "delete"],
   prescription: ["read", "write", "delete"],
+  inventory: ["read", "write", "delete"],
   task: ["read", "write", "delete"],
   lab: ["read", "write"],
 });
@@ -45,6 +48,7 @@ export const member = ac.newRole({
   patient: ["read", "write"],
   appointment: ["read", "write", "delete"],
   prescription: ["read", "write", "delete"],
+  inventory: ["read", "write", "delete"],
   task: ["read", "write", "delete"],
   lab: ["read", "write"],
 });
@@ -56,6 +60,7 @@ export const doctor = ac.newRole({
   patient: ["read", "write"],
   appointment: ["read", "write", "delete"],
   prescription: ["read", "write", "delete"],
+  inventory: ["read", "write", "delete"],
   task: ["read", "write", "delete"],
   lab: ["read", "write"],
 });
@@ -75,6 +80,7 @@ export const pharmacy = ac.newRole({
   patient: ["read"],
   appointment: ["read"],
   prescription: ["read", "write"],
+  inventory: ["read", "write"],
   task: ["read", "write"],
 });
 

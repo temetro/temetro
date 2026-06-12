@@ -1,9 +1,17 @@
 "use client";
 
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { TrendCard } from "@/components/analysis/trend-card";
+import { LiveHospitalChart } from "@/components/analysis/live-hospital-chart";
+import { Area, AreaChart } from "@/components/charts/area-chart";
+import { Bar } from "@/components/charts/bar";
+import { BarChart } from "@/components/charts/bar-chart";
+import { BarXAxis } from "@/components/charts/bar-x-axis";
+import { BarYAxis } from "@/components/charts/bar-y-axis";
+import { Grid } from "@/components/charts/grid";
+import { ChartTooltip } from "@/components/charts/tooltip";
+import { XAxis } from "@/components/charts/x-axis";
 import { Card } from "@/components/ui/card";
 import { type Analytics, getAnalytics } from "@/lib/analytics";
 
@@ -55,6 +63,28 @@ function Section({
   );
 }
 
+// A titled card that frames a chart, used for the trend visualisations.
+function ChartCard({
+  title,
+  total,
+  children,
+}: {
+  title: string;
+  total: number;
+  children: ReactNode;
+}) {
+  return (
+    <Card className="gap-3 p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-muted-foreground text-sm">{title}</span>
+        <span className="font-semibold text-foreground text-xl tabular-nums">
+          {total}
+        </span>
+      </div>
+      {children}
+    </Card>
+  );
+}
 
 export function AnalysisView() {
   const { t } = useTranslation();
@@ -76,6 +106,34 @@ export function AnalysisView() {
 
   const n = (v: number | undefined) => String(v ?? 0);
 
+  // The area chart needs real Date x-values: synthesise one month per point,
+  // ending with the current month.
+  const monthData = useMemo(() => {
+    const points = data?.trends.patientsByMonth ?? [];
+    const now = new Date();
+    return points.map((p, i) => ({
+      date: new Date(
+        now.getFullYear(),
+        now.getMonth() - (points.length - 1 - i),
+        1,
+      ),
+      patients: p.count,
+    }));
+  }, [data]);
+
+  // The bar chart is categorical (one bar per weekday).
+  const weekdayData = useMemo(
+    () =>
+      (data?.trends.appointmentsByWeekday ?? []).map((p) => ({
+        name: p.label,
+        appointments: p.count,
+      })),
+    [data],
+  );
+
+  const monthTotal = monthData.reduce((sum, p) => sum + p.patients, 0);
+  const weekdayTotal = weekdayData.reduce((sum, p) => sum + p.appointments, 0);
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-10">
       <div>
@@ -84,6 +142,23 @@ export function AnalysisView() {
         </h1>
         <p className="text-muted-foreground text-sm">{t("analysis.subtitle")}</p>
       </div>
+
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-semibold text-lg tracking-tight">
+            {t("analysis.live.title")}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {t("analysis.live.subtitle")}
+          </p>
+        </div>
+        <Card className="gap-3 p-4">
+          <span className="text-muted-foreground text-sm">
+            {t("analysis.live.label")}
+          </span>
+          <LiveHospitalChart />
+        </Card>
+      </section>
 
       <Section
         columns={3}
@@ -114,20 +189,29 @@ export function AnalysisView() {
           </p>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <TrendCard
-            description={t("analysis.charts.patientGrowthDescription")}
-            detailsLabel={t("analysis.charts.viewDetails")}
-            emptyLabel={t("analysis.charts.empty")}
-            points={data?.trends.patientsByMonth ?? []}
+          <ChartCard
             title={t("analysis.charts.patientGrowthTitle")}
-          />
-          <TrendCard
-            description={t("analysis.charts.weeklyAppointmentsDescription")}
-            detailsLabel={t("analysis.charts.viewDetails")}
-            emptyLabel={t("analysis.charts.empty")}
-            points={data?.trends.appointmentsByWeekday ?? []}
+            total={monthTotal}
+          >
+            <AreaChart aspectRatio="2 / 1" data={monthData}>
+              <Grid horizontal />
+              <Area dataKey="patients" fill="var(--chart-line-primary)" />
+              <XAxis tickMode="data" />
+              <ChartTooltip showDatePill={false} />
+            </AreaChart>
+          </ChartCard>
+          <ChartCard
             title={t("analysis.charts.weeklyAppointmentsTitle")}
-          />
+            total={weekdayTotal}
+          >
+            <BarChart aspectRatio="2 / 1" data={weekdayData}>
+              <Grid horizontal />
+              <Bar dataKey="appointments" fill="var(--chart-line-primary)" />
+              <BarXAxis />
+              <BarYAxis />
+              <ChartTooltip showDatePill={false} />
+            </BarChart>
+          </ChartCard>
         </div>
       </section>
 

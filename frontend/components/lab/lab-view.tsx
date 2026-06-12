@@ -3,6 +3,7 @@
 import { Check, FlaskConical, Plus, Search } from "lucide-react";
 import {
   type FormEvent,
+  type KeyboardEvent,
   type ReactNode,
   useEffect,
   useMemo,
@@ -24,7 +25,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { LAB_ANALYSES, LAB_ANALYSIS_UNITS } from "@/lib/lab-analyses";
 import {
+  type Lab,
   type LabFlag,
   type Patient,
   appendLabs,
@@ -41,7 +45,17 @@ const priorityVariant: Record<Priority, "destructive" | "secondary" | "outline">
     low: "outline",
   };
 
+const flagVariant: Record<LabFlag, "secondary" | "warning" | "destructive"> = {
+  normal: "secondary",
+  low: "warning",
+  high: "warning",
+  critical: "destructive",
+};
+
 const LAB_FLAGS: LabFlag[] = ["normal", "low", "high", "critical"];
+
+// A patient + one of their lab results, used by the "Recent results" feed.
+type RecentResult = { patient: Patient; lab: Lab };
 
 // Patient dates are stored as formatted strings (e.g. "Jun 02, 2026") — match
 // the format used by the patient form.
@@ -51,6 +65,23 @@ const today = () =>
     day: "2-digit",
     year: "numeric",
   });
+
+// Parse a stored date string to a timestamp for sorting; unknown formats sort
+// last (0).
+const ts = (s: string): number => {
+  const t = Date.parse(s);
+  return Number.isNaN(t) ? 0 : t;
+};
+
+// Flatten every patient's labs into a recent-results feed, newest first.
+function buildRecent(patients: Patient[]): RecentResult[] {
+  const all: RecentResult[] = [];
+  for (const patient of patients) {
+    for (const lab of patient.labs) all.push({ patient, lab });
+  }
+  all.sort((a, b) => ts(b.lab.takenAt) - ts(a.lab.takenAt));
+  return all.slice(0, 12);
+}
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -102,38 +133,69 @@ function AddResultDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   patients: Patient[];
-  onAdded: () => void;
+  onAdded: (patient: Patient, lab: Lab) => void;
 }) {
   const { t } = useTranslation();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [patientQuery, setPatientQuery] = useState("");
+  // Highlighted index in the patient match list, for arrow-key navigation.
+  const [activeIndex, setActiveIndex] = useState(0);
   const [name, setName] = useState("");
   const [value, setValue] = useState("");
   const [flag, setFlag] = useState<LabFlag>("normal");
   const [takenAt, setTakenAt] = useState(today());
+  // Advanced mode reveals a free-form reference-range field for analyses that
+  // aren't in the catalog (the test field already accepts any text).
+  const [advanced, setAdvanced] = useState(false);
+  const [refRange, setRefRange] = useState("");
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
     setPatient(null);
     setPatientQuery("");
+    setActiveIndex(0);
     setName("");
     setValue("");
     setFlag("normal");
     setTakenAt(today());
+    setAdvanced(false);
+    setRefRange("");
     setSaving(false);
   };
 
   const search = patientQuery.trim().toLowerCase();
+  // Only surface patients once the user has typed something — never the full
+  // roster on an empty field.
   const matches = useMemo(() => {
-    const base = search
-      ? patients.filter(
-          (p) =>
-            p.name.toLowerCase().includes(search) ||
-            p.fileNumber.includes(search),
-        )
-      : patients;
-    return base.slice(0, 6);
+    if (!search) return [];
+    return patients
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(search) ||
+          p.fileNumber.includes(search),
+      )
+      .slice(0, 6);
   }, [patients, search]);
+
+  // Keyboard navigation for the patient list: ↑/↓ to move, Enter to select.
+  const onPatientKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (matches.length === 0) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, matches.length - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, 0));
+    } else if (event.key === "Enter") {
+      // Don't submit the form — pick the highlighted patient instead.
+      event.preventDefault();
+      const picked = matches[activeIndex];
+      if (picked) setPatient(picked);
+    }
+  };
+
+  // Unit hint for the value field once a catalogued analysis is chosen.
+  const unitHint = LAB_ANALYSIS_UNITS[name.trim()];
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -151,23 +213,27 @@ function AddResultDialog({
       );
       return;
     }
+    const finalValue =
+      advanced && refRange.trim()
+        ? `${value.trim()} (ref ${refRange.trim()})`
+        : value.trim();
+    const lab: Lab = {
+      name: name.trim(),
+      value: finalValue,
+      flag,
+      takenAt: takenAt.trim() || today(),
+    };
     setSaving(true);
     try {
-      await appendLabs(patient.fileNumber, [
-        {
-          name: name.trim(),
-          value: value.trim(),
-          flag,
-          takenAt: takenAt.trim() || today(),
-        },
-      ]);
+      await appendLabs(patient.fileNumber, [lab]);
       notify.success(
         t("lab.addResult.addedTitle"),
-        t("lab.addResult.addedBody", { test: name.trim(), name: patient.name }),
+        t("lab.addResult.addedBody", { test: lab.name, name: patient.name }),
       );
+      const added = patient;
       reset();
       onOpenChange(false);
-      onAdded();
+      onAdded(added, lab);
     } catch {
       setSaving(false);
       notify.error(
@@ -223,51 +289,85 @@ function AddResultDialog({
                 <div className="relative">
                   <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
                   <Input
+                    aria-activedescendant={
+                      matches[activeIndex]
+                        ? `patient-opt-${matches[activeIndex].fileNumber}`
+                        : undefined
+                    }
                     autoFocus
                     className="pl-9"
-                    onChange={(event) => setPatientQuery(event.target.value)}
+                    onChange={(event) => {
+                      setPatientQuery(event.target.value);
+                      setActiveIndex(0);
+                    }}
+                    onKeyDown={onPatientKeyDown}
                     placeholder={t("lab.addResult.patientPlaceholder")}
                     value={patientQuery}
                   />
                 </div>
-                <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">
-                  {matches.map((p) => (
-                    <button
-                      className="flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
-                      key={p.fileNumber}
-                      onClick={() => setPatient(p)}
-                      type="button"
-                    >
-                      <Avatar className="size-8">
-                        <AvatarFallback>{p.initials}</AvatarFallback>
-                      </Avatar>
-                      <span className="min-w-0 truncate text-sm">{p.name}</span>
-                      <span className="ms-auto text-muted-foreground text-xs">
-                        #{p.fileNumber}
-                      </span>
-                    </button>
-                  ))}
-                  {matches.length === 0 && (
-                    <p className="px-2 py-3 text-muted-foreground text-sm">
-                      {t("lab.addResult.noPatients")}
-                    </p>
-                  )}
-                </div>
+                {search.length > 0 && (
+                  <div className="flex max-h-48 flex-col gap-1 overflow-y-auto">
+                    {matches.map((p, index) => (
+                      <button
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors",
+                          index === activeIndex
+                            ? "bg-accent"
+                            : "hover:bg-accent",
+                        )}
+                        id={`patient-opt-${p.fileNumber}`}
+                        key={p.fileNumber}
+                        onClick={() => setPatient(p)}
+                        onMouseMove={() => setActiveIndex(index)}
+                        type="button"
+                      >
+                        <Avatar className="size-8">
+                          <AvatarFallback>{p.initials}</AvatarFallback>
+                        </Avatar>
+                        <span className="min-w-0 truncate text-sm">
+                          {p.name}
+                        </span>
+                        <span className="ms-auto text-muted-foreground text-xs">
+                          #{p.fileNumber}
+                        </span>
+                      </button>
+                    ))}
+                    {matches.length === 0 && (
+                      <p className="px-2 py-3 text-muted-foreground text-sm">
+                        {t("lab.addResult.noPatients")}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-3">
               <Field label={t("lab.addResult.test")}>
                 <Input
+                  list="lab-analyses-list"
                   onChange={(event) => setName(event.target.value)}
                   placeholder={t("lab.addResult.testPlaceholder")}
                   value={name}
                 />
+                <datalist id="lab-analyses-list">
+                  {LAB_ANALYSES.map((a) => (
+                    <option key={a.name} value={a.name}>
+                      {a.group}
+                    </option>
+                  ))}
+                </datalist>
               </Field>
               <Field label={t("lab.addResult.value")}>
                 <Input
                   onChange={(event) => setValue(event.target.value)}
-                  placeholder={t("lab.addResult.valuePlaceholder")}
+                  placeholder={
+                    unitHint
+                      ? t("lab.addResult.valueUnitPlaceholder", {
+                          unit: unitHint,
+                        })
+                      : t("lab.addResult.valuePlaceholder")
+                  }
                   value={value}
                 />
               </Field>
@@ -293,6 +393,28 @@ function AddResultDialog({
                 />
               </Field>
             </div>
+
+            <label className="flex items-center justify-between gap-3 rounded-2xl border bg-card/30 px-3 py-2">
+              <span className="flex flex-col">
+                <span className="font-medium text-foreground text-sm">
+                  {t("lab.addResult.advanced")}
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  {t("lab.addResult.advancedHint")}
+                </span>
+              </span>
+              <Switch checked={advanced} onCheckedChange={setAdvanced} />
+            </label>
+
+            {advanced && (
+              <Field label={t("lab.addResult.refRange")}>
+                <Input
+                  onChange={(event) => setRefRange(event.target.value)}
+                  placeholder={t("lab.addResult.refRangePlaceholder")}
+                  value={refRange}
+                />
+              </Field>
+            )}
           </DialogPanel>
 
           <DialogFooter>
@@ -309,12 +431,13 @@ function AddResultDialog({
   );
 }
 
-// The lab department home: the lab's task queue plus the "add result" flow
-// for submitting a patient's analyses to their record.
+// The lab department home: the lab's task queue, an "add result" flow for
+// submitting a patient's analyses, and a feed of recently recorded results.
 export function LabView() {
   const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [recent, setRecent] = useState<RecentResult[]>([]);
   const [addOpen, setAddOpen] = useState(false);
 
   useEffect(() => {
@@ -328,7 +451,10 @@ export function LabView() {
       });
     listPatients()
       .then((data) => {
-        if (active) setPatients(data);
+        if (active) {
+          setPatients(data);
+          setRecent(buildRecent(data));
+        }
       })
       .catch(() => {
         /* same */
@@ -344,6 +470,17 @@ export function LabView() {
     () => tasks.filter((task) => task.assigneeRole === "lab"),
     [tasks],
   );
+
+  // After a result is submitted: show it instantly at the top of the feed, and
+  // refresh patient records in the background so it survives a reload.
+  const handleAdded = (patient: Patient, lab: Lab) => {
+    setRecent((prev) => [{ patient, lab }, ...prev].slice(0, 12));
+    listPatients()
+      .then((data) => setPatients(data))
+      .catch(() => {
+        /* keep the optimistic feed if the refresh fails */
+      });
+  };
 
   // Optimistically flip done, then persist; roll back on failure.
   const toggle = async (id: string) => {
@@ -442,10 +579,52 @@ export function LabView() {
         </div>
       </section>
 
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-semibold text-lg tracking-tight">
+            {t("lab.recent.title")}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {t("lab.recent.description")}
+          </p>
+        </div>
+        <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
+          {recent.length === 0 ? (
+            <p className="p-6 text-center text-muted-foreground text-sm">
+              {t("lab.recent.empty")}
+            </p>
+          ) : (
+            recent.map(({ patient, lab }, index) => (
+              <div
+                className="flex items-center gap-3 px-4 py-3"
+                key={`${patient.fileNumber}-${lab.name}-${lab.takenAt}-${index}`}
+              >
+                <Avatar className="size-8">
+                  <AvatarFallback>{patient.initials}</AvatarFallback>
+                </Avatar>
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate font-medium text-foreground text-sm">
+                    {lab.name}
+                    <span className="font-normal text-muted-foreground">
+                      {" "}
+                      · {lab.value}
+                    </span>
+                  </span>
+                  <span className="truncate text-muted-foreground text-xs">
+                    {patient.name} · #{patient.fileNumber} · {lab.takenAt}
+                  </span>
+                </div>
+                <Badge className="shrink-0" variant={flagVariant[lab.flag]}>
+                  {t(`patientCard.labFlag.${lab.flag}`)}
+                </Badge>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
+
       <AddResultDialog
-        onAdded={() => {
-          /* the patient record is reloaded on next lookup; nothing to refresh here */
-        }}
+        onAdded={handleAdded}
         onOpenChange={setAddOpen}
         open={addOpen}
         patients={patients}

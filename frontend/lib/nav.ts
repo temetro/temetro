@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Boxes,
   CalendarClock,
   Cross,
   FlaskConical,
@@ -90,6 +91,19 @@ export const navItems: NavItem[] = [
     icon: Cross,
     link: "/pharmacy",
     access: "pharmacy",
+    subs: [
+      {
+        id: "pharmacy-dispensing",
+        labelKey: "nav.pharmacy",
+        link: "/pharmacy",
+      },
+      {
+        id: "inventory",
+        labelKey: "nav.inventory",
+        icon: Boxes,
+        link: "/inventory",
+      },
+    ],
   },
   {
     id: "lab",

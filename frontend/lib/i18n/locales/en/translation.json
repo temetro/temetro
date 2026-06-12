@@ -115,6 +115,7 @@
     "prescriptions": "Prescriptions",
     "analysis": "Analysis",
     "pharmacy": "Pharmacy",
+    "inventory": "Inventory",
     "lab": "Lab",
     "notes": "Notes",
     "messages": "Messages",
@@ -338,6 +339,30 @@
     "completeFailedTitle": "Couldn't update prescription",
     "completeFailedBody": "Please try again."
   },
+  "inventory": {
+    "title": "Inventory",
+    "subtitle": "Search the pharmacy's medication stock and check availability.",
+    "searchPlaceholder": "Search medications",
+    "kpi": {
+      "total": "Medications in stock",
+      "low": "Low stock",
+      "out": "Out of stock"
+    },
+    "list": {
+      "title": "Medications",
+      "description": "Current stock levels across the pharmacy. Items at or below their reorder point are flagged.",
+      "empty": "No medications in inventory yet.",
+      "noMatches": "No medications match your search."
+    },
+    "stock": "{{count}} {{unit}}",
+    "reorderAt": "Reorder at {{count}}",
+    "location": "Shelf {{location}}",
+    "availability": {
+      "in-stock": "In stock",
+      "low": "Low stock",
+      "out": "Out of stock"
+    }
+  },
   "lab": {
     "title": "Lab",
     "subtitle": "The lab's work queue and analysis results.",
@@ -358,8 +383,13 @@
       "testPlaceholder": "e.g. Hemoglobin",
       "value": "Value",
       "valuePlaceholder": "e.g. 14.2 g/dL",
+      "valueUnitPlaceholder": "e.g. value in {{unit}}",
       "flag": "Flag",
       "takenAt": "Date",
+      "advanced": "Advanced",
+      "advancedHint": "Record a custom analysis with a reference range.",
+      "refRange": "Reference range",
+      "refRangePlaceholder": "e.g. 13.0–17.0 g/dL",
       "cancel": "Cancel",
       "submit": "Add result",
       "needPatientTitle": "Pick a patient",
@@ -370,6 +400,11 @@
       "addedBody": "{{test}} added to {{name}}'s record.",
       "failedTitle": "Couldn't add the result",
       "failedBody": "Please try again."
+    },
+    "recent": {
+      "title": "Recent results",
+      "description": "Analyses recorded on patient records, newest first.",
+      "empty": "No results recorded yet."
     },
     "toast": {
       "updateFailedTitle": "Couldn't update the task",
@@ -472,6 +507,11 @@
   "analysis": {
     "title": "Analysis",
     "subtitle": "Clinic performance at a glance, computed from your clinic's data.",
+    "live": {
+      "title": "Live",
+      "subtitle": "Patients currently in the building, updating in real time.",
+      "label": "In the building now"
+    },
     "patientVolume": {
       "title": "Patient volume",
       "description": "New, active and total patients",
@@ -501,7 +541,7 @@
     },
     "charts": {
       "title": "Trends",
-      "subtitle": "Tap a card for the full breakdown.",
+      "subtitle": "Patient growth and weekly appointment volume.",
       "viewDetails": "Tap for details",
       "patientGrowthTitle": "New patients",
       "patientGrowthDescription": "New patients per month over the last 6 months",

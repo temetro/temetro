@@ -155,12 +155,17 @@ export function PharmacyView() {
   }, []);
 
   const now = new Date();
+  // Start of today, so a course ending today still counts as expiring (not
+  // already elapsed by a few hours).
+  const startOfToday = new Date(now);
+  startOfToday.setHours(0, 0, 0, 0);
   const soon = new Date(now);
   soon.setDate(soon.getDate() + 7);
   const isExpiringSoon = (rx: Prescription) => {
     if (rx.status !== "active") return false;
     const end = expiresAt(rx);
-    return end != null && end <= soon;
+    // Only courses ending in the next 7 days — not ones that already elapsed.
+    return end != null && end >= startOfToday && end <= soon;
   };
 
   const active = useMemo(
