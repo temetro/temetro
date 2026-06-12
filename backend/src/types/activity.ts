@@ -6,6 +6,7 @@ export type ActivityEntityType =
   | "note"
   | "appointment"
   | "prescription"
+  | "inventory"
   | "task";
 
 export type ActivityEntry = {
