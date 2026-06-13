@@ -616,45 +616,29 @@
       "placeholder": "Look up a patient — try /patient 10293",
       "message": "Message",
       "addPatient": "Add patient",
-      "clinical": "Clinical",
       "attachFile": "Attach file",
       "attachFiles": "Attach files",
       "removeFile": "Remove {{name}}",
       "dictate": "Dictate",
       "send": "Send",
       "stop": "Stop",
-      "accessLevel": "Access level",
-      "responseMode": "Response mode",
-      "specialty": "Specialty",
-      "facility": "Facility",
-      "timeRange": "Time range",
-      "access": {
-        "standard": "Standard access",
-        "breakGlass": "Break-glass (emergency)",
-        "readOnly": "Read-only"
+      "model": "Model",
+      "moreModels": "More models",
+      "effort": "Effort",
+      "effortOptions": {
+        "low": "Low",
+        "medium": "Medium",
+        "high": "High"
       },
-      "response": {
-        "concise": "Concise",
-        "detailed": "Detailed",
-        "comprehensive": "Comprehensive"
-      },
-      "specialtyOptions": {
-        "internalMedicine": "Internal Medicine",
-        "cardiology": "Cardiology",
-        "pediatrics": "Pediatrics",
-        "emergency": "Emergency",
-        "all": "All specialties"
-      },
-      "facilityOptions": {
-        "mainHospital": "Main Hospital",
-        "northClinic": "North Clinic",
-        "telehealth": "Telehealth"
-      },
-      "timeOptions": {
-        "30d": "Last 30 days",
-        "12m": "Last 12 months",
-        "5y": "Last 5 years",
-        "all": "All time"
+      "models": {
+        "opus48": "For complex clinical reasoning",
+        "sonnet46": "Balanced for everyday tasks",
+        "haiku45": "Fastest for quick answers",
+        "gpt4o": "OpenAI multimodal flagship",
+        "gpt4oMini": "Fast, low-cost OpenAI model",
+        "gemini20Flash": "Fast Google model",
+        "gemini15Pro": "Google long-context model",
+        "ollama": "Runs locally on your infrastructure"
       }
     }
   },
@@ -662,7 +646,10 @@
     "notFound": "No patient found for file #{{number}}.",
     "overview": "Overview",
     "edit": "Edit",
-    "sex": { "F": "Female", "M": "Male" },
+    "sex": {
+      "F": "Female",
+      "M": "Male"
+    },
     "summary": {
       "fullName": "Full name",
       "mrn": "MRN",

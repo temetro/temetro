@@ -18,6 +18,7 @@ import {
 } from "@/components/ai-elements/message";
 import { ChatInput } from "@/components/chat/chat-input";
 import { PatientResult } from "@/components/chat/patient-cards";
+import { DEFAULT_EFFORT, DEFAULT_MODEL_ID, type Effort } from "@/lib/ai-models";
 import { getPatient, type Patient } from "@/lib/patients";
 
 type ChatMessage =
@@ -39,6 +40,10 @@ export function ChatPanel() {
   const { t } = useTranslation();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>("ready");
+  // Model + effort selected in the input; travels with each send (wired to the
+  // backend agent in a later phase). Defaults come from the shared catalog.
+  const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
+  const [effort, setEffort] = useState<Effort>(DEFAULT_EFFORT);
 
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
@@ -127,7 +132,15 @@ export function ChatPanel() {
   }, [requestedPatient, send]);
 
   const promptInput = (
-    <ChatInput onStop={handleStop} onSubmit={send} status={status} />
+    <ChatInput
+      effort={effort}
+      model={model}
+      onEffortChange={setEffort}
+      onModelChange={setModel}
+      onStop={handleStop}
+      onSubmit={send}
+      status={status}
+    />
   );
 
   if (messages.length === 0) {
