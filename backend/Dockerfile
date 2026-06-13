@@ -2,7 +2,11 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+# --ignore-scripts skips native postinstall builds (e.g. better-sqlite3, a
+# dev-only dependency of @better-auth/cli that needs Python/node-gyp). The build
+# step is just `tsc`, which needs no compiled binaries, and better-sqlite3 is
+# never used at runtime (the prod stage omits dev deps).
+RUN npm ci --ignore-scripts
 COPY . .
 RUN npm run build
 
