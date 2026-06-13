@@ -638,7 +638,7 @@
   "chat": {
     "heading": "Which patient would you like to look up?",
     "input": {
-      "placeholder": "Look up a patient — try /patient 10293",
+      "placeholder": "Ask anything, or type /patient 10293",
       "message": "Message",
       "addPatient": "Add patient",
       "attachFile": "Attach file",
