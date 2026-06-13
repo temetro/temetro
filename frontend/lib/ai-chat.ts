@@ -1,6 +1,9 @@
 import type { UIMessage } from "ai";
 
+import type { Appointment } from "@/lib/appointments";
 import type { Lab, Patient, Trend } from "@/lib/patients";
+import type { Prescription } from "@/lib/prescriptions";
+import type { Task } from "@/lib/tasks";
 
 // Custom data parts the backend agent streams alongside its text. They carry
 // REAL (un-redacted) record data straight to the clinician's screen for rich
@@ -25,6 +28,28 @@ export type VeilNoticeData = {
   level: string;
 };
 
+// A Chain-of-Thought step the agent emits as it works (one per tool action).
+export type StepData = {
+  id: string;
+  label: string;
+  status: "active" | "complete";
+};
+
+// Read-only list cards (display actions).
+export type AppointmentListData = { appointments: Appointment[] };
+export type TaskListData = { tasks: Task[] };
+export type PrescriptionListData = { prescriptions: Prescription[] };
+
+// An add proposed by the agent, awaiting one-click clinician approval. `record`
+// is the validated, ready-to-commit input for the matching create endpoint.
+export type ActionPreviewKind = "appointment" | "task" | "prescription";
+export type ActionPreviewData = {
+  token: string;
+  kind: ActionPreviewKind;
+  record: unknown;
+  issues?: string[];
+};
+
 // Maps each data part name → its payload. Part `type` strings are the key
 // prefixed with `data-` (e.g. `data-patientCard`), per the AI SDK convention.
 export type TemetroDataParts = {
@@ -32,6 +57,11 @@ export type TemetroDataParts = {
   labCard: LabCardData;
   importPreview: ImportPreviewData;
   veilNotice: VeilNoticeData;
+  step: StepData;
+  appointmentList: AppointmentListData;
+  taskList: TaskListData;
+  prescriptionList: PrescriptionListData;
+  actionPreview: ActionPreviewData;
 };
 
 export type TemetroUIMessage = UIMessage<never, TemetroDataParts>;

@@ -31,7 +31,7 @@ const iconButton =
 const pillButton =
   "flex h-8 items-center gap-1.5 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
 const contextPill =
-  "flex h-7 items-center gap-1.5 rounded-md px-2 text-[13px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground";
+  "flex h-7 items-center gap-1.5 rounded-md px-2 text-[13px] text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground";
 
 export function ChatInput({
   onSubmit,
@@ -125,7 +125,7 @@ export function ChatInput({
         event.preventDefault();
         submit();
       }}
-      className="w-full overflow-hidden rounded-[28px] border border-border/60 bg-input shadow-sm"
+      className="w-full overflow-hidden rounded-[28px] border border-border bg-input shadow-sm"
     >
       {/* Textarea + toolbar, filling the rounded card. */}
       <div className="bg-input">
@@ -212,8 +212,8 @@ export function ChatInput({
               className={cn(
                 "flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
                 canSend || isGenerating
-                  ? "bg-foreground text-background hover:bg-foreground/90"
-                  : "bg-muted-foreground/30 text-foreground/70"
+                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                  : "bg-muted text-muted-foreground"
               )}
               disabled={!(canSend || isGenerating)}
               onClick={isGenerating && onStop ? onStop : undefined}

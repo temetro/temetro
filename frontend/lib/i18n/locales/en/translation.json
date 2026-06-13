@@ -361,6 +361,31 @@
       "in-stock": "In stock",
       "low": "Low stock",
       "out": "Out of stock"
+    },
+    "addItem": "Add item",
+    "dialog": {
+      "title": "Add inventory item",
+      "description": "Add a medication to the pharmacy's stock. Only the name is required.",
+      "name": "Medication",
+      "namePlaceholder": "e.g. Amoxicillin",
+      "form": "Form",
+      "formPlaceholder": "e.g. Tablet",
+      "strength": "Strength",
+      "strengthPlaceholder": "e.g. 500mg",
+      "stock": "In stock",
+      "unit": "Unit",
+      "unitPlaceholder": "e.g. tablets",
+      "reorder": "Reorder at",
+      "location": "Location",
+      "locationPlaceholder": "e.g. A3",
+      "expires": "Expires",
+      "cancel": "Cancel",
+      "submit": "Add item",
+      "nameRequiredTitle": "Medication name required",
+      "nameRequiredBody": "Enter a medication name before adding the item.",
+      "addedTitle": "Item added",
+      "failedTitle": "Could not add item",
+      "failedBody": "Something went wrong. Please try again."
     }
   },
   "lab": {
@@ -643,12 +668,44 @@
       }
     },
     "patientNotFound": "I couldn't find a patient with file number {{fileNumber}}.",
-    "consent": {
-      "title": "Send to external AI provider?",
-      "body": "This message will be processed by {{provider}}, an external provider.",
-      "veilNote": "Veil de-identifies patient information (names, MRNs, providers) before it leaves your infrastructure, and restores it in the answer. Local Ollama models avoid this entirely.",
+    "thinking": "Thinking…",
+    "steps": "Steps",
+    "veil": {
+      "title": "Veil",
+      "body": "This message will be processed by {{provider}}, an external provider. Veil de-identifies patient information (names, MRNs, providers) before it leaves your infrastructure, and restores it in the answer.",
       "cancel": "Cancel",
-      "confirm": "De-identify & send"
+      "useLocal": "Use local model",
+      "confirm": "De-identify & send",
+      "activeChip": "Veil active · {{provider}}"
+    },
+    "actionCard": {
+      "title": {
+        "appointment": "Proposed appointment",
+        "task": "Proposed task",
+        "prescription": "Proposed prescription"
+      },
+      "kind": {
+        "appointment": "Appointment added.",
+        "task": "Task added.",
+        "prescription": "Prescription added."
+      },
+      "approve": "Add",
+      "adding": "Adding…",
+      "discard": "Discard",
+      "added": "Added.",
+      "discarded": "Discarded — nothing was saved.",
+      "addedTitle": "Added",
+      "failedTitle": "Could not add",
+      "failedBody": "Something went wrong, or you don't have permission. Please try again."
+    },
+    "lists": {
+      "appointments": "Appointments",
+      "tasks": "Tasks",
+      "prescriptions": "Prescriptions",
+      "done": "Done",
+      "noAppointments": "No appointments.",
+      "noTasks": "No tasks.",
+      "noPrescriptions": "No prescriptions."
     },
     "labCard": {
       "flags": {
