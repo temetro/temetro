@@ -1,18 +1,23 @@
 "use client";
 
-import { AlertTriangle, Boxes, PackageX, Pill, Search } from "lucide-react";
+import { AlertTriangle, Boxes, PackageX, Pill, Plus, Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AddInventoryDialog } from "@/components/pharmacy/add-inventory-dialog";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   type Availability,
+  type InventoryInput,
   type InventoryItem,
   availabilityOf,
+  createInventory,
   listInventory,
 } from "@/lib/inventory";
+import { notify } from "@/lib/toast";
 
 const availabilityVariant: Record<
   Availability,
@@ -90,6 +95,20 @@ export function InventoryView() {
   const { t } = useTranslation();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [query, setQuery] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+
+  // Persist a new item, then prepend the saved record so it appears immediately.
+  const addItem = async (input: InventoryInput) => {
+    try {
+      const created = await createInventory(input);
+      setItems((prev) => [created, ...prev]);
+    } catch {
+      notify.error(
+        t("inventory.dialog.failedTitle"),
+        t("inventory.dialog.failedBody"),
+      );
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -138,16 +157,28 @@ export function InventoryView() {
             {t("inventory.subtitle")}
           </p>
         </div>
-        <div className="relative">
-          <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
-          <Input
-            className="w-full pl-9 sm:w-64"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("inventory.searchPlaceholder")}
-            value={query}
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+            <Input
+              className="w-full pl-9 sm:w-64"
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("inventory.searchPlaceholder")}
+              value={query}
+            />
+          </div>
+          <Button onClick={() => setAddOpen(true)}>
+            <Plus className="size-4" />
+            {t("inventory.addItem")}
+          </Button>
         </div>
       </div>
+
+      <AddInventoryDialog
+        onAdd={addItem}
+        onOpenChange={setAddOpen}
+        open={addOpen}
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {kpis.map((k) => (
