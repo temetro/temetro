@@ -39,6 +39,28 @@ const PROVIDER_LABELS: Record<ApiProvider, string> = {
   gemini: "Google Gemini",
 };
 
+const PROVIDER_ORDER: ApiProvider[] = ["anthropic", "openai", "gemini"];
+
+// A safe default model id for each provider, used when the picked model doesn't
+// belong to the provider we end up calling.
+const DEFAULT_MODEL: Record<ApiProvider, string> = {
+  anthropic: "claude-sonnet-4-6",
+  openai: "gpt-4o",
+  gemini: "gemini-2.5-flash",
+};
+
+// Choose which provider to actually call: prefer the one the picked model maps
+// to (if it has a key), else the user's configured provider (if keyed), else any
+// provider that has a key. Returns null when no key is configured at all.
+function chooseProvider(
+  settings: AiSettingsRow,
+  requested: ApiProvider | null,
+): ApiProvider | null {
+  if (requested && getApiKey(settings, requested)) return requested;
+  if (getApiKey(settings, settings.provider)) return settings.provider;
+  return PROVIDER_ORDER.find((p) => getApiKey(settings, p)) ?? null;
+}
+
 // Resolve a concrete LanguageModel for a request. `requestedModelId` is the id
 // the user picked in the chat input; when it maps to a cloud provider we use
 // that provider's stored key, otherwise we fall back to local Ollama (also used
@@ -47,11 +69,8 @@ export function resolveModel(
   settings: AiSettingsRow,
   requestedModelId: string,
 ): ResolvedModel {
-  const provider =
-    settings.mode === "local" ? null : providerForModel(requestedModelId);
-
-  if (!provider) {
-    // Local mode via Ollama's OpenAI-compatible endpoint. No key required.
+  // Local mode (or the local sentinel) → Ollama's OpenAI-compatible endpoint.
+  if (settings.mode === "local" || requestedModelId === OLLAMA_SENTINEL) {
     const ollama = createOpenAICompatible({
       name: "ollama",
       baseURL: `${settings.ollamaBaseUrl.replace(/\/$/, "")}/v1`,
@@ -63,20 +82,34 @@ export function resolveModel(
     };
   }
 
-  const apiKey = getApiKey(settings, provider);
-  if (!apiKey) {
+  // API mode. Pick a provider that actually has a key, falling back gracefully
+  // so a configured key (e.g. Gemini) is used even if the picked model belongs
+  // to a different, unconfigured provider.
+  const requested = providerForModel(requestedModelId);
+  const provider = chooseProvider(settings, requested);
+  if (!provider) {
     throw new HttpError(
       400,
-      `No API key configured for ${PROVIDER_LABELS[provider]}. Add one in Settings → AI.`,
+      "No AI provider API key is configured. Add one in Settings → AI, or switch to a local model.",
     );
   }
 
+  // Use the picked model only if it belongs to the chosen provider; otherwise
+  // use the user's default (or a per-provider default).
+  const modelName =
+    requested === provider
+      ? requestedModelId
+      : providerForModel(settings.defaultModel) === provider
+        ? settings.defaultModel
+        : DEFAULT_MODEL[provider];
+
+  const apiKey = getApiKey(settings, provider)!;
   const model: LanguageModel =
     provider === "anthropic"
-      ? createAnthropic({ apiKey })(requestedModelId)
+      ? createAnthropic({ apiKey })(modelName)
       : provider === "gemini"
-        ? createGoogleGenerativeAI({ apiKey })(requestedModelId)
-        : createOpenAI({ apiKey })(requestedModelId);
+        ? createGoogleGenerativeAI({ apiKey })(modelName)
+        : createOpenAI({ apiKey })(modelName);
 
   return { model, isExternal: true, providerLabel: PROVIDER_LABELS[provider] };
 }

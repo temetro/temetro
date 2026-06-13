@@ -51,7 +51,27 @@ export const AI_MODELS: AiModel[] = [
     provider: "anthropic",
     label: "Haiku 4.5",
     descriptionKey: "chat.input.models.haiku45",
+  },
+  {
+    id: "gemini-2.5-pro",
+    provider: "gemini",
+    label: "Gemini 2.5 Pro",
+    descriptionKey: "chat.input.models.gemini25Pro",
     primary: true,
+    supportsEffort: true,
+  },
+  {
+    id: "gemini-2.5-flash",
+    provider: "gemini",
+    label: "Gemini 2.5 Flash",
+    descriptionKey: "chat.input.models.gemini25Flash",
+    primary: true,
+  },
+  {
+    id: "gemini-2.0-flash",
+    provider: "gemini",
+    label: "Gemini 2.0 Flash",
+    descriptionKey: "chat.input.models.gemini20Flash",
   },
   {
     id: "gpt-4o",
@@ -65,19 +85,6 @@ export const AI_MODELS: AiModel[] = [
     provider: "openai",
     label: "GPT-4o mini",
     descriptionKey: "chat.input.models.gpt4oMini",
-  },
-  {
-    id: "gemini-2.0-flash",
-    provider: "gemini",
-    label: "Gemini 2.0 Flash",
-    descriptionKey: "chat.input.models.gemini20Flash",
-  },
-  {
-    id: "gemini-1.5-pro",
-    provider: "gemini",
-    label: "Gemini 1.5 Pro",
-    descriptionKey: "chat.input.models.gemini15Pro",
-    supportsEffort: true,
   },
   {
     id: "ollama",

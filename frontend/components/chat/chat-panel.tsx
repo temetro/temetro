@@ -2,6 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import { AlertTriangle } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -38,8 +39,10 @@ import {
   getModel,
 } from "@/lib/ai-models";
 import type { TemetroUIMessage } from "@/lib/ai-chat";
+import { getAiConfig } from "@/lib/ai-settings";
 import { API_BASE_URL } from "@/lib/api-client";
 import { getPatient } from "@/lib/patients";
+import { notify } from "@/lib/toast";
 
 // Trigger: `/patient 10293` or just `/10293` — a client-side fast-path that
 // pulls records instantly without the LLM (also works offline).
@@ -65,8 +68,35 @@ export function ChatPanel() {
     [],
   );
 
-  const { messages, setMessages, sendMessage, status, stop } =
+  const { messages, setMessages, sendMessage, status, stop, error } =
     useChat<TemetroUIMessage>({ transport });
+
+  // Seed the model + effort from the user's saved AI config so the chat uses the
+  // provider they actually configured (e.g. their Gemini default), not a stale
+  // hardcoded default.
+  useEffect(() => {
+    let cancelled = false;
+    getAiConfig()
+      .then((cfg) => {
+        if (cancelled) return;
+        setModel(cfg.mode === "local" ? "ollama" : cfg.defaultModel);
+        setEffort(cfg.defaultEffort);
+      })
+      .catch(() => {
+        // Keep defaults; the chat still works and the backend falls back to any
+        // configured provider.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Pop a toast whenever a request errors, so failures are never silent.
+  useEffect(() => {
+    if (error) {
+      notify.error(t("chat.error.title"), error.message || t("chat.error.body"));
+    }
+  }, [error, t]);
 
   const isCloudModel = (getModel(model)?.provider ?? "ollama") !== "ollama";
 
@@ -158,6 +188,21 @@ export function ChatPanel() {
     />
   );
 
+  const errorAlert = error ? (
+    <div
+      className="flex w-full items-start gap-2 rounded-2xl border border-destructive/40 bg-destructive/8 px-4 py-3 text-sm text-destructive-foreground"
+      role="alert"
+    >
+      <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+      <div className="space-y-0.5">
+        <p className="font-medium">{t("chat.error.title")}</p>
+        <p className="text-destructive-foreground/90">
+          {error.message || t("chat.error.body")}
+        </p>
+      </div>
+    </div>
+  ) : null;
+
   const consentDialog = (
     <Dialog onOpenChange={setConsentOpen} open={consentOpen}>
       <DialogPopup>
@@ -191,7 +236,10 @@ export function ChatPanel() {
           <h1 className="text-center text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
             {t("chat.heading")}
           </h1>
-          {promptInput}
+          <div className="flex w-full flex-col gap-3">
+            {errorAlert}
+            {promptInput}
+          </div>
         </div>
         {consentDialog}
       </div>
@@ -240,7 +288,10 @@ export function ChatPanel() {
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-4">{promptInput}</div>
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-4 pb-4">
+        {errorAlert}
+        {promptInput}
+      </div>
       {consentDialog}
     </div>
   );

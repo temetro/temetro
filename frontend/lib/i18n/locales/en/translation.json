@@ -634,10 +634,11 @@
         "opus48": "For complex clinical reasoning",
         "sonnet46": "Balanced for everyday tasks",
         "haiku45": "Fastest for quick answers",
+        "gemini25Pro": "Google’s most capable model",
+        "gemini25Flash": "Fast Google model",
+        "gemini20Flash": "Lightweight Google model",
         "gpt4o": "OpenAI multimodal flagship",
         "gpt4oMini": "Fast, low-cost OpenAI model",
-        "gemini20Flash": "Fast Google model",
-        "gemini15Pro": "Google long-context model",
         "ollama": "Runs locally on your infrastructure"
       }
     },
@@ -673,6 +674,10 @@
       "failedCount": "{{count}} failed",
       "failedTitle": "Import failed",
       "failedBody": "The records could not be imported. Please try again."
+    },
+    "error": {
+      "title": "AI request failed",
+      "body": "Something went wrong reaching the AI. Check your provider and API key in Settings → AI."
     }
   },
   "patientCard": {

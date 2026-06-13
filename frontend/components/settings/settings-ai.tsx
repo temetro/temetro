@@ -71,6 +71,19 @@ export function AIPanel() {
   const set = <K extends keyof AiConfig>(key: K, value: AiConfig[K]) =>
     setConfig((prev) => ({ ...prev, [key]: value }));
 
+  // Switching provider: if the current default model doesn't belong to the new
+  // provider, pick that provider's first model so they never end up mismatched.
+  const setProvider = (provider: ApiProvider) =>
+    setConfig((prev) => {
+      const models = AI_MODELS.filter((m) => m.provider === provider);
+      const stillValid = models.some((m) => m.id === prev.defaultModel);
+      return {
+        ...prev,
+        provider,
+        defaultModel: stillValid ? prev.defaultModel : (models[0]?.id ?? prev.defaultModel),
+      };
+    });
+
   // Models available for the currently selected cloud provider.
   const providerModels = useMemo(
     () => AI_MODELS.filter((m) => m.provider === config.provider),
@@ -169,9 +182,7 @@ export function AIPanel() {
               <div className="space-y-1.5">
                 <FieldLabel>{t("settings.ai.provider")}</FieldLabel>
                 <Select
-                  onValueChange={(value) =>
-                    set("provider", value as ApiProvider)
-                  }
+                  onValueChange={(value) => setProvider(value as ApiProvider)}
                   value={config.provider}
                 >
                   <SelectTrigger>
