@@ -10,6 +10,12 @@ const schema = z.object({
     .min(1)
     .default("postgres://temetro:temetro@localhost:5432/temetro"),
   BETTER_AUTH_SECRET: z.string().min(1).default("dev-insecure-secret-change-me"),
+  // Key used to encrypt at-rest AI provider API keys (src/lib/crypto.ts). Any
+  // length passphrase; rotating it invalidates stored keys (they re-enter).
+  AI_CREDENTIALS_KEY: z
+    .string()
+    .min(1)
+    .default("dev-insecure-ai-key-change-me"),
   BETTER_AUTH_URL: z.string().min(1).default("http://localhost:4000"),
   FRONTEND_URL: z.string().min(1).default("http://localhost:3000"),
   PORT: z.coerce.number().int().positive().default(4000),
@@ -47,6 +53,12 @@ if (env.NODE_ENV === "production") {
   if (env.BETTER_AUTH_SECRET === "dev-insecure-secret-change-me") {
     console.error(
       "❌ BETTER_AUTH_SECRET is unset in production. Generate one: openssl rand -base64 32",
+    );
+    process.exit(1);
+  }
+  if (env.AI_CREDENTIALS_KEY === "dev-insecure-ai-key-change-me") {
+    console.error(
+      "❌ AI_CREDENTIALS_KEY is unset in production. Generate one: openssl rand -base64 32",
     );
     process.exit(1);
   }

@@ -6,6 +6,7 @@ import { db } from "../db/index.js";
 import { member, user } from "../db/schema/auth.js";
 import { HttpError } from "../lib/http-error.js";
 import { labSchema, patientInputSchema } from "../lib/patient-validation.js";
+import { isReceptionOnly, providerScope } from "../lib/role-scope.js";
 import {
   requireAuth,
   requireOrg,
@@ -26,37 +27,6 @@ const transferInputSchema = z.object({
 const labsAppendSchema = z.object({
   labs: z.array(labSchema).min(1).max(50),
 });
-
-// Only the `doctor` role is scoped to its own panel of patients. Any elevated
-// clinical role (owner / admin / member) sees the whole clinic, so scoping never
-// applies when the caller also holds one of those. Returns the user id to scope
-// by, or undefined for "see everything".
-function providerScope(
-  memberRole: string | undefined,
-  userId: string,
-): string | undefined {
-  const names = String(memberRole ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (!names.includes("doctor")) return undefined;
-  if (names.some((r) => ["owner", "admin", "member"].includes(r))) {
-    return undefined;
-  }
-  return userId;
-}
-
-// The `reception` role is scoped to scheduling + registration: it sees and
-// writes patient demographics only, never clinical PHI. True only when the
-// caller's role set is reception without any clinical-capable role.
-function isReceptionOnly(memberRole?: string): boolean {
-  const names = String(memberRole ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (!names.includes("reception")) return false;
-  return !names.some((r) => ["owner", "admin", "doctor", "member"].includes(r));
-}
 
 // Notify the rest of the clinic about a patient record change (best-effort,
 // pushed live over the socket).

@@ -9,8 +9,10 @@ import { env } from "./env.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 import { initRealtime } from "./realtime.js";
 import { activityRouter } from "./routes/activity.js";
+import { aiRouter } from "./routes/ai.js";
 import { analyticsRouter } from "./routes/analytics.js";
 import { appointmentsRouter } from "./routes/appointments.js";
+import { chatRouter } from "./routes/chat.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { inventoryRouter } from "./routes/inventory.js";
 import { notesRouter } from "./routes/notes.js";
@@ -68,6 +70,8 @@ app.use("/api/analytics", analyticsRouter);
 app.use("/api/conversations", conversationsRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/settings", settingsRouter);
+app.use("/api/ai", aiRouter);
+app.use("/api/chat", chatRouter);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -91,4 +95,6 @@ server.listen(env.PORT, () => {
   console.log(`  • messages: /api/conversations  (+ Socket.io)`);
   console.log(`  • notifs:   /api/notifications`);
   console.log(`  • settings: /api/settings`);
+  console.log(`  • ai:       /api/ai  (config + import)`);
+  console.log(`  • chat:     /api/chat  (LLM agent)`);
 });
