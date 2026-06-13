@@ -640,6 +640,39 @@
         "gemini15Pro": "Google long-context model",
         "ollama": "Runs locally on your infrastructure"
       }
+    },
+    "patientNotFound": "I couldn't find a patient with file number {{fileNumber}}.",
+    "consent": {
+      "title": "Send to external AI provider?",
+      "body": "This message will be processed by {{provider}}, an external provider.",
+      "veilNote": "Veil de-identifies patient information (names, MRNs, providers) before it leaves your infrastructure, and restores it in the answer. Local Ollama models avoid this entirely.",
+      "cancel": "Cancel",
+      "confirm": "De-identify & send"
+    },
+    "labCard": {
+      "flags": {
+        "low": "Low",
+        "high": "High",
+        "critical": "Critical",
+        "normal": "Normal"
+      }
+    },
+    "importCard": {
+      "title": "Import patient records",
+      "ready": "Ready to import",
+      "skipped": "Skipped",
+      "total": "Parsed",
+      "row": "Row {{index}}",
+      "approve": "Import {{count}} record(s)",
+      "approve_one": "Import 1 record",
+      "reject": "Discard",
+      "importing": "Importing…",
+      "rejectedNote": "Import discarded. Nothing was written.",
+      "importedTitle": "Records imported",
+      "importedBody": "Imported {{count}} patient record(s).",
+      "failedCount": "{{count}} failed",
+      "failedTitle": "Import failed",
+      "failedBody": "The records could not be imported. Please try again."
     }
   },
   "patientCard": {

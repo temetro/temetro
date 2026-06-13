@@ -55,7 +55,7 @@ export function ChatInput({
   const canSend =
     (value.trim().length > 0 || files.length > 0) && !isGenerating;
 
-  const submit = useCallback(() => {
+  const submit = useCallback(async () => {
     const trimmed = value.trim();
     if ((!trimmed && files.length === 0) || isGenerating) {
       return;
@@ -64,8 +64,24 @@ export function ChatInput({
     if (trimmed) {
       parts.push(trimmed);
     }
-    if (files.length > 0) {
-      parts.push(`[Attached: ${files.map((file) => file.name).join(", ")}]`);
+    // Include the text of attached files so the agent can parse them (e.g. a
+    // database export to import). Read text-like files; cap each so a huge file
+    // can't blow the context. Binary files are referenced by name only.
+    for (const file of files) {
+      const textLike =
+        /\.(csv|tsv|json|txt|md|xml|ndjson|tab)$/i.test(file.name) ||
+        file.type.startsWith("text/") ||
+        file.type === "application/json";
+      if (textLike) {
+        try {
+          const content = (await file.text()).slice(0, 200_000);
+          parts.push(`--- File: ${file.name} ---\n${content}`);
+        } catch {
+          parts.push(`[Attached: ${file.name}]`);
+        }
+      } else {
+        parts.push(`[Attached: ${file.name}]`);
+      }
     }
     onSubmit(parts.join("\n\n"));
     setValue("");

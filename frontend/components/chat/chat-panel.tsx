@@ -1,9 +1,10 @@
 "use client";
 
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
 import { nanoid } from "nanoid";
-import type { ChatStatus } from "ai";
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -17,110 +18,124 @@ import {
   MessageResponse,
 } from "@/components/ai-elements/message";
 import { ChatInput } from "@/components/chat/chat-input";
+import { ImportPreviewCard } from "@/components/chat/import-preview-card";
+import { LabChartCard } from "@/components/chat/lab-chart-card";
 import { PatientResult } from "@/components/chat/patient-cards";
-import { DEFAULT_EFFORT, DEFAULT_MODEL_ID, type Effort } from "@/lib/ai-models";
-import { getPatient, type Patient } from "@/lib/patients";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DEFAULT_EFFORT,
+  DEFAULT_MODEL_ID,
+  type Effort,
+  getModel,
+} from "@/lib/ai-models";
+import type { TemetroUIMessage } from "@/lib/ai-chat";
+import { API_BASE_URL } from "@/lib/api-client";
+import { getPatient } from "@/lib/patients";
 
-type ChatMessage =
-  | { id: string; role: "user"; text: string }
-  | { id: string; role: "assistant"; kind: "text"; text: string }
-  | {
-      id: string;
-      role: "assistant";
-      kind: "patient";
-      fileNumber: string;
-      status: "loading" | "ready" | "not-found";
-      patient?: Patient;
-    };
-
-// Trigger: `/patient 10293` or just `/10293` pulls up records.
+// Trigger: `/patient 10293` or just `/10293` — a client-side fast-path that
+// pulls records instantly without the LLM (also works offline).
 const PATIENT_COMMAND = /^\/(?:patient\s+)?(\d+)$/i;
 
 export function ChatPanel() {
   const { t } = useTranslation();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [status, setStatus] = useState<ChatStatus>("ready");
-  // Model + effort selected in the input; travels with each send (wired to the
-  // backend agent in a later phase). Defaults come from the shared catalog.
   const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
   const [effort, setEffort] = useState<Effort>(DEFAULT_EFFORT);
 
-  const send = useCallback(async (text: string) => {
-    const trimmed = text.trim();
-    if (!trimmed) {
-      return;
-    }
+  // Veil consent: cloud models de-identify + send data externally. We ask once
+  // per session before the first such send.
+  const [consented, setConsented] = useState(false);
+  const [consentOpen, setConsentOpen] = useState(false);
+  const pendingSend = useRef<string | null>(null);
 
-    setMessages((prev) => [
-      ...prev,
-      { id: nanoid(), role: "user", text: trimmed },
-    ]);
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport<TemetroUIMessage>({
+        api: `${API_BASE_URL}/api/chat`,
+        credentials: "include",
+      }),
+    [],
+  );
 
-    const match = trimmed.match(PATIENT_COMMAND);
+  const { messages, setMessages, sendMessage, status, stop } =
+    useChat<TemetroUIMessage>({ transport });
 
-    // Patient lookup: append a loading card set, then fill it in once the
-    // (mock) record comes back.
-    if (match) {
-      const fileNumber = match[1];
-      const resultId = nanoid();
-      setStatus("submitted");
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: resultId,
-          role: "assistant",
-          kind: "patient",
-          fileNumber,
-          status: "loading",
-        },
-      ]);
+  const isCloudModel = (getModel(model)?.provider ?? "ollama") !== "ollama";
 
-      let patient: Patient | null = null;
-      try {
-        patient = await getPatient(fileNumber);
-      } catch {
-        // Network / auth errors fall through as "not found"; a 401 will have
-        // already redirected to /login via the API client.
-        patient = null;
+  // Run the LLM agent for a message (after any consent gate).
+  const runAgent = useCallback(
+    (text: string) => {
+      sendMessage({ text }, { body: { model, effort } });
+    },
+    [sendMessage, model, effort],
+  );
+
+  const send = useCallback(
+    async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+
+      // Fast-path: `/patient <file#>` renders cards directly, no LLM.
+      const match = trimmed.match(PATIENT_COMMAND);
+      if (match) {
+        const fileNumber = match[1];
+        const userId = nanoid();
+        setMessages((prev) => [
+          ...prev,
+          { id: userId, role: "user", parts: [{ type: "text", text: trimmed }] },
+        ]);
+        let patient = null;
+        try {
+          patient = await getPatient(fileNumber);
+        } catch {
+          patient = null;
+        }
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: nanoid(),
+            role: "assistant",
+            parts: patient
+              ? [{ type: "data-patientCard", data: patient }]
+              : [
+                  {
+                    type: "text",
+                    text: t("chat.patientNotFound", { fileNumber }),
+                  },
+                ],
+          },
+        ]);
+        return;
       }
-      setMessages((prev) =>
-        prev.map((message) =>
-          message.id === resultId &&
-          message.role === "assistant" &&
-          message.kind === "patient"
-            ? {
-                ...message,
-                status: patient ? "ready" : "not-found",
-                patient: patient ?? undefined,
-              }
-            : message
-        )
-      );
-      setStatus("ready");
-      return;
-    }
 
-    // UI-only: mock assistant reply for anything that isn't a command.
-    setStatus("submitted");
-    window.setTimeout(() => {
-      setStatus("streaming");
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: nanoid(),
-          role: "assistant",
-          kind: "text",
-          text: `This is a **UI-only preview** of temetro. Try \`/patient 10293\` to pull up a patient's records.\n\nYou asked:\n\n> ${trimmed}`,
-        },
-      ]);
-      window.setTimeout(() => setStatus("ready"), 250);
-    }, 500);
-  }, []);
+      // Cloud model → ask for Veil consent once before sending externally.
+      if (isCloudModel && !consented) {
+        pendingSend.current = trimmed;
+        setConsentOpen(true);
+        return;
+      }
+      runAgent(trimmed);
+    },
+    [consented, isCloudModel, runAgent, setMessages, t],
+  );
 
-  const handleStop = useCallback(() => setStatus("ready"), []);
+  const confirmConsent = useCallback(() => {
+    setConsented(true);
+    setConsentOpen(false);
+    const text = pendingSend.current;
+    pendingSend.current = null;
+    if (text) runAgent(text);
+  }, [runAgent]);
 
-  // Opening a patient from the Patients page lands here as `/?patient=<file#>`;
-  // run the lookup once on arrival.
+  // Opening a patient from the Patients page lands here as `/?patient=<file#>`.
   const searchParams = useSearchParams();
   const requestedPatient = searchParams.get("patient");
   const handledPatientRef = useRef<string | null>(null);
@@ -137,10 +152,36 @@ export function ChatPanel() {
       model={model}
       onEffortChange={setEffort}
       onModelChange={setModel}
-      onStop={handleStop}
+      onStop={stop}
       onSubmit={send}
       status={status}
     />
+  );
+
+  const consentDialog = (
+    <Dialog onOpenChange={setConsentOpen} open={consentOpen}>
+      <DialogPopup>
+        <DialogHeader>
+          <DialogTitle>{t("chat.consent.title")}</DialogTitle>
+          <DialogDescription>
+            {t("chat.consent.body", {
+              provider: getModel(model)?.label ?? model,
+            })}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogPanel>
+          <p className="text-sm text-muted-foreground">
+            {t("chat.consent.veilNote")}
+          </p>
+        </DialogPanel>
+        <DialogFooter>
+          <Button onClick={() => setConsentOpen(false)} variant="outline">
+            {t("chat.consent.cancel")}
+          </Button>
+          <Button onClick={confirmConsent}>{t("chat.consent.confirm")}</Button>
+        </DialogFooter>
+      </DialogPopup>
+    </Dialog>
   );
 
   if (messages.length === 0) {
@@ -152,6 +193,7 @@ export function ChatPanel() {
           </h1>
           {promptInput}
         </div>
+        {consentDialog}
       </div>
     );
   }
@@ -160,48 +202,46 @@ export function ChatPanel() {
     <div className="flex flex-1 flex-col overflow-hidden">
       <Conversation>
         <ConversationContent className="mx-auto w-full max-w-3xl">
-          {messages.map((message) => {
-            if (message.role === "assistant" && message.kind === "patient") {
-              return (
-                <Message from="assistant" key={message.id}>
-                  <MessageContent className="w-full">
-                    <PatientResult
-                      fileNumber={message.fileNumber}
-                      onPatientUpdated={(updated) =>
-                        setMessages((prev) =>
-                          prev.map((m) =>
-                            m.id === message.id &&
-                            m.role === "assistant" &&
-                            m.kind === "patient"
-                              ? { ...m, patient: updated, status: "ready" }
-                              : m
-                          )
-                        )
-                      }
-                      patient={message.patient}
-                      status={message.status}
-                    />
-                  </MessageContent>
-                </Message>
-              );
-            }
-
-            return (
-              <Message from={message.role} key={message.id}>
-                <MessageContent>
-                  {message.role === "user" ? (
-                    <span className="whitespace-pre-wrap">{message.text}</span>
-                  ) : (
-                    <MessageResponse>{message.text}</MessageResponse>
-                  )}
-                </MessageContent>
-              </Message>
-            );
-          })}
+          {messages.map((message) => (
+            <Message from={message.role} key={message.id}>
+              <MessageContent className="w-full">
+                {message.parts.map((part, i) => {
+                  const key = `${message.id}-${i}`;
+                  if (part.type === "text") {
+                    return message.role === "user" ? (
+                      <span className="whitespace-pre-wrap" key={key}>
+                        {part.text}
+                      </span>
+                    ) : (
+                      <MessageResponse key={key}>{part.text}</MessageResponse>
+                    );
+                  }
+                  if (part.type === "data-patientCard") {
+                    return (
+                      <PatientResult
+                        fileNumber={part.data.fileNumber}
+                        key={key}
+                        patient={part.data}
+                        status="ready"
+                      />
+                    );
+                  }
+                  if (part.type === "data-labCard") {
+                    return <LabChartCard data={part.data} key={key} />;
+                  }
+                  if (part.type === "data-importPreview") {
+                    return <ImportPreviewCard data={part.data} key={key} />;
+                  }
+                  return null;
+                })}
+              </MessageContent>
+            </Message>
+          ))}
         </ConversationContent>
         <ConversationScrollButton />
       </Conversation>
       <div className="mx-auto w-full max-w-3xl px-4 pb-4">{promptInput}</div>
+      {consentDialog}
     </div>
   );
 }

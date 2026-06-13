@@ -50,3 +50,14 @@ export async function testAiConnection(input: {
     body: JSON.stringify(input),
   });
 }
+
+// Commit records the clinician approved in a chat import preview. The backend
+// re-validates and writes via the audited patient service.
+export async function commitImport(
+  records: unknown[],
+): Promise<{ created: string[]; failed: { fileNumber?: string; error: string }[] }> {
+  return apiFetch("/api/ai/import", {
+    method: "POST",
+    body: JSON.stringify({ records }),
+  });
+}
