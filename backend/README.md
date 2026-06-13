@@ -9,11 +9,14 @@ shape exactly.
 ## Quick start (Docker)
 
 ```bash
-cp .env.example .env
-# set a strong secret:
-#   openssl rand -base64 32   ->  paste into BETTER_AUTH_SECRET
-docker compose up            # db + backend + frontend
+docker compose up            # db + backend + frontend — no setup needed
 ```
+
+No `.env` or manual secret generation is required: on first start the backend
+generates any missing secrets (`BETTER_AUTH_SECRET`, `AI_CREDENTIALS_KEY`) and
+persists them to a Docker volume, so they stay stable across restarts. Create a
+`.env` (from `.env.example`) only if you want to **override** something — your
+own auth secret, SMTP, etc.
 
 - Frontend → http://localhost:3000
 - Backend → http://localhost:4000 (health: `GET /health`, auth health: `GET /api/auth/ok`)

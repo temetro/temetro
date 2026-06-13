@@ -1,7 +1,10 @@
 # Full-stack dev/run orchestration for temetro.
 #
-#   cp .env.example .env   # then set BETTER_AUTH_SECRET
-#   docker compose up      # db + backend + frontend
+#   docker compose up      # db + backend + frontend — that's it.
+#
+# No .env or secret setup is required: the backend generates any missing
+# secrets on first start and persists them (see docker-entrypoint.sh). Create a
+# .env only if you want to override something (SMTP, a real auth secret, etc.).
 #
 # Frontend  -> http://localhost:3000
 # Backend   -> http://localhost:4000
@@ -41,7 +44,10 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgres://temetro:temetro@db:5432/temetro
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET in .env (openssl rand -base64 32)}
+      # Secrets are optional: if unset, the entrypoint generates and persists
+      # them (to the temetro_secrets volume). Pass real values here to override.
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
+      AI_CREDENTIALS_KEY: ${AI_CREDENTIALS_KEY:-}
       BETTER_AUTH_URL: http://localhost:4000
       FRONTEND_URL: http://localhost:3000
       PORT: "4000"
@@ -51,6 +57,9 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-temetro <no-reply@temetro.local>}
+    volumes:
+      # Persists auto-generated secrets so they stay stable across restarts.
+      - temetro_secrets:/var/lib/temetro
     ports:
       - "4000:4000"
 
@@ -78,3 +87,4 @@ services:
 
 volumes:
   temetro_pgdata:
+  temetro_secrets:

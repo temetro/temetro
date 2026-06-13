@@ -18,6 +18,10 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/drizzle ./drizzle
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 4000
-# Apply migrations, then start the API.
+# The entrypoint auto-generates any missing secrets, then we apply migrations
+# and start the API.
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["sh", "-c", "node dist/migrate.js && node dist/index.js"]
