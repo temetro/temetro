@@ -81,6 +81,22 @@ No test runner is configured. Verify by running the stack (`docker compose up`) 
 - Docker: migrations run on container start (`node dist/migrate.js`); `docker-compose.yml` exposes a
   configurable `POSTGRES_PORT` host port.
 
+## AI chat
+
+- **`src/routes/chat.ts`** — `POST /api/chat`, a tool-using agent (AI SDK v6 `streamText`)
+  gated by `patient:read`. Providers resolve from the picked model id via
+  **`src/services/ai/provider.ts`** (Anthropic / OpenAI / Gemini for API-key mode, or a
+  local Ollama via the OpenAI-compatible endpoint). Tools (`src/services/ai/tools.ts`)
+  reuse the patient service under the same role scoping and stream **real** record data to
+  the client as custom data parts while the model sees only Veil-redacted results.
+- **Veil** (`src/services/ai/veil.ts`) de-identifies PHI to tokens before external calls,
+  resolves tokens on tool args, and rehydrates the final text (external mode runs
+  non-streamed so the rehydrated text is correct). Local mode bypasses it.
+- **AI config** lives in **`src/routes/ai.ts`** (`/api/ai/config`, `/test`, `/import`) over
+  the `user_ai_settings` table; provider keys are encrypted with `src/lib/crypto.ts`
+  (`AI_CREDENTIALS_KEY`). The migration **import** is gated behind a client approval step
+  and re-validated server-side.
+
 ## Not built yet
 
-The AI `/chat` endpoint (LLM proxy) and the signing / patient-owned-storage / approval flow.
+The signing / patient-owned-storage / approval flow.
