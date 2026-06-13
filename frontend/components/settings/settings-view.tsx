@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
+import { AIPanel } from "@/components/settings/settings-ai";
 import { SigningPanel } from "@/components/settings/settings-billing";
 import { CareTeamPanel } from "@/components/settings/settings-care-team";
 import { DevelopersPanel } from "@/components/settings/settings-developers";
@@ -13,11 +14,15 @@ import { useActiveRole } from "@/lib/roles";
 
 const TABS = [
   { id: "profile", labelKey: "settings.tabs.profile" },
+  { id: "ai", labelKey: "settings.tabs.ai" },
   { id: "records", labelKey: "settings.tabs.records" },
   { id: "signing", labelKey: "settings.tabs.signing" },
   { id: "careTeam", labelKey: "settings.tabs.careTeam" },
   { id: "developers", labelKey: "settings.tabs.developers" },
 ] as const;
+
+// Per-user tabs every clinician sees; the rest are clinic-wide (admin only).
+const PERSONAL_TABS = ["profile", "ai"];
 
 type Tab = (typeof TABS)[number]["id"];
 
@@ -27,9 +32,11 @@ export function SettingsView() {
   const [tab, setTab] = useState<Tab>("profile");
 
   // Only clinic owners/admins manage clinic-wide settings (care team, records,
-  // signing, developers). Everyone else gets their own profile only.
+  // signing, developers). Everyone else gets their personal tabs (profile, AI).
   const isAdmin = role === "owner" || role === "admin";
-  const visibleTabs = isAdmin ? TABS : TABS.filter((item) => item.id === "profile");
+  const visibleTabs = isAdmin
+    ? TABS
+    : TABS.filter((item) => PERSONAL_TABS.includes(item.id));
   const activeTab = visibleTabs.some((item) => item.id === tab) ? tab : "profile";
 
   return (
@@ -59,6 +66,7 @@ export function SettingsView() {
 
       <div className="mt-10 space-y-12">
         {activeTab === "profile" && <ProfilePanel />}
+        {activeTab === "ai" && <AIPanel />}
         {activeTab === "records" && <RecordsPanel />}
         {activeTab === "signing" && <SigningPanel />}
         {activeTab === "careTeam" && <CareTeamPanel />}

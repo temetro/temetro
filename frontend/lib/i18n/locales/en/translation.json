@@ -783,6 +783,7 @@
   "settings": {
     "tabs": {
       "profile": "Profile",
+      "ai": "AI",
       "records": "Records",
       "signing": "Signing",
       "careTeam": "Care team",
@@ -998,6 +999,57 @@
       "backupDescription": "Recover your signing identity if you lose this device",
       "backupLabel": "Recovery phrase",
       "backupDesc": "Export an encrypted backup of your signing key to restore it on a new device."
+    },
+    "ai": {
+      "modeTitle": "Inference mode",
+      "modeDescription": "Choose how temetro runs the AI. A cloud API key sends data off your infrastructure; a local model keeps everything on your machine.",
+      "mode": "Mode",
+      "modeApi": "Cloud API key",
+      "modeLocal": "Local model (Ollama)",
+      "modeApiHint": "Requests go to your chosen provider. Patient identifiers are de-identified by Veil before they leave.",
+      "modeLocalHint": "Requests run against a model on your own infrastructure. No patient data leaves the clinic.",
+      "providerTitle": "Provider & API key",
+      "providerDescription": "Your key is encrypted at rest and never shown again. You can store a key per provider and switch between them.",
+      "provider": "Provider",
+      "providers": {
+        "openai": "OpenAI",
+        "anthropic": "Anthropic",
+        "gemini": "Google Gemini"
+      },
+      "apiKey": "API key",
+      "apiKeyPlaceholder": "Paste your API key",
+      "apiKeySet": "•••••••••• (key set)",
+      "apiKeyHint": "The key is encrypted before storage and used only to call the provider.",
+      "apiKeyStored": "A key is stored for {{provider}}.",
+      "defaultModel": "Default model",
+      "selectModel": "Select a model",
+      "defaultEffort": "Default effort",
+      "localTitle": "Local model (Ollama)",
+      "localDescription": "Point temetro at your Ollama server. The model runs on your infrastructure, so patient data never leaves the clinic.",
+      "ollamaBaseUrl": "Ollama base URL",
+      "ollamaModel": "Model name",
+      "testConnection": "Test connection",
+      "testing": "Testing…",
+      "testOk": "Connection succeeded",
+      "testFailed": "Connection failed",
+      "testError": "Could not run the test.",
+      "veilTitle": "Veil — PHI safeguards",
+      "veilDescription": "Veil de-identifies patient information before it is sent to an external model, then restores it in the response.",
+      "veilLevel": "De-identification level",
+      "veilLevels": {
+        "full": "Full — names, MRNs, providers & free-text",
+        "names": "Names only — direct identifiers",
+        "off": "Off — send data as-is (not recommended)"
+      },
+      "veilApiNote": "Veil applies to every external request. Identifiers are replaced with tokens the model never sees, and re-inserted before you read the answer.",
+      "veilLocalNote": "You are in local mode, so patient data never leaves your infrastructure and Veil is not needed.",
+      "unsavedChanges": "You have unsaved AI settings.",
+      "saveChanges": "Save changes",
+      "saving": "Saving…",
+      "savedTitle": "AI settings saved",
+      "savedBody": "Your AI configuration has been updated.",
+      "saveFailedTitle": "Could not save",
+      "saveFailedBody": "Saving your AI settings failed. Please try again."
     }
   }
 }
