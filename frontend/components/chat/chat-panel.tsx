@@ -1,8 +1,8 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
-import { AlertTriangle, ShieldCheck } from "lucide-react";
+import { DefaultChatTransport, type ToolUIPart } from "ai";
+import { AlertTriangle, Brain, ChevronDown, ShieldCheck, X } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -24,9 +24,30 @@ import {
   MessageContent,
   MessageResponse,
 } from "@/components/ai-elements/message";
+import {
+  Queue,
+  QueueItem,
+  QueueItemAction,
+  QueueItemActions,
+  QueueItemContent,
+  QueueItemIndicator,
+  QueueList,
+} from "@/components/ai-elements/queue";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "@/components/ai-elements/tool";
 import { ActionPreviewCard } from "@/components/chat/action-preview-card";
+import { AnalyticsCard } from "@/components/chat/analytics-card";
+import { BatchActionPreviewCard } from "@/components/chat/batch-action-preview-card";
 import { ChatInput } from "@/components/chat/chat-input";
+import { ClinicCard } from "@/components/chat/clinic-card";
+import { InventoryListCard } from "@/components/chat/inventory-list-card";
 import { ImportPreviewCard } from "@/components/chat/import-preview-card";
 import { LabChartCard } from "@/components/chat/lab-chart-card";
 import { PatientResult } from "@/components/chat/patient-cards";
@@ -38,16 +59,25 @@ import {
 import { VeilConfirmation } from "@/components/chat/veil-confirmation";
 import { Badge } from "@/components/ui/badge";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   DEFAULT_EFFORT,
   DEFAULT_MODEL_ID,
   type Effort,
   getModel,
 } from "@/lib/ai-models";
-import type { TemetroUIMessage } from "@/lib/ai-chat";
+import type { ActionPreviewData, TemetroUIMessage } from "@/lib/ai-chat";
+import {
+  getThread,
+  notifyThreadsChanged,
+  saveThread,
+} from "@/lib/ai-chat-history";
 import { getAiConfig } from "@/lib/ai-settings";
 import { API_BASE_URL } from "@/lib/api-client";
 import { getPatient } from "@/lib/patients";
-import { notify } from "@/lib/toast";
 
 // Trigger: `/patient 10293` or just `/10293` — a client-side fast-path that
 // pulls records instantly without the LLM (also works offline).
@@ -63,6 +93,19 @@ export function ChatPanel() {
   // holds the message text waiting on that one-time approval.
   const [consented, setConsented] = useState(false);
   const [pendingConsent, setPendingConsent] = useState<string | null>(null);
+
+  // Claude-style message queue: messages submitted while the assistant is busy
+  // (or waiting on the Veil gate) wait here and auto-send when it goes idle.
+  const [queued, setQueued] = useState<string[]>([]);
+
+  // Persisted conversation: a client-owned thread id (a fresh one per new chat),
+  // saved to the server after each exchange so history survives reloads.
+  const [threadId, setThreadId] = useState<string>(() => nanoid());
+  const threadIdRef = useRef(threadId);
+  threadIdRef.current = threadId;
+  // Skip the auto-save that would otherwise fire right after loading a thread
+  // (which would needlessly bump it to the top of the history).
+  const justLoadedRef = useRef(false);
 
   const transport = useMemo(
     () =>
@@ -96,19 +139,23 @@ export function ChatPanel() {
     };
   }, []);
 
-  // Pop a toast whenever a request errors, so failures are never silent.
+  // Surface errors inline (and dismissible) instead of as a toast, so a failure
+  // stays visible until acknowledged and isn't duplicated. Reset the dismissed
+  // flag whenever a fresh error arrives.
+  const [errorDismissed, setErrorDismissed] = useState(false);
   useEffect(() => {
-    if (error) {
-      notify.error(t("chat.error.title"), error.message || t("chat.error.body"));
-    }
-  }, [error, t]);
+    if (error) setErrorDismissed(false);
+  }, [error]);
 
   const isCloudModel = (getModel(model)?.provider ?? "ollama") !== "ollama";
 
   // Run the LLM agent for a message (after any Veil gate) on a given model.
   const runAgentWith = useCallback(
     (text: string, modelId: string) => {
-      sendMessage({ text }, { body: { model: modelId, effort } });
+      sendMessage(
+        { text },
+        { body: { model: modelId, effort, threadId: threadIdRef.current } },
+      );
     },
     [sendMessage, effort],
   );
@@ -117,6 +164,12 @@ export function ChatPanel() {
     async (text: string) => {
       const trimmed = text.trim();
       if (!trimmed) return;
+
+      // Busy or awaiting the Veil gate → queue and auto-send when idle.
+      if (status === "submitted" || status === "streaming" || pendingConsent) {
+        setQueued((q) => [...q, trimmed]);
+        return;
+      }
 
       // Fast-path: `/patient <file#>` renders cards directly, no LLM.
       const match = trimmed.match(PATIENT_COMMAND);
@@ -158,8 +211,25 @@ export function ChatPanel() {
       }
       runAgentWith(trimmed, model);
     },
-    [consented, isCloudModel, model, runAgentWith, setMessages, t],
+    [
+      consented,
+      isCloudModel,
+      model,
+      pendingConsent,
+      runAgentWith,
+      setMessages,
+      status,
+      t,
+    ],
   );
+
+  // Drain the queue one message at a time whenever the chat returns to idle.
+  useEffect(() => {
+    if (status !== "ready" || pendingConsent || queued.length === 0) return;
+    const [next, ...rest] = queued;
+    setQueued(rest);
+    if (next) void send(next);
+  }, [status, pendingConsent, queued, send]);
 
   // Veil gate actions.
   const confirmConsent = useCallback(() => {
@@ -189,6 +259,67 @@ export function ChatPanel() {
     }
   }, [requestedPatient, send]);
 
+  // Open a saved thread from `/?thread=<id>` (sidebar history); a bare `/` starts
+  // a fresh chat. Driven by the URL so the sidebar links and "New chat" work.
+  const requestedThread = searchParams.get("thread");
+  useEffect(() => {
+    if (requestedThread) {
+      if (requestedThread === threadIdRef.current) return; // already open
+      let active = true;
+      getThread(requestedThread)
+        .then((thread) => {
+          if (!active) return;
+          justLoadedRef.current = true;
+          setThreadId(thread.id);
+          setMessages(
+            thread.messages.map(
+              (m) =>
+                ({
+                  id: nanoid(),
+                  role: m.role,
+                  parts: m.parts,
+                }) as TemetroUIMessage,
+            ),
+          );
+        })
+        .catch(() => {
+          /* missing/forbidden thread → leave the current chat as-is */
+        });
+      return () => {
+        active = false;
+      };
+    }
+    // No ?thread → fresh chat (e.g. after "New chat").
+    setThreadId(nanoid());
+    setMessages([]);
+  }, [requestedThread, setMessages]);
+
+  // Auto-save the conversation a moment after it settles (covers both LLM and
+  // the `/patient` fast path). Skips the redundant save right after a load.
+  useEffect(() => {
+    if (messages.length === 0) return;
+    if (status === "submitted" || status === "streaming") return;
+    if (justLoadedRef.current) {
+      justLoadedRef.current = false;
+      return;
+    }
+    const id = setTimeout(() => {
+      const firstUser = messages.find((m) => m.role === "user");
+      const textPart = firstUser?.parts.find((p) => p.type === "text") as
+        | { text?: string }
+        | undefined;
+      const title =
+        (textPart?.text ?? "").trim().slice(0, 60) ||
+        t("chat.history.untitled");
+      saveThread(threadIdRef.current, messages, title)
+        .then(notifyThreadsChanged)
+        .catch(() => {
+          /* a failed save shouldn't disrupt the chat */
+        });
+    }, 800);
+    return () => clearTimeout(id);
+  }, [messages, status, t]);
+
   const promptInput = (
     <ChatInput
       effort={effort}
@@ -210,26 +341,80 @@ export function ChatPanel() {
     />
   ) : null;
 
-  const errorAlert = error ? (
-    <div
-      className="flex w-full items-start gap-2 rounded-2xl border border-destructive/40 bg-destructive/8 px-4 py-3 text-destructive-foreground text-sm"
-      role="alert"
-    >
-      <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-      <div className="space-y-0.5">
-        <p className="font-medium">{t("chat.error.title")}</p>
-        <p className="text-destructive-foreground/90">
-          {error.message || t("chat.error.body")}
-        </p>
+  const errorAlert =
+    error && !errorDismissed ? (
+      <div
+        className="flex w-full items-start gap-2 rounded-2xl border border-destructive/40 bg-destructive/8 px-4 py-3 text-destructive-foreground text-sm"
+        role="alert"
+      >
+        <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+        <div className="flex-1 space-y-0.5">
+          <p className="font-medium">{t("chat.error.title")}</p>
+          <p className="text-destructive-foreground/90">
+            {error.message || t("chat.error.body")}
+          </p>
+        </div>
+        <button
+          aria-label={t("chat.error.dismiss")}
+          className="-mr-1 shrink-0 rounded-md p-1 text-destructive-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive-foreground"
+          onClick={() => setErrorDismissed(true)}
+          type="button"
+        >
+          <X className="size-4" />
+        </button>
       </div>
-    </div>
-  ) : null;
+    ) : null;
+
+  // Starter prompts shown on the empty state, each tied to an existing tool.
+  const suggestions = [
+    t("chat.suggestions.schedule"),
+    t("chat.suggestions.tasks"),
+    t("chat.suggestions.prescriptions"),
+    t("chat.suggestions.import"),
+  ];
+
+  const queuePanel =
+    queued.length > 0 ? (
+      <Queue>
+        <span className="px-1 text-muted-foreground text-xs">
+          {t("chat.queue.label", { count: queued.length })}
+        </span>
+        <QueueList>
+          {queued.map((q, i) => (
+            <QueueItem key={`${i}-${q}`}>
+              <div className="flex items-center gap-2">
+                <QueueItemIndicator />
+                <QueueItemContent>{q}</QueueItemContent>
+                <QueueItemActions>
+                  <QueueItemAction
+                    aria-label={t("chat.queue.remove")}
+                    onClick={() =>
+                      setQueued((prev) => prev.filter((_, j) => j !== i))
+                    }
+                  >
+                    <X className="size-3.5" />
+                  </QueueItemAction>
+                </QueueItemActions>
+              </div>
+            </QueueItem>
+          ))}
+        </QueueList>
+      </Queue>
+    ) : null;
 
   // Render one assistant/user message: a Chain-of-Thought trace built from any
   // `data-step` parts, then the rest of the parts (text + record cards) in order.
   const renderMessage = (message: TemetroUIMessage, isLast: boolean) => {
     const steps = message.parts.filter((p) => p.type === "data-step");
     const isWorking = status === "submitted" || status === "streaming";
+    // When the agent proposes many records at once (e.g. an imported file),
+    // collapse them into one batched approval instead of a card per record.
+    const actionPreviews = message.parts.filter(
+      (p) => p.type === "data-actionPreview",
+    );
+    const firstActionPreviewIdx = message.parts.findIndex(
+      (p) => p.type === "data-actionPreview",
+    );
     return (
       <Message from={message.role} key={message.id}>
         <MessageContent className="w-full">
@@ -254,6 +439,36 @@ export function ChatPanel() {
 
           {message.parts.map((part, i) => {
             const key = `${message.id}-${i}`;
+            if (part.type === "reasoning") {
+              return (
+                <Collapsible className="w-full" key={key}>
+                  <CollapsibleTrigger className="group flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
+                    <Brain className="size-4" />
+                    {isWorking && isLast ? (
+                      <Shimmer duration={1}>{t("chat.reasoning")}</Shimmer>
+                    ) : (
+                      t("chat.reasoning")
+                    )}
+                    <ChevronDown className="size-4 transition-transform group-data-[panel-open]:rotate-180" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 whitespace-pre-wrap text-muted-foreground text-sm leading-relaxed">
+                    {part.text}
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            }
+            if (part.type.startsWith("tool-")) {
+              const tp = part as ToolUIPart;
+              return (
+                <Tool key={key}>
+                  <ToolHeader state={tp.state} type={tp.type} />
+                  <ToolContent>
+                    <ToolInput input={tp.input} />
+                    <ToolOutput errorText={tp.errorText} output={tp.output} />
+                  </ToolContent>
+                </Tool>
+              );
+            }
             if (part.type === "text") {
               return message.role === "user" ? (
                 <span className="whitespace-pre-wrap" key={key}>
@@ -280,6 +495,18 @@ export function ChatPanel() {
               return <ImportPreviewCard data={part.data} key={key} />;
             }
             if (part.type === "data-actionPreview") {
+              if (actionPreviews.length >= 2) {
+                // Render the batch once (at the first proposal), skip the rest.
+                if (i !== firstActionPreviewIdx) return null;
+                return (
+                  <BatchActionPreviewCard
+                    items={actionPreviews.map(
+                      (p) => (p as { data: ActionPreviewData }).data,
+                    )}
+                    key={key}
+                  />
+                );
+              }
               return <ActionPreviewCard data={part.data} key={key} />;
             }
             if (part.type === "data-appointmentList") {
@@ -300,6 +527,15 @@ export function ChatPanel() {
                   prescriptions={part.data.prescriptions}
                 />
               );
+            }
+            if (part.type === "data-inventoryList") {
+              return <InventoryListCard items={part.data.items} key={key} />;
+            }
+            if (part.type === "data-clinicCard") {
+              return <ClinicCard data={part.data} key={key} />;
+            }
+            if (part.type === "data-analyticsCard") {
+              return <AnalyticsCard data={part.data} key={key} />;
             }
             if (part.type === "data-veilNotice") {
               return (
@@ -327,8 +563,8 @@ export function ChatPanel() {
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center px-4">
-        <div className="flex w-full max-w-3xl flex-col items-center gap-10">
+      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-8">
+        <div className="flex w-full max-w-3xl shrink-0 flex-col items-center gap-10">
           <h1 className="text-center font-semibold text-3xl text-balance tracking-tight sm:text-4xl">
             {t("chat.heading")}
           </h1>
@@ -336,6 +572,11 @@ export function ChatPanel() {
             {errorAlert}
             {veilGate}
             {promptInput}
+            <Suggestions className="justify-center pt-1">
+              {suggestions.map((s) => (
+                <Suggestion key={s} onClick={send} suggestion={s} />
+              ))}
+            </Suggestions>
           </div>
         </div>
       </div>
@@ -360,6 +601,7 @@ export function ChatPanel() {
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-4 pb-4">
         {errorAlert}
         {veilGate}
+        {queuePanel}
         {promptInput}
       </div>
     </div>

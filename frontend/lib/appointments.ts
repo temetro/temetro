@@ -18,6 +18,7 @@ export type Appointment = {
   type: string;
   provider: string;
   status: AppointmentStatus;
+  source: "manual" | "ai"; // "ai" = drafted by the chat agent, flag for review
   createdAt: string;
   updatedAt: string;
 };
@@ -31,6 +32,7 @@ export type AppointmentInput = {
   type: string;
   provider: string;
   status?: AppointmentStatus;
+  source?: "manual" | "ai";
 };
 
 export function listAppointments(): Promise<Appointment[]> {

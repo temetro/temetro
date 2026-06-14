@@ -4,6 +4,7 @@ import { CircleCheck, Clock, Pill, Plus, Search } from "lucide-react";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AiBadge } from "@/components/ai-badge";
 import {
   AddPrescriptionDialog,
   type NewPrescription,
@@ -93,6 +94,7 @@ function RxRow({ rx, onOpen }: { rx: Prescription; onOpen: () => void }) {
           {formatPrescribedAt(rx.prescribedAt)}
         </span>
       </div>
+      <AiBadge source={rx.source} />
       <Badge variant={statusVariant[rx.status]}>
         {t(`prescriptions.status.${rx.status}`)}
       </Badge>

@@ -25,6 +25,7 @@ function toPrescription(row: PrescriptionRow): Prescription {
     status: row.status,
     duration: row.duration,
     notes: row.notes,
+    source: row.source,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -43,6 +44,7 @@ function columns(orgId: string, input: PrescriptionInput, createdBy?: string) {
     status: input.status,
     duration: input.duration ?? null,
     notes: input.notes ?? null,
+    source: input.source,
     // Only set prescribedAt when supplied; otherwise the column default (today).
     ...(input.prescribedAt ? { prescribedAt: input.prescribedAt } : {}),
     ...(createdBy ? { createdBy } : {}),

@@ -50,6 +50,10 @@ export const patients = pgTable(
     primaryProviderId: text("primary_provider_id").references(() => user.id, {
       onDelete: "set null",
     }),
+    // Provenance: "ai" rows were imported/drafted by the chat agent (possibly
+    // with auto-generated file numbers or placeholder fields) and are flagged
+    // for clinician review/edit.
+    source: text("source").$type<"manual" | "ai">().notNull().default("manual"),
     createdBy: text("created_by").references(() => user.id, {
       onDelete: "set null",
     }),

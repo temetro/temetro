@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AiBadge } from "@/components/ai-badge";
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import { PatientDetail } from "@/components/patients/patient-detail";
 import { TransferPatientDialog } from "@/components/patients/transfer-patient-dialog";
@@ -97,7 +98,10 @@ export function PatientDetailSheet({
       <Sheet onOpenChange={onOpenChange} open={open}>
         <SheetPopup className="sm:max-w-xl" side="right">
           <SheetHeader>
-            <SheetTitle>{title}</SheetTitle>
+            <SheetTitle className="flex items-center gap-2">
+              {title}
+              {status === "ready" && <AiBadge source={patient?.source} />}
+            </SheetTitle>
           </SheetHeader>
           <SheetPanel className="min-h-0 flex-1">
             {status === "loading" && <DetailSkeleton />}

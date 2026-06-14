@@ -3,10 +3,12 @@ import type { PgTable } from "drizzle-orm/pg-core";
 
 import { db } from "../db/index.js";
 import { appointments } from "../db/schema/appointments.js";
+import { invoices } from "../db/schema/invoices.js";
 import { patients } from "../db/schema/patients.js";
 import { prescriptions } from "../db/schema/prescriptions.js";
 import { tasks } from "../db/schema/tasks.js";
 import type { Analytics } from "../types/analytics.js";
+import { invoiceTotal } from "./invoices.js";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 const keyOf = (d: Date) =>
@@ -178,6 +180,41 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
     count: dayCounts.get(d.key) ?? 0,
   }));
 
+  // Earnings from invoices (real money). `void` invoices are excluded entirely.
+  const invoiceRows = await db
+    .select({
+      lineItems: invoices.lineItems,
+      status: invoices.status,
+      issuedAt: invoices.issuedAt,
+    })
+    .from(invoices)
+    .where(eq(invoices.organizationId, orgId));
+  let totalBilled = 0;
+  let totalPaid = 0;
+  let totalOutstanding = 0;
+  const billedByMonth = new Map(months.map((m) => [m.key, 0]));
+  const paidByMonth = new Map(months.map((m) => [m.key, 0]));
+  for (const inv of invoiceRows) {
+    if (inv.status === "void") continue;
+    const amount = invoiceTotal({ lineItems: inv.lineItems });
+    totalBilled += amount;
+    if (inv.status === "paid") totalPaid += amount;
+    else totalOutstanding += amount; // draft + sent
+    // issuedAt is a YYYY-MM-DD string; its YYYY-MM prefix is the month key.
+    const monthKey = inv.issuedAt.slice(0, 7);
+    if (billedByMonth.has(monthKey)) {
+      billedByMonth.set(monthKey, billedByMonth.get(monthKey)! + amount);
+      if (inv.status === "paid") {
+        paidByMonth.set(monthKey, paidByMonth.get(monthKey)! + amount);
+      }
+    }
+  }
+  const earningsByMonth = months.map((m) => ({
+    label: m.label,
+    billed: billedByMonth.get(m.key) ?? 0,
+    paid: paidByMonth.get(m.key) ?? 0,
+  }));
+
   return {
     patients: {
       total: patientsTotal,
@@ -192,6 +229,26 @@ export async function getAnalytics(orgId: string): Promise<Analytics> {
     },
     prescriptions: { total: rxTotal, active: rxActive },
     tasks: { open: tasksOpen, done: tasksDone },
+    earnings: {
+      totalBilled,
+      totalPaid,
+      totalOutstanding,
+      byMonth: earningsByMonth,
+    },
     trends: { patientsByMonth, appointmentsByWeekday },
   };
+}
+
+// "In the building now" — today's appointments that are checked in. Cheap query
+// for the Analysis Live card to poll.
+export async function getLiveMetric(orgId: string): Promise<number> {
+  const todayKey = keyOf(new Date());
+  return countWhere(
+    appointments,
+    and(
+      eq(appointments.organizationId, orgId),
+      eq(appointments.date, todayKey),
+      eq(appointments.status, "checked-in"),
+    )!,
+  );
 }

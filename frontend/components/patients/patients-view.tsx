@@ -4,6 +4,7 @@ import { Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AiBadge } from "@/components/ai-badge";
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import { PatientDetailSheet } from "@/components/patients/patient-detail-sheet";
 import { Badge } from "@/components/ui/badge";
@@ -173,7 +174,10 @@ export function PatientsView() {
                   tabIndex={0}
                 >
                   <td className="px-4 py-3 font-medium text-foreground">
-                    {p.name}
+                    <span className="flex items-center gap-2">
+                      {p.name}
+                      <AiBadge source={p.source} />
+                    </span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {p.fileNumber}

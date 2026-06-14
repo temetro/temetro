@@ -21,6 +21,7 @@ export const prescriptionInputSchema = z.object({
   status: z.enum(["active", "completed", "expired"]).default("active"),
   duration: z.string().trim().max(120).nullish(),
   notes: z.string().max(5000).nullish(),
+  source: z.enum(["manual", "ai"]).default("manual"),
 });
 
 export type PrescriptionInput = z.infer<typeof prescriptionInputSchema>;

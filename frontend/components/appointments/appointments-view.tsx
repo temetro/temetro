@@ -12,6 +12,8 @@ import {
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AiBadge } from "@/components/ai-badge";
+import { AppointmentDetailSheet } from "@/components/appointments/appointment-detail-sheet";
 import {
   AddAppointmentDialog,
   type NewAppointment,
@@ -28,6 +30,7 @@ import {
   listAppointments,
 } from "@/lib/appointments";
 import { notify } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 
 export type { Appointment } from "@/lib/appointments";
 
@@ -98,10 +101,35 @@ function Kpi({
   );
 }
 
-function ApptRow({ appt }: { appt: Appointment }) {
+function ApptRow({
+  appt,
+  onOpen,
+}: {
+  appt: Appointment;
+  onOpen?: (appt: Appointment) => void;
+}) {
   const { t } = useTranslation();
+  const interactive = Boolean(onOpen);
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
+    <div
+      className={cn(
+        "flex items-center gap-3 px-4 py-3",
+        interactive && "cursor-pointer transition-colors hover:bg-accent/50",
+      )}
+      onClick={interactive ? () => onOpen?.(appt) : undefined}
+      onKeyDown={
+        interactive
+          ? (event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onOpen?.(appt);
+              }
+            }
+          : undefined
+      }
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+    >
       <span className="w-12 shrink-0 font-medium text-foreground text-sm tabular-nums">
         {appt.time}
       </span>
@@ -116,6 +144,7 @@ function ApptRow({ appt }: { appt: Appointment }) {
           {appt.type} · {appt.provider}
         </span>
       </div>
+      <AiBadge source={appt.source} />
       <Badge variant={statusVariant[appt.status]}>
         {t(`appointments.status.${appt.status}`)}
       </Badge>
@@ -123,11 +152,17 @@ function ApptRow({ appt }: { appt: Appointment }) {
   );
 }
 
-export function ScheduleList({ items }: { items: Appointment[] }) {
+export function ScheduleList({
+  items,
+  onOpen,
+}: {
+  items: Appointment[];
+  onOpen?: (appt: Appointment) => void;
+}) {
   return (
     <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
       {items.map((appt) => (
-        <ApptRow appt={appt} key={appt.id} />
+        <ApptRow appt={appt} key={appt.id} onOpen={onOpen} />
       ))}
     </div>
   );
@@ -161,6 +196,13 @@ export function AppointmentsView() {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [query, setQuery] = useState("");
+  const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const openAppt = (appt: Appointment) => {
+    setSelectedAppt(appt);
+    setSheetOpen(true);
+  };
 
   useEffect(() => {
     let active = true;
@@ -297,7 +339,7 @@ export function AppointmentsView() {
         results.length > 0 ? (
           results.map((group) => (
             <Section key={group.key} title={formatDayKey(group.key)}>
-              <ScheduleList items={group.items} />
+              <ScheduleList items={group.items} onOpen={openAppt} />
             </Section>
           ))
         ) : (
@@ -315,7 +357,7 @@ export function AppointmentsView() {
 
           <Section description={formatDayKey(TODAY)} title={t("appointments.today")}>
             {todayItems.length > 0 ? (
-              <ScheduleList items={todayItems} />
+              <ScheduleList items={todayItems} onOpen={openAppt} />
             ) : (
               <p className="rounded-2xl border border-dashed bg-card/20 px-4 py-8 text-center text-muted-foreground text-sm">
                 {t("appointments.nothingToday")}
@@ -325,7 +367,7 @@ export function AppointmentsView() {
 
           {upcoming.map((group) => (
             <Section key={group.key} title={formatDayKey(group.key)}>
-              <ScheduleList items={group.items} />
+              <ScheduleList items={group.items} onOpen={openAppt} />
             </Section>
           ))}
         </>
@@ -341,6 +383,20 @@ export function AppointmentsView() {
         appointments={appointments}
         onOpenChange={setCalendarOpen}
         open={calendarOpen}
+      />
+
+      <AppointmentDetailSheet
+        appt={selectedAppt}
+        onDeleted={(id) =>
+          setAppointments((prev) => prev.filter((a) => a.id !== id))
+        }
+        onOpenChange={setSheetOpen}
+        onSaved={(updated) =>
+          setAppointments((prev) =>
+            prev.map((a) => (a.id === updated.id ? updated : a)),
+          )
+        }
+        open={sheetOpen}
       />
     </div>
   );

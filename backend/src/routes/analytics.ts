@@ -15,3 +15,12 @@ analyticsRouter.get("/", async (req, res, next) => {
     next(err);
   }
 });
+
+// Lightweight real-time metric polled by the Live card: patients checked in today.
+analyticsRouter.get("/live", async (req, res, next) => {
+  try {
+    res.json({ value: await service.getLiveMetric(req.organizationId!) });
+  } catch (err) {
+    next(err);
+  }
+});

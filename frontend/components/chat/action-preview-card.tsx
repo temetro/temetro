@@ -1,6 +1,14 @@
 "use client";
 
-import { AlertTriangle, CalendarPlus, Check, ClipboardList, Pill, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarPlus,
+  Check,
+  ClipboardList,
+  Pill,
+  Receipt,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -8,20 +16,29 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { ActionPreviewData } from "@/lib/ai-chat";
 import { type AppointmentInput, createAppointment } from "@/lib/appointments";
+import {
+  createInvoice,
+  formatMoney,
+  type InvoiceInput,
+  type InvoiceLineItem,
+} from "@/lib/invoices";
 import { type PrescriptionInput, createPrescription } from "@/lib/prescriptions";
 import { type TaskInput, createTask } from "@/lib/tasks";
 import { notify } from "@/lib/toast";
 
 type Status = "pending" | "committing" | "done" | "rejected";
 
-const ICONS = {
+export const ACTION_ICONS = {
   appointment: CalendarPlus,
   task: ClipboardList,
   prescription: Pill,
+  invoice: Receipt,
 } as const;
 
+const ICONS = ACTION_ICONS;
+
 // Summarise the proposed record into a couple of readable lines per kind.
-function summarize(data: ActionPreviewData): string[] {
+export function summarize(data: ActionPreviewData): string[] {
   const r = data.record as Record<string, unknown>;
   if (data.kind === "appointment") {
     return [
@@ -36,6 +53,14 @@ function summarize(data: ActionPreviewData): string[] {
       [r.assignee, r.due, r.priority].filter(Boolean).join(" · "),
     ].filter(Boolean);
   }
+  if (data.kind === "invoice") {
+    const items = (r.lineItems as InvoiceLineItem[] | undefined) ?? [];
+    const total = items.reduce((s, li) => s + li.quantity * li.unitPrice, 0);
+    return [
+      String(r.name ?? ""),
+      `${items.length} item${items.length === 1 ? "" : "s"} · ${formatMoney(total)}`,
+    ].filter(Boolean);
+  }
   // prescription
   return [
     [r.medication, r.dose].filter(Boolean).join(" "),
@@ -44,13 +69,23 @@ function summarize(data: ActionPreviewData): string[] {
   ].filter(Boolean);
 }
 
-async function commit(data: ActionPreviewData): Promise<void> {
+export async function commitAction(data: ActionPreviewData): Promise<void> {
+  // Stamp provenance so the committed record is flagged "Added by AI" and shows
+  // up for review/editing on the relevant page.
   if (data.kind === "appointment") {
-    await createAppointment(data.record as AppointmentInput);
+    await createAppointment({
+      ...(data.record as AppointmentInput),
+      source: "ai",
+    });
   } else if (data.kind === "task") {
     await createTask(data.record as TaskInput);
+  } else if (data.kind === "invoice") {
+    await createInvoice({ ...(data.record as InvoiceInput), source: "ai" });
   } else {
-    await createPrescription(data.record as PrescriptionInput);
+    await createPrescription({
+      ...(data.record as PrescriptionInput),
+      source: "ai",
+    });
   }
 }
 
@@ -67,7 +102,7 @@ export function ActionPreviewCard({ data }: { data: ActionPreviewData }) {
   const approve = async () => {
     setStatus("committing");
     try {
-      await commit(data);
+      await commitAction(data);
       setStatus("done");
       notify.success(
         t("chat.actionCard.addedTitle"),

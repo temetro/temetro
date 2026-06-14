@@ -17,6 +17,7 @@ export type Prescription = {
   status: RxStatus;
   duration: string | null;
   notes: string | null;
+  source: "manual" | "ai"; // "ai" = drafted by the chat agent, flag for review
   createdAt: string;
   updatedAt: string;
 };
@@ -35,6 +36,7 @@ export type PrescriptionInput = {
   prescriber?: string;
   prescribedAt?: string;
   status?: RxStatus;
+  source?: "manual" | "ai";
 };
 
 // "2026-06-05" -> "Jun 5, 2026" (matches the previous mock display format).

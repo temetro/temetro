@@ -57,7 +57,8 @@ export function ChatInput({
 
   const submit = useCallback(async () => {
     const trimmed = value.trim();
-    if ((!trimmed && files.length === 0) || isGenerating) {
+    // Allow submitting while generating — the panel queues it (Claude-style).
+    if (!trimmed && files.length === 0) {
       return;
     }
     const parts: string[] = [];
@@ -86,7 +87,7 @@ export function ChatInput({
     onSubmit(parts.join("\n\n"));
     setValue("");
     setFiles([]);
-  }, [value, files, isGenerating, onSubmit]);
+  }, [value, files, onSubmit]);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -125,7 +126,7 @@ export function ChatInput({
         event.preventDefault();
         submit();
       }}
-      className="w-full overflow-hidden rounded-[28px] border border-border bg-input shadow-sm"
+      className="w-full shrink-0 overflow-hidden rounded-[28px] border border-border bg-input shadow-sm"
     >
       {/* Textarea + toolbar, filling the rounded card. */}
       <div className="bg-input">

@@ -5,7 +5,8 @@
     "password": "Password",
     "signIn": "Sign in",
     "signUp": "Sign up",
-    "backToSignIn": "Back to sign in"
+    "backToSignIn": "Back to sign in",
+    "addedByAi": "Added by AI"
   },
   "auth": {
     "login": {
@@ -112,6 +113,7 @@
     "newChat": "New chat",
     "patients": "Patients",
     "appointments": "Appointments",
+    "invoices": "Invoices",
     "prescriptions": "Prescriptions",
     "analysis": "Analysis",
     "pharmacy": "Pharmacy",
@@ -237,6 +239,7 @@
       "change": "Change",
       "searchPlaceholder": "Search name or file number",
       "noPatients": "No patients found.",
+      "noProviders": "No doctors found.",
       "date": "Date",
       "time": "Time",
       "type": "Type",
@@ -248,11 +251,107 @@
       "pickPatientBody": "Search and select a patient first.",
       "addedTitle": "Appointment added"
     },
+    "sheet": {
+      "title": "Appointment",
+      "editHint": "Click any appointment to edit — this is enabled.",
+      "date": "Date",
+      "time": "Time",
+      "type": "Type",
+      "provider": "Provider",
+      "status": "Status",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "delete": "Delete",
+      "savedTitle": "Appointment updated",
+      "savedBody": "Your changes were saved.",
+      "saveFailedTitle": "Couldn't save",
+      "saveFailedBody": "Please try again.",
+      "deletedTitle": "Appointment deleted",
+      "deleteFailedTitle": "Couldn't delete",
+      "deleteFailedBody": "Please try again."
+    },
     "calendarDialog": {
       "today": "Today",
       "appointmentCount_one": "{{count}} appointment",
       "appointmentCount_other": "{{count}} appointments",
       "none": "No appointments on this day."
+    }
+  },
+  "invoices": {
+    "title": "Invoices",
+    "subtitle": "Patient billing — create, split, and export invoices.",
+    "searchPlaceholder": "Search patient, number, status",
+    "new": "New invoice",
+    "empty": "No invoices yet.",
+    "noMatches": "No invoices match your search.",
+    "loadError": "Couldn't load invoices.",
+    "recent": "Invoices",
+    "recentDescription": "Most recent first",
+    "addFailedTitle": "Couldn't save invoice",
+    "addFailedBody": "Please try again.",
+    "kpi": {
+      "outstanding": "Outstanding",
+      "paid": "Paid",
+      "drafts": "Drafts"
+    },
+    "status": {
+      "draft": "Draft",
+      "sent": "Sent",
+      "paid": "Paid",
+      "void": "Void"
+    },
+    "dialog": {
+      "createTitle": "New invoice",
+      "editTitle": "Edit invoice",
+      "description": "Pick a patient and add line items.",
+      "patient": "Patient",
+      "searchPlaceholder": "Search name or file number",
+      "noPatients": "No patients found.",
+      "fileNumber": "File #{{number}}",
+      "change": "Change",
+      "issued": "Issued",
+      "due": "Due date",
+      "status": "Status",
+      "notes": "Notes",
+      "notesPlaceholder": "Optional notes…",
+      "lineItems": "Line items",
+      "lineDescription": "Description",
+      "lineDescriptionPlaceholder": "e.g. Consultation",
+      "qty": "Qty",
+      "unitPrice": "Unit price",
+      "addLine": "Add line",
+      "total": "Total",
+      "cancel": "Cancel",
+      "create": "Create invoice",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "pickPatientTitle": "Pick a patient",
+      "pickPatientBody": "Search and select a patient first."
+    },
+    "sheet": {
+      "fallbackTitle": "Invoice",
+      "issued": "Issued",
+      "due": "Due",
+      "status": "Status",
+      "total": "Total",
+      "lineItems": "Line items",
+      "installments": "Installments",
+      "noInstallments": "Not split into installments.",
+      "split": "Split into installments",
+      "splitTitle": "Split invoice",
+      "splitBody": "Divide the total into equal monthly installments.",
+      "splitCount": "Installments",
+      "splitConfirm": "Split",
+      "download": "Download PDF",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deletedTitle": "Invoice deleted",
+      "splitFailedTitle": "Couldn't split invoice",
+      "splitFailedBody": "Please try again.",
+      "deleteFailedTitle": "Couldn't delete invoice",
+      "deleteFailedBody": "Please try again.",
+      "paid": "Paid",
+      "unpaid": "Unpaid"
     }
   },
   "prescriptions": {
@@ -535,7 +634,10 @@
     "live": {
       "title": "Live",
       "subtitle": "Patients currently in the building, updating in real time.",
-      "label": "In the building now"
+      "label": "In the building now",
+      "start": "Go live",
+      "pause": "Pause",
+      "idle": "Live stream paused — press Go live to start."
     },
     "patientVolume": {
       "title": "Patient volume",
@@ -543,6 +645,14 @@
       "total": "Total patients",
       "newThisMonth": "New this month",
       "active": "Active patients"
+    },
+    "earnings": {
+      "title": "Earnings",
+      "description": "Billed, paid and outstanding — from invoices",
+      "billed": "Total billed",
+      "paid": "Total paid",
+      "outstanding": "Outstanding",
+      "byMonth": "Billed vs paid, by month"
     },
     "appointments": {
       "title": "Appointments & schedule",
@@ -670,6 +780,23 @@
     "patientNotFound": "I couldn't find a patient with file number {{fileNumber}}.",
     "thinking": "Thinking…",
     "steps": "Steps",
+    "reasoning": "Reasoning",
+    "history": {
+      "title": "Chats",
+      "untitled": "New chat",
+      "empty": "No saved chats yet.",
+      "delete": "Delete chat"
+    },
+    "suggestions": {
+      "schedule": "Show today's schedule",
+      "tasks": "List open tasks",
+      "prescriptions": "Show recent prescriptions",
+      "import": "Import a patient database"
+    },
+    "queue": {
+      "label": "Queued · {{count}}",
+      "remove": "Remove from queue"
+    },
     "veil": {
       "title": "Veil",
       "body": "This message will be processed by {{provider}}, an external provider. Veil de-identifies patient information (names, MRNs, providers) before it leaves your infrastructure, and restores it in the answer.",
@@ -682,12 +809,14 @@
       "title": {
         "appointment": "Proposed appointment",
         "task": "Proposed task",
-        "prescription": "Proposed prescription"
+        "prescription": "Proposed prescription",
+        "invoice": "Proposed invoice"
       },
       "kind": {
         "appointment": "Appointment added.",
         "task": "Task added.",
-        "prescription": "Prescription added."
+        "prescription": "Prescription added.",
+        "invoice": "Invoice added."
       },
       "approve": "Add",
       "adding": "Adding…",
@@ -696,7 +825,21 @@
       "discarded": "Discarded — nothing was saved.",
       "addedTitle": "Added",
       "failedTitle": "Could not add",
-      "failedBody": "Something went wrong, or you don't have permission. Please try again."
+      "failedBody": "Something went wrong, or you don't have permission. Please try again.",
+      "batch": {
+        "title": "{{count}} records proposed",
+        "review": "Review & add",
+        "dialogTitle": "Review proposed records",
+        "dialogDescription": "Add them all at once, or remove any you don't want.",
+        "addAll": "Add all",
+        "adding": "Adding…",
+        "discardAll": "Discard all",
+        "newPatient": "New patient will be created",
+        "remove": "Remove",
+        "done": "Added {{added}} of {{total}}.",
+        "failedCount": "{{count}} failed",
+        "discarded": "Discarded — nothing was saved."
+      }
     },
     "lists": {
       "appointments": "Appointments",
@@ -705,7 +848,24 @@
       "done": "Done",
       "noAppointments": "No appointments.",
       "noTasks": "No tasks.",
-      "noPrescriptions": "No prescriptions."
+      "noPrescriptions": "No prescriptions.",
+      "inventory": "Inventory",
+      "noInventory": "No inventory items."
+    },
+    "clinicCard": {
+      "title": "Clinic",
+      "since": "Since {{date}}"
+    },
+    "analyticsCard": {
+      "title": "Clinic analytics",
+      "patients": "Patients",
+      "appointmentsThisWeek": "Appts this week",
+      "activePrescriptions": "Active Rx",
+      "openTasks": "Open tasks",
+      "billed": "Billed",
+      "paid": "Paid",
+      "outstanding": "Outstanding",
+      "byMonth": "Billed vs paid, by month"
     },
     "labCard": {
       "flags": {
@@ -721,6 +881,7 @@
       "skipped": "Skipped",
       "total": "Parsed",
       "row": "Row {{index}}",
+      "more": "+{{count}} more",
       "approve": "Import {{count}} record(s)",
       "approve_one": "Import 1 record",
       "reject": "Discard",
@@ -734,7 +895,8 @@
     },
     "error": {
       "title": "AI request failed",
-      "body": "Something went wrong reaching the AI. Check your provider and API key in Settings → AI."
+      "body": "Something went wrong reaching the AI. Check your provider and API key in Settings → AI.",
+      "dismiss": "Dismiss"
     }
   },
   "patientCard": {

@@ -1,6 +1,8 @@
 import type { UIMessage } from "ai";
 
+import type { Analytics } from "@/lib/analytics";
 import type { Appointment } from "@/lib/appointments";
+import type { InventoryItem } from "@/lib/inventory";
 import type { Lab, Patient, Trend } from "@/lib/patients";
 import type { Prescription } from "@/lib/prescriptions";
 import type { Task } from "@/lib/tasks";
@@ -39,10 +41,22 @@ export type StepData = {
 export type AppointmentListData = { appointments: Appointment[] };
 export type TaskListData = { tasks: Task[] };
 export type PrescriptionListData = { prescriptions: Prescription[] };
+export type InventoryListData = { items: InventoryItem[] };
+
+// Clinic-wide read cards.
+export type ClinicCardData = {
+  name: string;
+  slug: string | null;
+  createdAt: string | null;
+};
 
 // An add proposed by the agent, awaiting one-click clinician approval. `record`
 // is the validated, ready-to-commit input for the matching create endpoint.
-export type ActionPreviewKind = "appointment" | "task" | "prescription";
+export type ActionPreviewKind =
+  | "appointment"
+  | "task"
+  | "prescription"
+  | "invoice";
 export type ActionPreviewData = {
   token: string;
   kind: ActionPreviewKind;
@@ -61,6 +75,9 @@ export type TemetroDataParts = {
   appointmentList: AppointmentListData;
   taskList: TaskListData;
   prescriptionList: PrescriptionListData;
+  inventoryList: InventoryListData;
+  clinicCard: ClinicCardData;
+  analyticsCard: Analytics;
   actionPreview: ActionPreviewData;
 };
 
