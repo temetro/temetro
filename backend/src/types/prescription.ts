@@ -16,6 +16,7 @@ export type Prescription = {
   status: PrescriptionStatus;
   duration: string | null;
   notes: string | null;
+  source: "manual" | "ai";
   createdAt: string;
   updatedAt: string;
 };

@@ -22,6 +22,7 @@ function toAppointment(row: AppointmentRow): Appointment {
     type: row.type,
     provider: row.provider,
     status: row.status,
+    source: row.source,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -38,6 +39,7 @@ function columns(orgId: string, input: AppointmentInput, createdBy?: string) {
     type: input.type,
     provider: input.provider,
     status: input.status,
+    source: input.source,
     ...(createdBy ? { createdBy } : {}),
   };
 }

@@ -65,6 +65,7 @@ function toPatient(row: PatientRow, children: Children): Patient {
     labs: children.labs,
     labTrend: row.labTrend,
     encounters: children.encounters,
+    source: row.source,
   };
 }
 
@@ -119,6 +120,7 @@ function patientColumns(orgId: string, input: PatientInput, createdBy?: string) 
     vitalsTakenAt: input.vitals.takenAt,
     vitalsTrend: input.vitalsTrend,
     labTrend: input.labTrend,
+    source: input.source,
     ...(createdBy ? { createdBy } : {}),
   };
 }
@@ -141,6 +143,7 @@ function demographicColumns(
     primaryProviderId: input.primaryProviderId ?? null,
     status: input.status,
     initials: input.initials,
+    source: input.source,
     alerts: [] as string[],
     vitalsBp: "",
     vitalsHr: "",
@@ -293,6 +296,24 @@ function isUniqueViolation(err: unknown): boolean {
   );
 }
 
+// Pick the next free numeric file number for an org (max existing digit-only
+// file number + 1, floored at 10000). Used when an AI import omits one. The
+// unique index still guards against a race, surfacing a 409.
+export async function generateFileNumber(orgId: string): Promise<string> {
+  const [r] = await db
+    .select({
+      max: sql<number>`coalesce(max((${patients.fileNumber})::bigint), 9999)`,
+    })
+    .from(patients)
+    .where(
+      and(
+        eq(patients.organizationId, orgId),
+        sql`${patients.fileNumber} ~ '^[0-9]+$'`,
+      ),
+    );
+  return String(Number(r?.max ?? 9999) + 1);
+}
+
 export async function listPatients(
   orgId: string,
   demographicsOnly = false,
@@ -366,9 +387,13 @@ export async function transferPatient(
 export async function createPatient(
   orgId: string,
   userId: string,
-  input: PatientInput,
+  rawInput: PatientInput,
   demographicsOnly = false,
 ): Promise<Patient> {
+  // Auto-assign a file number when one wasn't supplied (e.g. AI imports).
+  const input: PatientInput = rawInput.fileNumber
+    ? rawInput
+    : { ...rawInput, fileNumber: await generateFileNumber(orgId) };
   try {
     return await db.transaction(async (tx) => {
       // Reception registers demographics only — clinical input is ignored and

@@ -17,6 +17,7 @@ export type Appointment = {
   type: string;
   provider: string;
   status: AppointmentStatus;
+  source: "manual" | "ai";
   createdAt: string;
   updatedAt: string;
 };

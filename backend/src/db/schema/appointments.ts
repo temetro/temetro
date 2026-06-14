@@ -22,6 +22,9 @@ export const appointments = pgTable(
     type: text("type").notNull(),
     provider: text("provider").notNull(),
     status: text("status").$type<AppointmentStatus>().notNull(),
+    // Provenance: "ai" rows were drafted by the chat agent (possibly with
+    // placeholder fields) and are flagged for clinician review/edit.
+    source: text("source").$type<"manual" | "ai">().notNull().default("manual"),
     createdBy: text("created_by").references(() => user.id, {
       onDelete: "set null",
     }),

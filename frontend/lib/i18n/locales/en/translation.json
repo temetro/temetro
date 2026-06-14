@@ -5,7 +5,8 @@
     "password": "Password",
     "signIn": "Sign in",
     "signUp": "Sign up",
-    "backToSignIn": "Back to sign in"
+    "backToSignIn": "Back to sign in",
+    "addedByAi": "Added by AI"
   },
   "auth": {
     "login": {

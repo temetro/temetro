@@ -45,12 +45,20 @@ function summarize(data: ActionPreviewData): string[] {
 }
 
 async function commit(data: ActionPreviewData): Promise<void> {
+  // Stamp provenance so the committed record is flagged "Added by AI" and shows
+  // up for review/editing on the relevant page.
   if (data.kind === "appointment") {
-    await createAppointment(data.record as AppointmentInput);
+    await createAppointment({
+      ...(data.record as AppointmentInput),
+      source: "ai",
+    });
   } else if (data.kind === "task") {
     await createTask(data.record as TaskInput);
   } else {
-    await createPrescription(data.record as PrescriptionInput);
+    await createPrescription({
+      ...(data.record as PrescriptionInput),
+      source: "ai",
+    });
   }
 }
 

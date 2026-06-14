@@ -31,6 +31,8 @@ export const prescriptions = pgTable(
     status: text("status").$type<PrescriptionStatus>().notNull(),
     duration: text("duration"),
     notes: text("notes"),
+    // Provenance: "ai" rows were drafted by the chat agent and flagged for review.
+    source: text("source").$type<"manual" | "ai">().notNull().default("manual"),
     createdBy: text("created_by").references(() => user.id, {
       onDelete: "set null",
     }),

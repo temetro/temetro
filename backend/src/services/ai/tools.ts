@@ -248,28 +248,41 @@ export function createChatTools(ctx: ToolContext) {
 
     proposeAppointment: tool({
       description:
-        "Propose a new appointment for the clinician to approve. Does NOT save — it shows an approval card; the clinician confirms before anything is written. Provide the patient's file number (MRN); name/initials are filled from the record.",
+        "Propose a new appointment for the clinician to approve. Does NOT save — it shows an approval card; the clinician confirms before anything is written. Prefer the patient's file number (MRN), which fills name/initials from the record. If the file number is unknown (e.g. parsing a schedule export), pass the patient's name instead; type/provider may be omitted and will be filled with placeholders for the clinician to edit.",
       inputSchema: z.object({
-        fileNumber: z.string().describe("Patient file number / MRN (may be a token)"),
+        fileNumber: z
+          .string()
+          .optional()
+          .describe("Patient file number / MRN (may be a token); omit if unknown"),
+        name: z
+          .string()
+          .optional()
+          .describe("Patient name — use when no file number is known"),
         date: z.string().describe("Appointment date, YYYY-MM-DD"),
         time: z.string().describe("Appointment time, HH:mm (24h)"),
-        type: z.string().describe("Visit type, e.g. Follow-up, Consultation"),
-        provider: z.string().describe("Provider/clinician name"),
+        type: z
+          .string()
+          .optional()
+          .describe("Visit type, e.g. Follow-up, Consultation"),
+        provider: z.string().optional().describe("Provider/clinician name"),
       }),
-      execute: async ({ fileNumber, date, time, type, provider }) => {
-        step(`Drafting appointment for patient ${fileNumber}`);
-        const patient = await resolvePatient(fileNumber);
-        if (!patient) {
+      execute: async ({ fileNumber, name, date, time, type, provider }) => {
+        step(`Drafting appointment for ${fileNumber ?? name ?? "patient"}`);
+        const patient = fileNumber ? await resolvePatient(fileNumber) : null;
+        // A name (resolved or supplied) is the minimum needed to draft a row.
+        const resolvedName = patient?.name ?? (name ? veil.rehydrate(name) : undefined);
+        if (!resolvedName) {
           return { ok: false as const, reason: "patient_not_found" as const };
         }
         const candidate = {
-          fileNumber: patient.fileNumber,
-          name: patient.name,
-          initials: patient.initials,
+          fileNumber: patient?.fileNumber ?? "",
+          name: resolvedName,
+          initials: patient?.initials ?? "",
           date,
           time,
-          type,
-          provider,
+          type: type ?? "",
+          provider: provider ?? "",
+          source: "ai" as const,
         };
         const parsed = appointmentInputSchema.safeParse(candidate);
         const issues = parsed.success
@@ -369,6 +382,7 @@ export function createChatTools(ctx: ToolContext) {
           frequency,
           duration: duration ?? null,
           notes: notes ?? null,
+          source: "ai" as const,
         };
         const parsed = prescriptionInputSchema.safeParse(candidate);
         const issues = parsed.success

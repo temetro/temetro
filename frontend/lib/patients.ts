@@ -75,6 +75,7 @@ export type Patient = {
   labs: Lab[];
   labTrend: Trend; // headline lab plotted as a sparkline
   encounters: Encounter[];
+  source?: "manual" | "ai"; // "ai" = imported/drafted by the chat agent
 };
 
 // Fetch one patient in the active clinic. Returns null when not found (404).

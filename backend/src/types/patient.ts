@@ -70,4 +70,5 @@ export type Patient = {
   labs: Lab[];
   labTrend: Trend; // headline lab plotted as a sparkline
   encounters: Encounter[];
+  source?: "manual" | "ai"; // "ai" = imported/drafted by the chat agent
 };

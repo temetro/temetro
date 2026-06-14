@@ -117,7 +117,7 @@ aiRouter.post(
           const patient = await patients.createPatient(
             req.organizationId!,
             req.user!.id,
-            parsed.data,
+            { ...parsed.data, source: "ai" },
             demographicsOnly,
           );
           created.push(patient.fileNumber);
