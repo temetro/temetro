@@ -238,6 +238,7 @@
       "change": "Change",
       "searchPlaceholder": "Search name or file number",
       "noPatients": "No patients found.",
+      "noProviders": "No doctors found.",
       "date": "Date",
       "time": "Time",
       "type": "Type",
@@ -248,6 +249,25 @@
       "pickPatientTitle": "Pick a patient",
       "pickPatientBody": "Search and select a patient first.",
       "addedTitle": "Appointment added"
+    },
+    "sheet": {
+      "title": "Appointment",
+      "editHint": "Click any appointment to edit — this is enabled.",
+      "date": "Date",
+      "time": "Time",
+      "type": "Type",
+      "provider": "Provider",
+      "status": "Status",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "delete": "Delete",
+      "savedTitle": "Appointment updated",
+      "savedBody": "Your changes were saved.",
+      "saveFailedTitle": "Couldn't save",
+      "saveFailedBody": "Please try again.",
+      "deletedTitle": "Appointment deleted",
+      "deleteFailedTitle": "Couldn't delete",
+      "deleteFailedBody": "Please try again."
     },
     "calendarDialog": {
       "today": "Today",

@@ -1,12 +1,13 @@
 "use client";
 
-import { CalendarDays, Search } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { TODAY } from "@/components/appointments/appointments-view";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import {
   Dialog,
   DialogClose,
@@ -20,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { listPatients, type Patient } from "@/lib/patients";
+import { listProviders, type Provider } from "@/lib/staff";
 import { notify } from "@/lib/toast";
 
 export type NewAppointment = {
@@ -58,9 +60,9 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-// Compact "New appointment" dialog. The patient is chosen via a quick search by
-// name or file number; the rest is the slot. The new entry is handed back to the
-// page via onAdd, which persists it through the appointments API.
+// Compact "New appointment" dialog. The patient and provider are chosen via
+// searchable comboboxes (arrow keys + Enter); the rest is the slot. The new
+// entry is handed back to the page via onAdd, which persists it through the API.
 export function AddAppointmentDialog({
   open,
   onOpenChange,
@@ -72,49 +74,77 @@ export function AddAppointmentDialog({
 }) {
   const { t } = useTranslation();
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [query, setQuery] = useState("");
+  const [providers, setProviders] = useState<Provider[]>([]);
   const [selected, setSelected] = useState<Patient | null>(null);
   const [date, setDate] = useState<Date>(() => new Date(`${TODAY}T00:00:00`));
   const [dateOpen, setDateOpen] = useState(false);
   const [time, setTime] = useState("09:00");
   const [type, setType] = useState(TYPES[0]);
   const [provider, setProvider] = useState("");
+  const [providerQuery, setProviderQuery] = useState("");
 
-  // Load patients lazily when the dialog opens (for the quick search).
+  // Load patients + providers lazily when the dialog opens (for the searches).
   useEffect(() => {
     if (!open) return;
     let active = true;
     listPatients()
-      .then((data) => {
-        if (active) setPatients(data);
-      })
+      .then((data) => active && setPatients(data))
       .catch(() => {
         /* search just stays empty */
+      });
+    listProviders()
+      .then((data) => active && setProviders(data))
+      .catch(() => {
+        /* falls back to the patient's PCP on submit */
       });
     return () => {
       active = false;
     };
   }, [open]);
 
-  const matches = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return patients
-      .filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) || p.fileNumber.includes(q),
-      )
-      .slice(0, 6);
-  }, [patients, query]);
+  const patientOptions = useMemo<ComboboxOption[]>(
+    () =>
+      patients.map((p) => ({
+        value: p.fileNumber,
+        // Fold the file number into the label so it's type-to-searchable.
+        label: `${p.name} ${p.fileNumber}`,
+        node: (
+          <span className="flex w-full items-center justify-between gap-2">
+            <span className="truncate">{p.name}</span>
+            <span className="shrink-0 text-muted-foreground text-xs">
+              #{p.fileNumber}
+            </span>
+          </span>
+        ),
+      })),
+    [patients],
+  );
+
+  const providerOptions = useMemo<ComboboxOption[]>(
+    () =>
+      providers.map((pr) => ({
+        value: pr.name,
+        label: pr.name,
+        node: (
+          <span className="flex w-full items-center justify-between gap-2">
+            <span className="truncate">{pr.name}</span>
+            <span className="shrink-0 text-muted-foreground text-xs capitalize">
+              {pr.role}
+            </span>
+          </span>
+        ),
+      })),
+    [providers],
+  );
 
   const reset = () => {
-    setQuery("");
     setSelected(null);
     setDate(new Date(`${TODAY}T00:00:00`));
     setDateOpen(false);
     setTime("09:00");
     setType(TYPES[0]);
     setProvider("");
+    setProviderQuery("");
   };
 
   const submit = (event: FormEvent) => {
@@ -175,10 +205,7 @@ export function AddAppointmentDialog({
                     </span>
                   </div>
                   <Button
-                    onClick={() => {
-                      setSelected(null);
-                      setQuery("");
-                    }}
+                    onClick={() => setSelected(null)}
                     size="sm"
                     type="button"
                     variant="ghost"
@@ -187,46 +214,16 @@ export function AddAppointmentDialog({
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-1.5">
-                  <div className="relative">
-                    <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
-                    <Input
-                      autoFocus
-                      className="pl-9"
-                      onChange={(event) => setQuery(event.target.value)}
-                      placeholder={t("appointments.dialog.searchPlaceholder")}
-                      value={query}
-                    />
-                  </div>
-                  {query.trim() && (
-                    <div className="max-h-56 overflow-y-auto rounded-2xl border bg-popover p-1">
-                      {matches.length === 0 ? (
-                        <p className="px-2 py-2 text-muted-foreground text-sm">
-                          {t("appointments.dialog.noPatients")}
-                        </p>
-                      ) : (
-                        matches.map((p) => (
-                          <button
-                            className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent"
-                            key={p.fileNumber}
-                            onClick={() => {
-                              setSelected(p);
-                              setQuery("");
-                            }}
-                            type="button"
-                          >
-                            <span className="truncate text-foreground text-sm">
-                              {p.name}
-                            </span>
-                            <span className="shrink-0 text-muted-foreground text-xs">
-                              #{p.fileNumber}
-                            </span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
+                <Combobox
+                  autoFocus
+                  emptyText={t("appointments.dialog.noPatients")}
+                  onSelect={(fileNumber) => {
+                    const p = patients.find((x) => x.fileNumber === fileNumber);
+                    if (p) setSelected(p);
+                  }}
+                  options={patientOptions}
+                  placeholder={t("appointments.dialog.searchPlaceholder")}
+                />
               )}
             </Field>
 
@@ -290,10 +287,16 @@ export function AddAppointmentDialog({
                 </select>
               </Field>
               <Field label={t("appointments.dialog.provider")}>
-                <Input
-                  onChange={(event) => setProvider(event.target.value)}
+                <Combobox
+                  emptyText={t("appointments.dialog.noProviders")}
+                  onSelect={(name) => {
+                    setProvider(name);
+                    setProviderQuery(name);
+                  }}
+                  onValueChange={setProviderQuery}
+                  options={providerOptions}
                   placeholder={t("appointments.dialog.providerPlaceholder")}
-                  value={provider}
+                  value={providerQuery}
                 />
               </Field>
             </div>
