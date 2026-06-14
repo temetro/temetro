@@ -11,6 +11,7 @@ import {
   NotebookPen,
   Pill,
   Plus,
+  Receipt,
   Settings,
   Users,
 } from "lucide-react";
@@ -68,6 +69,13 @@ export const navItems: NavItem[] = [
         labelKey: "nav.appointments",
         icon: CalendarClock,
         link: "/appointments",
+      },
+      {
+        id: "invoices",
+        labelKey: "nav.invoices",
+        icon: Receipt,
+        link: "/invoices",
+        access: "clinical",
       },
       {
         id: "prescriptions",
