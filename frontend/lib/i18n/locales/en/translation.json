@@ -556,7 +556,10 @@
     "live": {
       "title": "Live",
       "subtitle": "Patients currently in the building, updating in real time.",
-      "label": "In the building now"
+      "label": "In the building now",
+      "start": "Go live",
+      "pause": "Pause",
+      "idle": "Live stream paused — press Go live to start."
     },
     "patientVolume": {
       "title": "Patient volume",

@@ -8,7 +8,6 @@ import { Area, AreaChart } from "@/components/charts/area-chart";
 import { Bar } from "@/components/charts/bar";
 import { BarChart } from "@/components/charts/bar-chart";
 import { BarXAxis } from "@/components/charts/bar-x-axis";
-import { BarYAxis } from "@/components/charts/bar-y-axis";
 import { Grid } from "@/components/charts/grid";
 import { ChartTooltip } from "@/components/charts/tooltip";
 import { XAxis } from "@/components/charts/x-axis";
@@ -196,7 +195,8 @@ export function AnalysisView() {
             <AreaChart aspectRatio="2 / 1" data={monthData}>
               <Grid horizontal />
               <Area dataKey="patients" fill="var(--chart-line-primary)" />
-              <XAxis tickMode="data" />
+              {/* One tick per month so every point is labelled. */}
+              <XAxis numTicks={Math.max(monthData.length, 2)} tickMode="data" />
               <ChartTooltip showDatePill={false} />
             </AreaChart>
           </ChartCard>
@@ -207,8 +207,9 @@ export function AnalysisView() {
             <BarChart aspectRatio="2 / 1" data={weekdayData}>
               <Grid horizontal />
               <Bar dataKey="appointments" fill="var(--chart-line-primary)" />
+              {/* Vertical bars: weekdays live on the x-axis only. (A BarYAxis
+                  here printed the categories down the left, overflowing the card.) */}
               <BarXAxis />
-              <BarYAxis />
               <ChartTooltip showDatePill={false} />
             </BarChart>
           </ChartCard>
