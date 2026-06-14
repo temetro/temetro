@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { AlertTriangle, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ShieldCheck, X } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -47,7 +47,6 @@ import type { TemetroUIMessage } from "@/lib/ai-chat";
 import { getAiConfig } from "@/lib/ai-settings";
 import { API_BASE_URL } from "@/lib/api-client";
 import { getPatient } from "@/lib/patients";
-import { notify } from "@/lib/toast";
 
 // Trigger: `/patient 10293` or just `/10293` — a client-side fast-path that
 // pulls records instantly without the LLM (also works offline).
@@ -96,12 +95,13 @@ export function ChatPanel() {
     };
   }, []);
 
-  // Pop a toast whenever a request errors, so failures are never silent.
+  // Surface errors inline (and dismissible) instead of as a toast, so a failure
+  // stays visible until acknowledged and isn't duplicated. Reset the dismissed
+  // flag whenever a fresh error arrives.
+  const [errorDismissed, setErrorDismissed] = useState(false);
   useEffect(() => {
-    if (error) {
-      notify.error(t("chat.error.title"), error.message || t("chat.error.body"));
-    }
-  }, [error, t]);
+    if (error) setErrorDismissed(false);
+  }, [error]);
 
   const isCloudModel = (getModel(model)?.provider ?? "ollama") !== "ollama";
 
@@ -210,20 +210,29 @@ export function ChatPanel() {
     />
   ) : null;
 
-  const errorAlert = error ? (
-    <div
-      className="flex w-full items-start gap-2 rounded-2xl border border-destructive/40 bg-destructive/8 px-4 py-3 text-destructive-foreground text-sm"
-      role="alert"
-    >
-      <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-      <div className="space-y-0.5">
-        <p className="font-medium">{t("chat.error.title")}</p>
-        <p className="text-destructive-foreground/90">
-          {error.message || t("chat.error.body")}
-        </p>
+  const errorAlert =
+    error && !errorDismissed ? (
+      <div
+        className="flex w-full items-start gap-2 rounded-2xl border border-destructive/40 bg-destructive/8 px-4 py-3 text-destructive-foreground text-sm"
+        role="alert"
+      >
+        <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+        <div className="flex-1 space-y-0.5">
+          <p className="font-medium">{t("chat.error.title")}</p>
+          <p className="text-destructive-foreground/90">
+            {error.message || t("chat.error.body")}
+          </p>
+        </div>
+        <button
+          aria-label={t("chat.error.dismiss")}
+          className="-mr-1 shrink-0 rounded-md p-1 text-destructive-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive-foreground"
+          onClick={() => setErrorDismissed(true)}
+          type="button"
+        >
+          <X className="size-4" />
+        </button>
       </div>
-    </div>
-  ) : null;
+    ) : null;
 
   // Render one assistant/user message: a Chain-of-Thought trace built from any
   // `data-step` parts, then the rest of the parts (text + record cards) in order.

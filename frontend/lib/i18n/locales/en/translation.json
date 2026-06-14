@@ -745,6 +745,7 @@
       "skipped": "Skipped",
       "total": "Parsed",
       "row": "Row {{index}}",
+      "more": "+{{count}} more",
       "approve": "Import {{count}} record(s)",
       "approve_one": "Import 1 record",
       "reject": "Discard",
@@ -758,7 +759,8 @@
     },
     "error": {
       "title": "AI request failed",
-      "body": "Something went wrong reaching the AI. Check your provider and API key in Settings → AI."
+      "body": "Something went wrong reaching the AI. Check your provider and API key in Settings → AI.",
+      "dismiss": "Dismiss"
     }
   },
   "patientCard": {

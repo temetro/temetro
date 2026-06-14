@@ -67,13 +67,19 @@ export function ImportPreviewCard({ data }: { data: ImportPreviewData }) {
       </div>
 
       {data.invalid.length > 0 ? (
-        <ul className="space-y-1 rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
+        <ul className="max-h-40 space-y-1 overflow-y-auto rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
           {data.invalid.slice(0, 5).map((issue) => (
-            <li key={issue.index}>
+            <li className="truncate" key={issue.index}>
               {t("chat.importCard.row", { index: issue.index + 1 })}:{" "}
-              {issue.errors.join("; ")}
+              {issue.errors[0]}
+              {issue.errors.length > 1 ? ` (+${issue.errors.length - 1})` : ""}
             </li>
           ))}
+          {data.invalid.length > 5 ? (
+            <li className="text-muted-foreground/70">
+              {t("chat.importCard.more", { count: data.invalid.length - 5 })}
+            </li>
+          ) : null}
         </ul>
       ) : null}
 
