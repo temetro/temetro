@@ -143,7 +143,9 @@ chatRouter.post("/", async (req, res, next) => {
             tools,
             stopWhen: stepCountIs(6),
           });
-          writer.merge(result.toUIMessageStream());
+          // Forward reasoning parts (when the model emits them) so the client
+          // can render a Claude-style thinking block.
+          writer.merge(result.toUIMessageStream({ sendReasoning: true }));
         }
       },
       onError: (error) =>

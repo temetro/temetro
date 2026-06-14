@@ -772,6 +772,16 @@
     "patientNotFound": "I couldn't find a patient with file number {{fileNumber}}.",
     "thinking": "Thinking…",
     "steps": "Steps",
+    "suggestions": {
+      "schedule": "Show today's schedule",
+      "tasks": "List open tasks",
+      "prescriptions": "Show recent prescriptions",
+      "import": "Import a patient database"
+    },
+    "queue": {
+      "label": "Queued · {{count}}",
+      "remove": "Remove from queue"
+    },
     "veil": {
       "title": "Veil",
       "body": "This message will be processed by {{provider}}, an external provider. Veil de-identifies patient information (names, MRNs, providers) before it leaves your infrastructure, and restores it in the answer.",

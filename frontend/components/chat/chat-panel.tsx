@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport } from "ai";
+import { DefaultChatTransport, type ToolUIPart } from "ai";
 import { AlertTriangle, ShieldCheck, X } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useSearchParams } from "next/navigation";
@@ -24,7 +24,29 @@ import {
   MessageContent,
   MessageResponse,
 } from "@/components/ai-elements/message";
+import {
+  Queue,
+  QueueItem,
+  QueueItemAction,
+  QueueItemActions,
+  QueueItemContent,
+  QueueItemIndicator,
+  QueueList,
+} from "@/components/ai-elements/queue";
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@/components/ai-elements/reasoning";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "@/components/ai-elements/tool";
 import { ActionPreviewCard } from "@/components/chat/action-preview-card";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ImportPreviewCard } from "@/components/chat/import-preview-card";
@@ -62,6 +84,10 @@ export function ChatPanel() {
   // holds the message text waiting on that one-time approval.
   const [consented, setConsented] = useState(false);
   const [pendingConsent, setPendingConsent] = useState<string | null>(null);
+
+  // Claude-style message queue: messages submitted while the assistant is busy
+  // (or waiting on the Veil gate) wait here and auto-send when it goes idle.
+  const [queued, setQueued] = useState<string[]>([]);
 
   const transport = useMemo(
     () =>
@@ -118,6 +144,12 @@ export function ChatPanel() {
       const trimmed = text.trim();
       if (!trimmed) return;
 
+      // Busy or awaiting the Veil gate → queue and auto-send when idle.
+      if (status === "submitted" || status === "streaming" || pendingConsent) {
+        setQueued((q) => [...q, trimmed]);
+        return;
+      }
+
       // Fast-path: `/patient <file#>` renders cards directly, no LLM.
       const match = trimmed.match(PATIENT_COMMAND);
       if (match) {
@@ -158,8 +190,25 @@ export function ChatPanel() {
       }
       runAgentWith(trimmed, model);
     },
-    [consented, isCloudModel, model, runAgentWith, setMessages, t],
+    [
+      consented,
+      isCloudModel,
+      model,
+      pendingConsent,
+      runAgentWith,
+      setMessages,
+      status,
+      t,
+    ],
   );
+
+  // Drain the queue one message at a time whenever the chat returns to idle.
+  useEffect(() => {
+    if (status !== "ready" || pendingConsent || queued.length === 0) return;
+    const [next, ...rest] = queued;
+    setQueued(rest);
+    if (next) void send(next);
+  }, [status, pendingConsent, queued, send]);
 
   // Veil gate actions.
   const confirmConsent = useCallback(() => {
@@ -234,6 +283,43 @@ export function ChatPanel() {
       </div>
     ) : null;
 
+  // Starter prompts shown on the empty state, each tied to an existing tool.
+  const suggestions = [
+    t("chat.suggestions.schedule"),
+    t("chat.suggestions.tasks"),
+    t("chat.suggestions.prescriptions"),
+    t("chat.suggestions.import"),
+  ];
+
+  const queuePanel =
+    queued.length > 0 ? (
+      <Queue>
+        <span className="px-1 text-muted-foreground text-xs">
+          {t("chat.queue.label", { count: queued.length })}
+        </span>
+        <QueueList>
+          {queued.map((q, i) => (
+            <QueueItem key={`${i}-${q}`}>
+              <div className="flex items-center gap-2">
+                <QueueItemIndicator />
+                <QueueItemContent>{q}</QueueItemContent>
+                <QueueItemActions>
+                  <QueueItemAction
+                    aria-label={t("chat.queue.remove")}
+                    onClick={() =>
+                      setQueued((prev) => prev.filter((_, j) => j !== i))
+                    }
+                  >
+                    <X className="size-3.5" />
+                  </QueueItemAction>
+                </QueueItemActions>
+              </div>
+            </QueueItem>
+          ))}
+        </QueueList>
+      </Queue>
+    ) : null;
+
   // Render one assistant/user message: a Chain-of-Thought trace built from any
   // `data-step` parts, then the rest of the parts (text + record cards) in order.
   const renderMessage = (message: TemetroUIMessage, isLast: boolean) => {
@@ -263,6 +349,30 @@ export function ChatPanel() {
 
           {message.parts.map((part, i) => {
             const key = `${message.id}-${i}`;
+            if (part.type === "reasoning") {
+              return (
+                <Reasoning
+                  className="w-full"
+                  isStreaming={isWorking && isLast}
+                  key={key}
+                >
+                  <ReasoningTrigger />
+                  <ReasoningContent>{part.text}</ReasoningContent>
+                </Reasoning>
+              );
+            }
+            if (part.type.startsWith("tool-")) {
+              const tp = part as ToolUIPart;
+              return (
+                <Tool key={key}>
+                  <ToolHeader state={tp.state} type={tp.type} />
+                  <ToolContent>
+                    <ToolInput input={tp.input} />
+                    <ToolOutput errorText={tp.errorText} output={tp.output} />
+                  </ToolContent>
+                </Tool>
+              );
+            }
             if (part.type === "text") {
               return message.role === "user" ? (
                 <span className="whitespace-pre-wrap" key={key}>
@@ -345,6 +455,11 @@ export function ChatPanel() {
             {errorAlert}
             {veilGate}
             {promptInput}
+            <Suggestions className="justify-center pt-1">
+              {suggestions.map((s) => (
+                <Suggestion key={s} onClick={send} suggestion={s} />
+              ))}
+            </Suggestions>
           </div>
         </div>
       </div>
@@ -369,6 +484,7 @@ export function ChatPanel() {
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-4 pb-4">
         {errorAlert}
         {veilGate}
+        {queuePanel}
         {promptInput}
       </div>
     </div>
