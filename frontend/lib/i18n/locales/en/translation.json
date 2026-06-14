@@ -809,7 +809,21 @@
       "discarded": "Discarded — nothing was saved.",
       "addedTitle": "Added",
       "failedTitle": "Could not add",
-      "failedBody": "Something went wrong, or you don't have permission. Please try again."
+      "failedBody": "Something went wrong, or you don't have permission. Please try again.",
+      "batch": {
+        "title": "{{count}} records proposed",
+        "review": "Review & add",
+        "dialogTitle": "Review proposed records",
+        "dialogDescription": "Add them all at once, or remove any you don't want.",
+        "addAll": "Add all",
+        "adding": "Adding…",
+        "discardAll": "Discard all",
+        "newPatient": "New patient will be created",
+        "remove": "Remove",
+        "done": "Added {{added}} of {{total}}.",
+        "failedCount": "{{count}} failed",
+        "discarded": "Discarded — nothing was saved."
+      }
     },
     "lists": {
       "appointments": "Appointments",

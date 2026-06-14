@@ -11,7 +11,10 @@ import {
   problems,
 } from "../db/schema/patients.js";
 import { HttpError } from "../lib/http-error.js";
-import type { PatientInput } from "../lib/patient-validation.js";
+import {
+  patientInputSchema,
+  type PatientInput,
+} from "../lib/patient-validation.js";
 import type {
   Allergy,
   Encounter,
@@ -312,6 +315,40 @@ export async function generateFileNumber(orgId: string): Promise<string> {
       ),
     );
   return String(Number(r?.max ?? 9999) + 1);
+}
+
+// Resolve the file number to attach a denormalized record (e.g. an appointment)
+// to a patient. With a file number, use it as-is. Without one (AI-imported rows),
+// reuse an existing same-name patient when present — deduping repeat rows and
+// re-imports — otherwise create a minimal patient (auto file number, source "ai")
+// so they appear on the Patients page. Returns the file number to link.
+export async function ensurePatient(
+  orgId: string,
+  userId: string,
+  patient: { fileNumber: string; name: string; initials: string },
+): Promise<string> {
+  if (patient.fileNumber) return patient.fileNumber;
+  const [existing] = await db
+    .select({ fileNumber: patients.fileNumber })
+    .from(patients)
+    .where(
+      and(
+        eq(patients.organizationId, orgId),
+        eq(patients.name, patient.name),
+      ),
+    )
+    .limit(1);
+  if (existing) return existing.fileNumber;
+  const created = await createPatient(
+    orgId,
+    userId,
+    patientInputSchema.parse({
+      name: patient.name,
+      initials: patient.initials,
+      source: "ai",
+    }),
+  );
+  return created.fileNumber;
 }
 
 export async function listPatients(

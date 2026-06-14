@@ -14,14 +14,16 @@ import { notify } from "@/lib/toast";
 
 type Status = "pending" | "committing" | "done" | "rejected";
 
-const ICONS = {
+export const ACTION_ICONS = {
   appointment: CalendarPlus,
   task: ClipboardList,
   prescription: Pill,
 } as const;
 
+const ICONS = ACTION_ICONS;
+
 // Summarise the proposed record into a couple of readable lines per kind.
-function summarize(data: ActionPreviewData): string[] {
+export function summarize(data: ActionPreviewData): string[] {
   const r = data.record as Record<string, unknown>;
   if (data.kind === "appointment") {
     return [
@@ -44,7 +46,7 @@ function summarize(data: ActionPreviewData): string[] {
   ].filter(Boolean);
 }
 
-async function commit(data: ActionPreviewData): Promise<void> {
+export async function commitAction(data: ActionPreviewData): Promise<void> {
   // Stamp provenance so the committed record is flagged "Added by AI" and shows
   // up for review/editing on the relevant page.
   if (data.kind === "appointment") {
@@ -75,7 +77,7 @@ export function ActionPreviewCard({ data }: { data: ActionPreviewData }) {
   const approve = async () => {
     setStatus("committing");
     try {
-      await commit(data);
+      await commitAction(data);
       setStatus("done");
       notify.success(
         t("chat.actionCard.addedTitle"),

@@ -86,7 +86,7 @@ export function LiveHospitalChart() {
         <div className="h-56 w-full">
           <LiveLineChart
             data={data}
-            margin={{ left: 44 }}
+            margin={{ left: 44, right: 28 }}
             value={value}
             window={WINDOW_SECONDS}
           >

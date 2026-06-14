@@ -4,6 +4,7 @@ import { db } from "../db/index.js";
 import { appointments } from "../db/schema/appointments.js";
 import type { AppointmentInput } from "../lib/appointment-validation.js";
 import type { Appointment } from "../types/appointment.js";
+import * as patients from "./patients.js";
 
 type AppointmentRow = typeof appointments.$inferSelect;
 
@@ -58,9 +59,16 @@ export async function createAppointment(
   userId: string,
   input: AppointmentInput,
 ): Promise<Appointment> {
+  // Link to a patient — creating one when the booking has no file number (e.g.
+  // an AI-imported appointment), so the person shows up on the Patients page.
+  const fileNumber = await patients.ensurePatient(orgId, userId, {
+    fileNumber: input.fileNumber,
+    name: input.name,
+    initials: input.initials,
+  });
   const [row] = await db
     .insert(appointments)
-    .values(columns(orgId, input, userId))
+    .values(columns(orgId, { ...input, fileNumber }, userId))
     .returning();
   return toAppointment(row!);
 }

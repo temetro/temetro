@@ -126,7 +126,7 @@ export function ChatInput({
         event.preventDefault();
         submit();
       }}
-      className="w-full overflow-hidden rounded-[28px] border border-border bg-input shadow-sm"
+      className="w-full shrink-0 overflow-hidden rounded-[28px] border border-border bg-input shadow-sm"
     >
       {/* Textarea + toolbar, filling the rounded card. */}
       <div className="bg-input">

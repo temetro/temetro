@@ -43,6 +43,7 @@ import {
   ToolOutput,
 } from "@/components/ai-elements/tool";
 import { ActionPreviewCard } from "@/components/chat/action-preview-card";
+import { BatchActionPreviewCard } from "@/components/chat/batch-action-preview-card";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ImportPreviewCard } from "@/components/chat/import-preview-card";
 import { LabChartCard } from "@/components/chat/lab-chart-card";
@@ -65,7 +66,7 @@ import {
   type Effort,
   getModel,
 } from "@/lib/ai-models";
-import type { TemetroUIMessage } from "@/lib/ai-chat";
+import type { ActionPreviewData, TemetroUIMessage } from "@/lib/ai-chat";
 import { getAiConfig } from "@/lib/ai-settings";
 import { API_BASE_URL } from "@/lib/api-client";
 import { getPatient } from "@/lib/patients";
@@ -325,6 +326,14 @@ export function ChatPanel() {
   const renderMessage = (message: TemetroUIMessage, isLast: boolean) => {
     const steps = message.parts.filter((p) => p.type === "data-step");
     const isWorking = status === "submitted" || status === "streaming";
+    // When the agent proposes many records at once (e.g. an imported file),
+    // collapse them into one batched approval instead of a card per record.
+    const actionPreviews = message.parts.filter(
+      (p) => p.type === "data-actionPreview",
+    );
+    const firstActionPreviewIdx = message.parts.findIndex(
+      (p) => p.type === "data-actionPreview",
+    );
     return (
       <Message from={message.role} key={message.id}>
         <MessageContent className="w-full">
@@ -405,6 +414,18 @@ export function ChatPanel() {
               return <ImportPreviewCard data={part.data} key={key} />;
             }
             if (part.type === "data-actionPreview") {
+              if (actionPreviews.length >= 2) {
+                // Render the batch once (at the first proposal), skip the rest.
+                if (i !== firstActionPreviewIdx) return null;
+                return (
+                  <BatchActionPreviewCard
+                    items={actionPreviews.map(
+                      (p) => (p as { data: ActionPreviewData }).data,
+                    )}
+                    key={key}
+                  />
+                );
+              }
               return <ActionPreviewCard data={part.data} key={key} />;
             }
             if (part.type === "data-appointmentList") {
@@ -452,8 +473,8 @@ export function ChatPanel() {
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center px-4">
-        <div className="flex w-full max-w-3xl flex-col items-center gap-10">
+      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-8">
+        <div className="flex w-full max-w-3xl shrink-0 flex-col items-center gap-10">
           <h1 className="text-center font-semibold text-3xl text-balance tracking-tight sm:text-4xl">
             {t("chat.heading")}
           </h1>
