@@ -646,6 +646,14 @@
       "newThisMonth": "New this month",
       "active": "Active patients"
     },
+    "earnings": {
+      "title": "Earnings",
+      "description": "Billed, paid and outstanding — from invoices",
+      "billed": "Total billed",
+      "paid": "Total paid",
+      "outstanding": "Outstanding",
+      "byMonth": "Billed vs paid, by month"
+    },
     "appointments": {
       "title": "Appointments & schedule",
       "description": "Bookings, attendance and what's coming up",
@@ -773,6 +781,12 @@
     "thinking": "Thinking…",
     "steps": "Steps",
     "reasoning": "Reasoning",
+    "history": {
+      "title": "Chats",
+      "untitled": "New chat",
+      "empty": "No saved chats yet.",
+      "delete": "Delete chat"
+    },
     "suggestions": {
       "schedule": "Show today's schedule",
       "tasks": "List open tasks",
@@ -795,12 +809,14 @@
       "title": {
         "appointment": "Proposed appointment",
         "task": "Proposed task",
-        "prescription": "Proposed prescription"
+        "prescription": "Proposed prescription",
+        "invoice": "Proposed invoice"
       },
       "kind": {
         "appointment": "Appointment added.",
         "task": "Task added.",
-        "prescription": "Prescription added."
+        "prescription": "Prescription added.",
+        "invoice": "Invoice added."
       },
       "approve": "Add",
       "adding": "Adding…",
@@ -832,7 +848,24 @@
       "done": "Done",
       "noAppointments": "No appointments.",
       "noTasks": "No tasks.",
-      "noPrescriptions": "No prescriptions."
+      "noPrescriptions": "No prescriptions.",
+      "inventory": "Inventory",
+      "noInventory": "No inventory items."
+    },
+    "clinicCard": {
+      "title": "Clinic",
+      "since": "Since {{date}}"
+    },
+    "analyticsCard": {
+      "title": "Clinic analytics",
+      "patients": "Patients",
+      "appointmentsThisWeek": "Appts this week",
+      "activePrescriptions": "Active Rx",
+      "openTasks": "Open tasks",
+      "billed": "Billed",
+      "paid": "Paid",
+      "outstanding": "Outstanding",
+      "byMonth": "Billed vs paid, by month"
     },
     "labCard": {
       "flags": {

@@ -3,6 +3,7 @@
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { EarningsChart } from "@/components/analysis/earnings-chart";
 import { LiveHospitalChart } from "@/components/analysis/live-hospital-chart";
 import { Area, AreaChart } from "@/components/charts/area-chart";
 import { Bar } from "@/components/charts/bar";
@@ -13,6 +14,7 @@ import { ChartTooltip } from "@/components/charts/tooltip";
 import { XAxis } from "@/components/charts/x-axis";
 import { Card } from "@/components/ui/card";
 import { type Analytics, getAnalytics } from "@/lib/analytics";
+import { formatMoney } from "@/lib/invoices";
 
 // Clinic analytics computed on the server from real data (patients,
 // appointments, prescriptions, tasks). No fabricated financials — temetro has no
@@ -214,6 +216,37 @@ export function AnalysisView() {
             </BarChart>
           </ChartCard>
         </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-semibold text-lg tracking-tight">
+            {t("analysis.earnings.title")}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {t("analysis.earnings.description")}
+          </p>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatCard
+            label={t("analysis.earnings.billed")}
+            value={formatMoney(data?.earnings.totalBilled ?? 0)}
+          />
+          <StatCard
+            label={t("analysis.earnings.paid")}
+            value={formatMoney(data?.earnings.totalPaid ?? 0)}
+          />
+          <StatCard
+            label={t("analysis.earnings.outstanding")}
+            value={formatMoney(data?.earnings.totalOutstanding ?? 0)}
+          />
+        </div>
+        <Card className="gap-3 p-4">
+          <span className="text-muted-foreground text-sm">
+            {t("analysis.earnings.byMonth")}
+          </span>
+          <EarningsChart data={data?.earnings.byMonth ?? []} />
+        </Card>
       </section>
 
       <Section

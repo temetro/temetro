@@ -10,13 +10,16 @@ import {
   type UIMessage,
 } from "ai";
 import { Router } from "express";
+import { z } from "zod";
 
+import { HttpError } from "../lib/http-error.js";
 import {
   requireAuth,
   requireOrg,
   requirePermission,
 } from "../middleware/auth.js";
 import { recordActivity } from "../services/activity.js";
+import * as aiChat from "../services/ai-chat.js";
 import { getAiSettings } from "../services/ai/config.js";
 import { resolveModel } from "../services/ai/provider.js";
 import { createChatTools } from "../services/ai/tools.js";
@@ -43,12 +46,19 @@ function systemPrompt(veilActive: boolean, providerLabel: string): string {
     "- listAppointments: when asked to see the schedule / upcoming visits.",
     "- listTasks: when asked to see open tasks / to-dos.",
     "- listPrescriptions: when asked to see prescriptions.",
+    "- getClinicInfo: the clinic's name / basic info (e.g. 'what's my clinic called?').",
+    "- getAnalytics: clinic KPIs AND earnings (money billed / paid / outstanding, by month). Use for analytics, earnings, revenue, or performance questions.",
+    "- listInventory: stock levels / low-stock / reorder questions.",
     "",
     "Add tools (propose only — these NEVER write):",
     "- proposeAppointment / proposeTask / proposePrescription: when the clinician",
     "  asks to add/book/create one. They show an approval card; the record is only",
     "  written after the clinician clicks Add. NEVER say you added/booked/created",
     "  something — say you've drafted it for their approval.",
+    "- proposeInvoice: when the clinician wants to bill someone — e.g. they upload",
+    "  a list of purchased medications/items. Parse it into line items",
+    "  {description, quantity, unitPrice} (use the prices in the document) and call",
+    "  proposeInvoice with the patient/client name.",
     "- previewImport: when the clinician wants to import/migrate an existing",
     "  patient database file, or add a single patient. Parse the uploaded content",
     "  into our patient shape and call previewImport.",
@@ -163,6 +173,69 @@ chatRouter.post("/", async (req, res, next) => {
     });
 
     pipeUIMessageStreamToResponse({ response: res, stream });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- Persisted conversation history (Claude-style) --------------------------
+// Threads are per-user within the clinic. The client owns the thread id (nanoid)
+// and saves a snapshot of the conversation after each exchange.
+
+chatRouter.get("/threads", async (req, res, next) => {
+  try {
+    res.json(await aiChat.listThreads(req.organizationId!, req.user!.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+chatRouter.get("/threads/:id", async (req, res, next) => {
+  try {
+    const thread = await aiChat.getThread(
+      req.organizationId!,
+      req.user!.id,
+      req.params.id as string,
+    );
+    if (!thread) throw new HttpError(404, "Conversation not found.");
+    res.json(thread);
+  } catch (err) {
+    next(err);
+  }
+});
+
+const saveThreadSchema = z.object({
+  messages: z
+    .array(z.object({ role: z.string(), parts: z.unknown() }))
+    .max(500),
+  title: z.string().trim().max(120).default("New chat"),
+});
+
+chatRouter.put("/threads/:id", async (req, res, next) => {
+  try {
+    const { messages, title } = saveThreadSchema.parse(req.body);
+    await aiChat.saveThread(
+      req.organizationId!,
+      req.user!.id,
+      req.params.id as string,
+      messages,
+      title || "New chat",
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+chatRouter.delete("/threads/:id", async (req, res, next) => {
+  try {
+    const ok = await aiChat.deleteThread(
+      req.organizationId!,
+      req.user!.id,
+      req.params.id as string,
+    );
+    if (!ok) throw new HttpError(404, "Conversation not found.");
+    res.status(204).end();
   } catch (err) {
     next(err);
   }

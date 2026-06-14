@@ -2,11 +2,19 @@ import { tool } from "ai";
 import type { UIMessageStreamWriter } from "ai";
 import { z } from "zod";
 
+import { eq } from "drizzle-orm";
+
+import { db } from "../../db/index.js";
+import { organization } from "../../db/schema/auth.js";
 import { appointmentInputSchema } from "../../lib/appointment-validation.js";
+import { initialsFromName } from "../../lib/initials.js";
+import { invoiceInputSchema } from "../../lib/invoice-validation.js";
 import { patientInputSchema } from "../../lib/patient-validation.js";
 import { prescriptionInputSchema } from "../../lib/prescription-validation.js";
 import { taskInputSchema } from "../../lib/task-validation.js";
+import * as analytics from "../analytics.js";
 import * as appointments from "../appointments.js";
+import * as inventory from "../inventory.js";
 import * as patients from "../patients.js";
 import * as prescriptions from "../prescriptions.js";
 import * as tasks from "../tasks.js";
@@ -395,6 +403,123 @@ export function createChatTools(ctx: ToolContext) {
           data: {
             token: `rx-${stepSeq}`,
             kind: "prescription" as const,
+            record: parsed.success ? parsed.data : candidate,
+            issues,
+          },
+        });
+        return {
+          ok: parsed.success,
+          issues,
+          note: "Preview only — awaiting clinician approval before any write.",
+        };
+      },
+    }),
+
+    // --- Clinic-wide reads (aggregates / non-PHI — safe to return to model) ---
+
+    getClinicInfo: tool({
+      description:
+        "Get the clinic's name and basic info. Use when the clinician asks about their clinic/organization (e.g. 'what's my clinic called?').",
+      inputSchema: z.object({}),
+      execute: async () => {
+        step("Loading clinic info");
+        const [org] = await db
+          .select({
+            name: organization.name,
+            slug: organization.slug,
+            createdAt: organization.createdAt,
+          })
+          .from(organization)
+          .where(eq(organization.id, orgId));
+        const info = {
+          name: org?.name ?? "",
+          slug: org?.slug ?? null,
+          createdAt: org?.createdAt ? org.createdAt.toISOString() : null,
+        };
+        writer.write({ type: "data-clinicCard", data: info });
+        return info;
+      },
+    }),
+
+    getAnalytics: tool({
+      description:
+        "Retrieve the clinic's analytics AND earnings — patient/appointment/prescription/task counts plus money billed, paid, and outstanding (from invoices), with a by-month earnings trend. Use for KPIs, earnings, revenue, or performance questions.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        step("Loading clinic analytics");
+        const data = await analytics.getAnalytics(orgId);
+        writer.write({ type: "data-analyticsCard", data });
+        return data; // aggregates only, no PHI
+      },
+    }),
+
+    listInventory: tool({
+      description:
+        "List the clinic's inventory (medications/supplies, stock levels, reorder thresholds). Use for stock, low-stock, or reorder questions.",
+      inputSchema: z.object({}),
+      execute: async () => {
+        step("Loading inventory");
+        const items = await inventory.listInventory(orgId);
+        writer.write({ type: "data-inventoryList", data: { items } });
+        return {
+          count: items.length,
+          items: items.map((i) => ({
+            name: i.name,
+            form: i.form,
+            strength: i.strength,
+            stock: i.stockQuantity,
+            reorderThreshold: i.reorderThreshold,
+          })),
+        };
+      },
+    }),
+
+    proposeInvoice: tool({
+      description:
+        "Propose a new invoice for the clinician to approve — e.g. parse an uploaded list of purchased medications into billable line items. Does NOT save; it shows an approval card the clinician confirms. Provide the patient/client name (a file number if known) and line items {description, quantity, unitPrice}; prices come from the uploaded document.",
+      inputSchema: z.object({
+        name: z.string().describe("Patient/client name (may be a token)"),
+        fileNumber: z
+          .string()
+          .optional()
+          .describe("Patient file number / MRN if known"),
+        lineItems: z
+          .array(
+            z.object({
+              description: z.string(),
+              quantity: z.number(),
+              unitPrice: z.number(),
+            }),
+          )
+          .describe("Billed items, e.g. each purchased medication"),
+        notes: z.string().nullish(),
+      }),
+      execute: async ({ name, fileNumber, lineItems, notes }) => {
+        step(`Drafting invoice for ${fileNumber ?? name}`);
+        const patient = fileNumber ? await resolvePatient(fileNumber) : null;
+        const resolvedName = patient?.name ?? (name ? veil.rehydrate(name) : "");
+        if (!resolvedName) {
+          return { ok: false as const, reason: "patient_not_found" as const };
+        }
+        const candidate = {
+          fileNumber: patient?.fileNumber ?? "",
+          name: resolvedName,
+          initials: patient?.initials ?? initialsFromName(resolvedName),
+          lineItems,
+          notes: notes ?? null,
+          source: "ai" as const,
+        };
+        const parsed = invoiceInputSchema.safeParse(candidate);
+        const issues = parsed.success
+          ? []
+          : parsed.error.issues.map(
+              (i) => `${i.path.join(".") || "(root)"}: ${i.message}`,
+            );
+        writer.write({
+          type: "data-actionPreview",
+          data: {
+            token: `invoice-${stepSeq}`,
+            kind: "invoice" as const,
             record: parsed.success ? parsed.data : candidate,
             issues,
           },

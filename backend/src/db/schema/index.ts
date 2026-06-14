@@ -11,3 +11,4 @@ export * from "./messaging.js";
 export * from "./notifications.js";
 export * from "./settings.js";
 export * from "./ai.js";
+export * from "./ai-chat.js";

@@ -290,30 +290,38 @@ export function LiveLine({
           />
         </g>
 
-        {/* Badge — use popover vars so text is never white-on-white */}
-        {badge && (
-          <g transform={`translate(${liveDotX + 12},${liveDotY})`}>
-            <rect
-              fill="var(--popover)"
-              height={24}
-              opacity={0.95}
-              rx={6}
-              width={formatValue(liveValue).length * 7.5 + 16}
-              x={0}
-              y={-12}
-            />
-            <text
-              fill="var(--popover-foreground)"
-              fontFamily="SF Mono, Menlo, Monaco, monospace"
-              fontSize={11}
-              fontWeight={500}
-              x={8}
-              y={4}
-            >
-              {formatValue(liveValue)}
-            </text>
-          </g>
-        )}
+        {/* Badge — use popover vars so text is never white-on-white. Flip it to
+            the left of the dot when it would overflow the right edge, so the
+            value never spills outside the card. */}
+        {badge &&
+          (() => {
+            const badgeWidth = formatValue(liveValue).length * 7.5 + 16;
+            const flip = liveDotX + 12 + badgeWidth > innerWidth;
+            const badgeX = flip ? liveDotX - 12 - badgeWidth : liveDotX + 12;
+            return (
+              <g transform={`translate(${badgeX},${liveDotY})`}>
+                <rect
+                  fill="var(--popover)"
+                  height={24}
+                  opacity={0.95}
+                  rx={6}
+                  width={badgeWidth}
+                  x={0}
+                  y={-12}
+                />
+                <text
+                  fill="var(--popover-foreground)"
+                  fontFamily="SF Mono, Menlo, Monaco, monospace"
+                  fontSize={11}
+                  fontWeight={500}
+                  x={8}
+                  y={4}
+                >
+                  {formatValue(liveValue)}
+                </text>
+              </g>
+            );
+          })()}
       </motion.g>
     </>
   );

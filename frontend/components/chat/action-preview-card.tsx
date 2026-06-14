@@ -1,6 +1,14 @@
 "use client";
 
-import { AlertTriangle, CalendarPlus, Check, ClipboardList, Pill, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarPlus,
+  Check,
+  ClipboardList,
+  Pill,
+  Receipt,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -8,6 +16,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { ActionPreviewData } from "@/lib/ai-chat";
 import { type AppointmentInput, createAppointment } from "@/lib/appointments";
+import {
+  createInvoice,
+  formatMoney,
+  type InvoiceInput,
+  type InvoiceLineItem,
+} from "@/lib/invoices";
 import { type PrescriptionInput, createPrescription } from "@/lib/prescriptions";
 import { type TaskInput, createTask } from "@/lib/tasks";
 import { notify } from "@/lib/toast";
@@ -18,6 +32,7 @@ export const ACTION_ICONS = {
   appointment: CalendarPlus,
   task: ClipboardList,
   prescription: Pill,
+  invoice: Receipt,
 } as const;
 
 const ICONS = ACTION_ICONS;
@@ -38,6 +53,14 @@ export function summarize(data: ActionPreviewData): string[] {
       [r.assignee, r.due, r.priority].filter(Boolean).join(" · "),
     ].filter(Boolean);
   }
+  if (data.kind === "invoice") {
+    const items = (r.lineItems as InvoiceLineItem[] | undefined) ?? [];
+    const total = items.reduce((s, li) => s + li.quantity * li.unitPrice, 0);
+    return [
+      String(r.name ?? ""),
+      `${items.length} item${items.length === 1 ? "" : "s"} · ${formatMoney(total)}`,
+    ].filter(Boolean);
+  }
   // prescription
   return [
     [r.medication, r.dose].filter(Boolean).join(" "),
@@ -56,6 +79,8 @@ export async function commitAction(data: ActionPreviewData): Promise<void> {
     });
   } else if (data.kind === "task") {
     await createTask(data.record as TaskInput);
+  } else if (data.kind === "invoice") {
+    await createInvoice({ ...(data.record as InvoiceInput), source: "ai" });
   } else {
     await createPrescription({
       ...(data.record as PrescriptionInput),

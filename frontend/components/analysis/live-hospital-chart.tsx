@@ -12,51 +12,63 @@ import { LiveLine } from "@/components/charts/live-line";
 import { LiveYAxis } from "@/components/charts/live-y-axis";
 import { ChartTooltip } from "@/components/charts/tooltip";
 import { Button } from "@/components/ui/button";
+import { getLiveMetric } from "@/lib/analytics";
 
-// temetro has no real-time telemetry feed yet, so the "Live" panel simulates a
-// hospital signal (patients currently in the building) as a bounded random walk
-// that updates once a second. Swap `tick()` for a WebSocket/poll when a real
-// feed exists — the chart contract (append { time, value }) stays the same.
-//
-// The simulation (a 1s interval + an rAF animation loop) only runs while the
-// clinician has explicitly toggled it on, so the Analysis page stays idle by
-// default instead of animating in the background.
-const BASELINE = 48;
-const MIN = 24;
-const MAX = 90;
+// The "Live" panel plots a REAL clinic signal — patients checked in today — by
+// polling GET /api/analytics/live. It only runs while the clinician toggles it
+// on, so the Analysis page stays idle by default. The metric changes slowly
+// (only as people check in), so the line scrolls smoothly using the last value
+// and refreshes from the server every few seconds.
 const WINDOW_SECONDS = 30;
+const REFETCH_EVERY_TICKS = 5; // poll the server every 5s (1s render ticks)
 
 export function LiveHospitalChart() {
   const { t } = useTranslation();
   const [live, setLive] = useState(false);
   const [data, setData] = useState<LiveLinePoint[]>([]);
-  const [value, setValue] = useState(BASELINE);
-  const valueRef = useRef(BASELINE);
+  const [value, setValue] = useState(0);
+  const valueRef = useRef(0);
 
   useEffect(() => {
     if (!live) return;
-    // Seed a short history so the line is drawn immediately on start.
-    const now = Date.now() / 1000;
-    valueRef.current = BASELINE;
-    setValue(BASELINE);
-    setData(
-      Array.from({ length: WINDOW_SECONDS }, (_, i) => ({
-        time: now - (WINDOW_SECONDS - i),
-        value: BASELINE,
-      })),
-    );
+    let active = true;
 
+    const refetch = () =>
+      getLiveMetric()
+        .then((r) => {
+          if (!active) return;
+          valueRef.current = r.value;
+          setValue(r.value);
+        })
+        .catch(() => {
+          /* keep the last value on a transient error */
+        });
+
+    // Seed a short flat history from the first reading so the line draws at once.
+    refetch().finally(() => {
+      if (!active) return;
+      const now = Date.now() / 1000;
+      setData(
+        Array.from({ length: WINDOW_SECONDS }, (_, i) => ({
+          time: now - (WINDOW_SECONDS - i),
+          value: valueRef.current,
+        })),
+      );
+    });
+
+    let tick = 0;
     const id = setInterval(() => {
-      const drift = (Math.random() - 0.5) * 5;
-      const next = Math.max(MIN, Math.min(MAX, valueRef.current + drift));
-      valueRef.current = next;
-      setValue(next);
+      tick += 1;
+      if (tick % REFETCH_EVERY_TICKS === 0) void refetch();
       setData((prev) => [
         ...prev.slice(-500),
-        { time: Date.now() / 1000, value: next },
+        { time: Date.now() / 1000, value: valueRef.current },
       ]);
     }, 1000);
-    return () => clearInterval(id);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
   }, [live]);
 
   return (
@@ -86,7 +98,7 @@ export function LiveHospitalChart() {
         <div className="h-56 w-full">
           <LiveLineChart
             data={data}
-            margin={{ left: 44, right: 28 }}
+            margin={{ left: 52, right: 48 }}
             value={value}
             window={WINDOW_SECONDS}
           >

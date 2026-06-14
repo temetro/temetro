@@ -43,8 +43,11 @@ import {
   ToolOutput,
 } from "@/components/ai-elements/tool";
 import { ActionPreviewCard } from "@/components/chat/action-preview-card";
+import { AnalyticsCard } from "@/components/chat/analytics-card";
 import { BatchActionPreviewCard } from "@/components/chat/batch-action-preview-card";
 import { ChatInput } from "@/components/chat/chat-input";
+import { ClinicCard } from "@/components/chat/clinic-card";
+import { InventoryListCard } from "@/components/chat/inventory-list-card";
 import { ImportPreviewCard } from "@/components/chat/import-preview-card";
 import { LabChartCard } from "@/components/chat/lab-chart-card";
 import { PatientResult } from "@/components/chat/patient-cards";
@@ -67,6 +70,11 @@ import {
   getModel,
 } from "@/lib/ai-models";
 import type { ActionPreviewData, TemetroUIMessage } from "@/lib/ai-chat";
+import {
+  getThread,
+  notifyThreadsChanged,
+  saveThread,
+} from "@/lib/ai-chat-history";
 import { getAiConfig } from "@/lib/ai-settings";
 import { API_BASE_URL } from "@/lib/api-client";
 import { getPatient } from "@/lib/patients";
@@ -89,6 +97,15 @@ export function ChatPanel() {
   // Claude-style message queue: messages submitted while the assistant is busy
   // (or waiting on the Veil gate) wait here and auto-send when it goes idle.
   const [queued, setQueued] = useState<string[]>([]);
+
+  // Persisted conversation: a client-owned thread id (a fresh one per new chat),
+  // saved to the server after each exchange so history survives reloads.
+  const [threadId, setThreadId] = useState<string>(() => nanoid());
+  const threadIdRef = useRef(threadId);
+  threadIdRef.current = threadId;
+  // Skip the auto-save that would otherwise fire right after loading a thread
+  // (which would needlessly bump it to the top of the history).
+  const justLoadedRef = useRef(false);
 
   const transport = useMemo(
     () =>
@@ -135,7 +152,10 @@ export function ChatPanel() {
   // Run the LLM agent for a message (after any Veil gate) on a given model.
   const runAgentWith = useCallback(
     (text: string, modelId: string) => {
-      sendMessage({ text }, { body: { model: modelId, effort } });
+      sendMessage(
+        { text },
+        { body: { model: modelId, effort, threadId: threadIdRef.current } },
+      );
     },
     [sendMessage, effort],
   );
@@ -238,6 +258,67 @@ export function ChatPanel() {
       send(`/patient ${requestedPatient}`);
     }
   }, [requestedPatient, send]);
+
+  // Open a saved thread from `/?thread=<id>` (sidebar history); a bare `/` starts
+  // a fresh chat. Driven by the URL so the sidebar links and "New chat" work.
+  const requestedThread = searchParams.get("thread");
+  useEffect(() => {
+    if (requestedThread) {
+      if (requestedThread === threadIdRef.current) return; // already open
+      let active = true;
+      getThread(requestedThread)
+        .then((thread) => {
+          if (!active) return;
+          justLoadedRef.current = true;
+          setThreadId(thread.id);
+          setMessages(
+            thread.messages.map(
+              (m) =>
+                ({
+                  id: nanoid(),
+                  role: m.role,
+                  parts: m.parts,
+                }) as TemetroUIMessage,
+            ),
+          );
+        })
+        .catch(() => {
+          /* missing/forbidden thread → leave the current chat as-is */
+        });
+      return () => {
+        active = false;
+      };
+    }
+    // No ?thread → fresh chat (e.g. after "New chat").
+    setThreadId(nanoid());
+    setMessages([]);
+  }, [requestedThread, setMessages]);
+
+  // Auto-save the conversation a moment after it settles (covers both LLM and
+  // the `/patient` fast path). Skips the redundant save right after a load.
+  useEffect(() => {
+    if (messages.length === 0) return;
+    if (status === "submitted" || status === "streaming") return;
+    if (justLoadedRef.current) {
+      justLoadedRef.current = false;
+      return;
+    }
+    const id = setTimeout(() => {
+      const firstUser = messages.find((m) => m.role === "user");
+      const textPart = firstUser?.parts.find((p) => p.type === "text") as
+        | { text?: string }
+        | undefined;
+      const title =
+        (textPart?.text ?? "").trim().slice(0, 60) ||
+        t("chat.history.untitled");
+      saveThread(threadIdRef.current, messages, title)
+        .then(notifyThreadsChanged)
+        .catch(() => {
+          /* a failed save shouldn't disrupt the chat */
+        });
+    }, 800);
+    return () => clearTimeout(id);
+  }, [messages, status, t]);
 
   const promptInput = (
     <ChatInput
@@ -446,6 +527,15 @@ export function ChatPanel() {
                   prescriptions={part.data.prescriptions}
                 />
               );
+            }
+            if (part.type === "data-inventoryList") {
+              return <InventoryListCard items={part.data.items} key={key} />;
+            }
+            if (part.type === "data-clinicCard") {
+              return <ClinicCard data={part.data} key={key} />;
+            }
+            if (part.type === "data-analyticsCard") {
+              return <AnalyticsCard data={part.data} key={key} />;
             }
             if (part.type === "data-veilNotice") {
               return (

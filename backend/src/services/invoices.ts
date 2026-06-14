@@ -4,6 +4,7 @@ import { db } from "../db/index.js";
 import { invoices } from "../db/schema/invoices.js";
 import type { InvoiceInput } from "../lib/invoice-validation.js";
 import type { Invoice, InvoiceInstallment } from "../types/invoice.js";
+import * as patients from "./patients.js";
 
 type InvoiceRow = typeof invoices.$inferSelect;
 
@@ -104,9 +105,17 @@ export async function createInvoice(
   input: InvoiceInput,
 ): Promise<Invoice> {
   const number = input.number || (await generateInvoiceNumber(orgId));
+  // Link to a patient — creating one when the invoice has no file number (e.g.
+  // an AI invoice built from an uploaded purchase list), so the client shows up
+  // on the Patients page.
+  const fileNumber = await patients.ensurePatient(orgId, userId, {
+    fileNumber: input.fileNumber,
+    name: input.name,
+    initials: input.initials,
+  });
   const [row] = await db
     .insert(invoices)
-    .values(columns(orgId, { ...input, number }, userId))
+    .values(columns(orgId, { ...input, number, fileNumber }, userId))
     .returning();
   return toInvoice(row!);
 }
