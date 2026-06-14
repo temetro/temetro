@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type ToolUIPart } from "ai";
-import { AlertTriangle, ShieldCheck, X } from "lucide-react";
+import { AlertTriangle, Brain, ChevronDown, ShieldCheck, X } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -33,11 +33,6 @@ import {
   QueueItemIndicator,
   QueueList,
 } from "@/components/ai-elements/queue";
-import {
-  Reasoning,
-  ReasoningContent,
-  ReasoningTrigger,
-} from "@/components/ai-elements/reasoning";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import {
@@ -59,6 +54,11 @@ import {
 } from "@/components/chat/record-list-card";
 import { VeilConfirmation } from "@/components/chat/veil-confirmation";
 import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   DEFAULT_EFFORT,
   DEFAULT_MODEL_ID,
@@ -351,14 +351,20 @@ export function ChatPanel() {
             const key = `${message.id}-${i}`;
             if (part.type === "reasoning") {
               return (
-                <Reasoning
-                  className="w-full"
-                  isStreaming={isWorking && isLast}
-                  key={key}
-                >
-                  <ReasoningTrigger />
-                  <ReasoningContent>{part.text}</ReasoningContent>
-                </Reasoning>
+                <Collapsible className="w-full" key={key}>
+                  <CollapsibleTrigger className="group flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground">
+                    <Brain className="size-4" />
+                    {isWorking && isLast ? (
+                      <Shimmer duration={1}>{t("chat.reasoning")}</Shimmer>
+                    ) : (
+                      t("chat.reasoning")
+                    )}
+                    <ChevronDown className="size-4 transition-transform group-data-[panel-open]:rotate-180" />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2 whitespace-pre-wrap text-muted-foreground text-sm leading-relaxed">
+                    {part.text}
+                  </CollapsibleContent>
+                </Collapsible>
               );
             }
             if (part.type.startsWith("tool-")) {

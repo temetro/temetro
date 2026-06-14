@@ -772,6 +772,7 @@
     "patientNotFound": "I couldn't find a patient with file number {{fileNumber}}.",
     "thinking": "Thinking…",
     "steps": "Steps",
+    "reasoning": "Reasoning",
     "suggestions": {
       "schedule": "Show today's schedule",
       "tasks": "List open tasks",
