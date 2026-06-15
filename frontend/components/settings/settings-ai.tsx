@@ -17,7 +17,13 @@ import {
   FieldLabel,
   SettingsCard,
   SettingsSection,
+  ToggleRow,
 } from "@/components/settings/settings-parts";
+import {
+  type AiPolicy,
+  getAiPolicy,
+  saveAiPolicy,
+} from "@/lib/ai-policy";
 import { AI_MODELS, EFFORT_LEVELS, type Effort } from "@/lib/ai-models";
 import {
   type AiConfig,
@@ -28,6 +34,7 @@ import {
   saveAiConfig,
   testAiConnection,
 } from "@/lib/ai-settings";
+import { useActiveRole } from "@/lib/roles";
 import { notify } from "@/lib/toast";
 
 const PROVIDERS: ApiProvider[] = ["openai", "anthropic", "gemini"];
@@ -51,6 +58,55 @@ export function AIPanel() {
   const [apiKey, setApiKey] = useState("");
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+
+  // Clinic-wide AI availability (admin-controlled kill-switch).
+  const role = useActiveRole();
+  const isAdmin = role === "owner" || role === "admin";
+  const [policy, setPolicy] = useState<AiPolicy | null>(null);
+  const [policyBaseline, setPolicyBaseline] = useState<AiPolicy | null>(null);
+  const [savingPolicy, setSavingPolicy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    getAiPolicy()
+      .then((p) => {
+        if (cancelled) return;
+        setPolicy(p);
+        setPolicyBaseline(p);
+      })
+      .catch(() => {
+        /* leave null; section just won't render its controls */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const policyDirty =
+    policy != null &&
+    policyBaseline != null &&
+    JSON.stringify(policy) !== JSON.stringify(policyBaseline);
+
+  const savePolicy = async () => {
+    if (!policy) return;
+    setSavingPolicy(true);
+    try {
+      const saved = await saveAiPolicy(policy);
+      setPolicy(saved);
+      setPolicyBaseline(saved);
+      notify.success(
+        t("settings.ai.availability.savedTitle"),
+        t("settings.ai.availability.savedBody"),
+      );
+    } catch {
+      notify.error(
+        t("settings.ai.saveFailedTitle"),
+        t("settings.ai.saveFailedBody"),
+      );
+    } finally {
+      setSavingPolicy(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -142,6 +198,63 @@ export function AIPanel() {
 
   return (
     <>
+      {policy ? (
+        <SettingsSection
+          description={t("settings.ai.availability.description")}
+          title={t("settings.ai.availability.title")}
+        >
+          {isAdmin ? (
+            <div className="space-y-3">
+              <ToggleRow
+                checked={policy.aiEnabled}
+                description={t("settings.ai.availability.enabledHint")}
+                onCheckedChange={(checked) =>
+                  setPolicy((p) => (p ? { ...p, aiEnabled: checked } : p))
+                }
+                title={t("settings.ai.availability.enabled")}
+              />
+              {policy.aiEnabled ? (
+                <ToggleRow
+                  checked={policy.disabledForEmployees}
+                  description={t(
+                    "settings.ai.availability.employeesOnlyHint",
+                  )}
+                  onCheckedChange={(checked) =>
+                    setPolicy((p) =>
+                      p ? { ...p, disabledForEmployees: checked } : p,
+                    )
+                  }
+                  title={t("settings.ai.availability.employeesOnly")}
+                />
+              ) : null}
+              {policyDirty ? (
+                <div className="flex justify-end">
+                  <Button
+                    disabled={savingPolicy}
+                    onClick={savePolicy}
+                    size="sm"
+                  >
+                    {savingPolicy
+                      ? t("settings.ai.saving")
+                      : t("settings.ai.saveChanges")}
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          ) : (
+            <SettingsCard className="px-4 py-3.5">
+              <p className="text-sm text-muted-foreground">
+                {policy.aiEnabled
+                  ? policy.disabledForEmployees
+                    ? t("settings.ai.availability.readonlyEmployeesOnly")
+                    : t("settings.ai.availability.readonlyEnabled")
+                  : t("settings.ai.availability.readonlyDisabled")}
+              </p>
+            </SettingsCard>
+          )}
+        </SettingsSection>
+      ) : null}
+
       <SettingsSection
         description={t("settings.ai.modeDescription")}
         title={t("settings.ai.modeTitle")}

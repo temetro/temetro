@@ -127,6 +127,13 @@
       "when": 1781537419038,
       "tag": "0017_wealthy_northstar",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1781537902724,
+      "tag": "0018_clean_doctor_strange",
+      "breakpoints": true
     }
   ]
 }

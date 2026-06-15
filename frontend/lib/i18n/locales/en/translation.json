@@ -1274,6 +1274,19 @@
       "backupDesc": "Export an encrypted backup of your signing key to restore it on a new device."
     },
     "ai": {
+      "availability": {
+        "title": "Availability",
+        "description": "Control who in your clinic can use the AI assistant. When disabled, the AI page and sidebar entry are hidden and the assistant cannot be reached.",
+        "enabled": "Enable AI assistant",
+        "enabledHint": "Turn the AI assistant on for your clinic. Off hides it for everyone.",
+        "employeesOnly": "Disable for employees only",
+        "employeesOnlyHint": "Hide the AI from staff; owners and admins keep access.",
+        "savedTitle": "AI availability updated",
+        "savedBody": "The change applies across your clinic.",
+        "readonlyEnabled": "The AI assistant is enabled for your clinic.",
+        "readonlyEmployeesOnly": "The AI assistant is restricted to owners and admins.",
+        "readonlyDisabled": "The AI assistant is disabled for your clinic."
+      },
       "modeTitle": "Inference mode",
       "modeDescription": "Choose how temetro runs the AI. A cloud API key sends data off your infrastructure; a local model keeps everything on your machine.",
       "mode": "Mode",

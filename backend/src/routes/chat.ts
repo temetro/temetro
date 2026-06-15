@@ -21,6 +21,7 @@ import {
 import { recordActivity } from "../services/activity.js";
 import * as aiChat from "../services/ai-chat.js";
 import { getAiSettings } from "../services/ai/config.js";
+import { aiAllowedFor, getPolicy } from "../services/ai/policy.js";
 import { resolveModel } from "../services/ai/provider.js";
 import { createChatTools } from "../services/ai/tools.js";
 import { createVeil } from "../services/ai/veil.js";
@@ -144,6 +145,13 @@ chatRouter.post("/", async (req, res, next) => {
     if (!Array.isArray(messages)) {
       res.status(400).json({ error: "messages must be an array." });
       return;
+    }
+
+    // Honour the clinic's AI kill-switch — employees can't reach the agent even
+    // by bypassing the (also-gated) UI.
+    const policy = await getPolicy(req.organizationId!);
+    if (!aiAllowedFor(policy, req.memberRole)) {
+      throw new HttpError(403, "The AI assistant is disabled for your account.");
     }
 
     const settings = await getAiSettings(req.user!.id);
