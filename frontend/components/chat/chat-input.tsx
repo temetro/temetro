@@ -17,7 +17,7 @@ import type { Effort } from "@/lib/ai-models";
 import { cn } from "@/lib/utils";
 
 type ChatInputProps = {
-  onSubmit: (text: string) => void;
+  onSubmit: (text: string, files: File[]) => void;
   status: ChatStatus;
   onStop?: () => void;
   model: string;
@@ -55,36 +55,16 @@ export function ChatInput({
   const canSend =
     (value.trim().length > 0 || files.length > 0) && !isGenerating;
 
-  const submit = useCallback(async () => {
+  const submit = useCallback(() => {
     const trimmed = value.trim();
     // Allow submitting while generating — the panel queues it (Claude-style).
     if (!trimmed && files.length === 0) {
       return;
     }
-    const parts: string[] = [];
-    if (trimmed) {
-      parts.push(trimmed);
-    }
-    // Include the text of attached files so the agent can parse them (e.g. a
-    // database export to import). Read text-like files; cap each so a huge file
-    // can't blow the context. Binary files are referenced by name only.
-    for (const file of files) {
-      const textLike =
-        /\.(csv|tsv|json|txt|md|xml|ndjson|tab)$/i.test(file.name) ||
-        file.type.startsWith("text/") ||
-        file.type === "application/json";
-      if (textLike) {
-        try {
-          const content = (await file.text()).slice(0, 200_000);
-          parts.push(`--- File: ${file.name} ---\n${content}`);
-        } catch {
-          parts.push(`[Attached: ${file.name}]`);
-        }
-      } else {
-        parts.push(`[Attached: ${file.name}]`);
-      }
-    }
-    onSubmit(parts.join("\n\n"));
+    // Hand the raw files to the panel; it sends them as proper attachment parts
+    // (rendered as chips, not raw inlined text) and the backend extracts any
+    // text-like content for the model.
+    onSubmit(trimmed, files);
     setValue("");
     setFiles([]);
   }, [value, files, onSubmit]);
@@ -234,7 +214,7 @@ export function ChatInput({
     <PatientFormDialog
       key={addKey}
       mode="create"
-      onCreated={(fileNumber) => onSubmit(`/patient ${fileNumber}`)}
+      onCreated={(fileNumber) => onSubmit(`/patient ${fileNumber}`, [])}
       onOpenChange={setAddOpen}
       open={addOpen}
     />

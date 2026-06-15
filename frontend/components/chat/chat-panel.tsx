@@ -1,13 +1,23 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type ToolUIPart } from "ai";
+import {
+  DefaultChatTransport,
+  type FileUIPart,
+  type ToolUIPart,
+} from "ai";
 import { AlertTriangle, Brain, ChevronDown, ShieldCheck, X } from "lucide-react";
 import { nanoid } from "nanoid";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import {
+  Attachment,
+  AttachmentInfo,
+  AttachmentPreview,
+  Attachments,
+} from "@/components/ai-elements/attachments";
 import {
   ChainOfThought,
   ChainOfThoughtContent,
@@ -83,6 +93,23 @@ import { getPatient } from "@/lib/patients";
 // pulls records instantly without the LLM (also works offline).
 const PATIENT_COMMAND = /^\/(?:patient\s+)?(\d+)$/i;
 
+// Read a File into a FileUIPart (data URL). The backend extracts text-like
+// content for the model; images/PDFs are read directly by vision providers.
+function fileToPart(file: File): Promise<FileUIPart> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () =>
+      resolve({
+        type: "file",
+        mediaType: file.type || "application/octet-stream",
+        filename: file.name,
+        url: reader.result as string,
+      });
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
 export function ChatPanel() {
   const { t } = useTranslation();
   const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
@@ -92,11 +119,14 @@ export function ChatPanel() {
   // per session before the first such send — inline (no modal). `pendingConsent`
   // holds the message text waiting on that one-time approval.
   const [consented, setConsented] = useState(false);
-  const [pendingConsent, setPendingConsent] = useState<string | null>(null);
+  const [pendingConsent, setPendingConsent] = useState<{
+    text: string;
+    files: File[];
+  } | null>(null);
 
   // Claude-style message queue: messages submitted while the assistant is busy
   // (or waiting on the Veil gate) wait here and auto-send when it goes idle.
-  const [queued, setQueued] = useState<string[]>([]);
+  const [queued, setQueued] = useState<{ text: string; files: File[] }[]>([]);
 
   // Persisted conversation: a client-owned thread id (a fresh one per new chat),
   // saved to the server after each exchange so history survives reloads.
@@ -151,9 +181,10 @@ export function ChatPanel() {
 
   // Run the LLM agent for a message (after any Veil gate) on a given model.
   const runAgentWith = useCallback(
-    (text: string, modelId: string) => {
+    async (text: string, modelId: string, files: File[] = []) => {
+      const fileParts = await Promise.all(files.map(fileToPart));
       sendMessage(
-        { text },
+        { text, files: fileParts },
         { body: { model: modelId, effort, threadId: threadIdRef.current } },
       );
     },
@@ -161,13 +192,13 @@ export function ChatPanel() {
   );
 
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, files: File[] = []) => {
       const trimmed = text.trim();
-      if (!trimmed) return;
+      if (!trimmed && files.length === 0) return;
 
       // Busy or awaiting the Veil gate → queue and auto-send when idle.
       if (status === "submitted" || status === "streaming" || pendingConsent) {
-        setQueued((q) => [...q, trimmed]);
+        setQueued((q) => [...q, { text: trimmed, files }]);
         return;
       }
 
@@ -206,10 +237,10 @@ export function ChatPanel() {
 
       // Cloud model → inline Veil consent once before sending externally.
       if (isCloudModel && !consented) {
-        setPendingConsent(trimmed);
+        setPendingConsent({ text: trimmed, files });
         return;
       }
-      runAgentWith(trimmed, model);
+      void runAgentWith(trimmed, model, files);
     },
     [
       consented,
@@ -228,22 +259,22 @@ export function ChatPanel() {
     if (status !== "ready" || pendingConsent || queued.length === 0) return;
     const [next, ...rest] = queued;
     setQueued(rest);
-    if (next) void send(next);
+    if (next) void send(next.text, next.files);
   }, [status, pendingConsent, queued, send]);
 
   // Veil gate actions.
   const confirmConsent = useCallback(() => {
     setConsented(true);
-    const text = pendingConsent;
+    const pending = pendingConsent;
     setPendingConsent(null);
-    if (text) runAgentWith(text, model);
+    if (pending) void runAgentWith(pending.text, model, pending.files);
   }, [pendingConsent, runAgentWith, model]);
 
   const useLocalInstead = useCallback(() => {
     setModel("ollama");
-    const text = pendingConsent;
+    const pending = pendingConsent;
     setPendingConsent(null);
-    if (text) runAgentWith(text, "ollama");
+    if (pending) void runAgentWith(pending.text, "ollama", pending.files);
   }, [pendingConsent, runAgentWith]);
 
   const cancelConsent = useCallback(() => setPendingConsent(null), []);
@@ -381,10 +412,13 @@ export function ChatPanel() {
         </span>
         <QueueList>
           {queued.map((q, i) => (
-            <QueueItem key={`${i}-${q}`}>
+            <QueueItem key={`${i}-${q.text}`}>
               <div className="flex items-center gap-2">
                 <QueueItemIndicator />
-                <QueueItemContent>{q}</QueueItemContent>
+                <QueueItemContent>
+                  {q.text ||
+                    t("chat.queue.attachmentsOnly", { count: q.files.length })}
+                </QueueItemContent>
                 <QueueItemActions>
                   <QueueItemAction
                     aria-label={t("chat.queue.remove")}
@@ -415,13 +449,16 @@ export function ChatPanel() {
     const firstActionPreviewIdx = message.parts.findIndex(
       (p) => p.type === "data-actionPreview",
     );
+    // Attachments the clinician uploaded — rendered once as a chip group.
+    const fileParts = message.parts.filter((p) => p.type === "file");
+    const firstFileIdx = message.parts.findIndex((p) => p.type === "file");
     return (
       <Message from={message.role} key={message.id}>
         <MessageContent className="w-full">
           {steps.length > 0 ? (
             <ChainOfThought
               className="mb-1"
-              defaultOpen={isLast && isWorking}
+              defaultOpen={false}
               key={`${message.id}-cot`}
             >
               <ChainOfThoughtHeader>{t("chat.steps")}</ChainOfThoughtHeader>
@@ -476,6 +513,26 @@ export function ChatPanel() {
                 </span>
               ) : (
                 <MessageResponse key={key}>{part.text}</MessageResponse>
+              );
+            }
+            if (part.type === "file") {
+              // Render the whole message's files as one chip group, once.
+              if (i !== firstFileIdx) return null;
+              return (
+                <Attachments className="w-full" key={key} variant="inline">
+                  {fileParts.map((fp, fi) => (
+                    <Attachment
+                      data={{
+                        ...(fp as FileUIPart),
+                        id: `${message.id}-file-${fi}`,
+                      }}
+                      key={`${message.id}-file-${fi}`}
+                    >
+                      <AttachmentPreview />
+                      <AttachmentInfo />
+                    </Attachment>
+                  ))}
+                </Attachments>
               );
             }
             if (part.type === "data-patientCard") {

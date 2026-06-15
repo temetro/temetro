@@ -56,7 +56,8 @@ export type ActionPreviewKind =
   | "appointment"
   | "task"
   | "prescription"
-  | "invoice";
+  | "invoice"
+  | "inventory";
 export type ActionPreviewData = {
   token: string;
   kind: ActionPreviewKind;

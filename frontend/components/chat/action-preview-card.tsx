@@ -2,6 +2,7 @@
 
 import {
   AlertTriangle,
+  Boxes,
   CalendarPlus,
   Check,
   ClipboardList,
@@ -22,6 +23,7 @@ import {
   type InvoiceInput,
   type InvoiceLineItem,
 } from "@/lib/invoices";
+import { type InventoryInput, createInventory } from "@/lib/inventory";
 import { type PrescriptionInput, createPrescription } from "@/lib/prescriptions";
 import { type TaskInput, createTask } from "@/lib/tasks";
 import { notify } from "@/lib/toast";
@@ -33,6 +35,7 @@ export const ACTION_ICONS = {
   task: ClipboardList,
   prescription: Pill,
   invoice: Receipt,
+  inventory: Boxes,
 } as const;
 
 const ICONS = ACTION_ICONS;
@@ -61,6 +64,18 @@ export function summarize(data: ActionPreviewData): string[] {
       `${items.length} item${items.length === 1 ? "" : "s"} · ${formatMoney(total)}`,
     ].filter(Boolean);
   }
+  if (data.kind === "inventory") {
+    const items = (r.items as InventoryInput[] | undefined) ?? [];
+    return [
+      `${items.length} item${items.length === 1 ? "" : "s"}`,
+      items
+        .map((it) =>
+          [it.name, it.strength].filter(Boolean).join(" ") +
+          (it.stockQuantity ? ` ×${it.stockQuantity}` : ""),
+        )
+        .join(", "),
+    ].filter(Boolean);
+  }
   // prescription
   return [
     [r.medication, r.dose].filter(Boolean).join(" "),
@@ -81,6 +96,12 @@ export async function commitAction(data: ActionPreviewData): Promise<void> {
     await createTask(data.record as TaskInput);
   } else if (data.kind === "invoice") {
     await createInvoice({ ...(data.record as InvoiceInput), source: "ai" });
+  } else if (data.kind === "inventory") {
+    const { items = [] } = data.record as { items?: InventoryInput[] };
+    // Commit each proposed stock item via the RBAC-gated create endpoint.
+    for (const item of items) {
+      await createInventory(item);
+    }
   } else {
     await createPrescription({
       ...(data.record as PrescriptionInput),
