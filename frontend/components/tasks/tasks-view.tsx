@@ -1,7 +1,8 @@
 "use client";
 
-import { Check, Plus } from "lucide-react";
+import { CalendarClock, Plus } from "lucide-react";
 import {
+  type DragEvent,
   type FormEvent,
   type ReactNode,
   useEffect,
@@ -32,6 +33,7 @@ import {
   type Priority,
   type Task,
   type TaskInput,
+  type TaskStatus,
   createTask,
   listTasks,
   updateTask,
@@ -47,7 +49,8 @@ function deptLabel(role: string): string {
 
 export type { Priority, Task } from "@/lib/tasks";
 
-type Filter = "all" | "open" | "done";
+// The board columns, left → right.
+const COLUMNS: TaskStatus[] = ["todo", "in_progress", "done"];
 
 const priorityVariant: Record<Priority, "destructive" | "secondary" | "outline"> =
   {
@@ -56,32 +59,12 @@ const priorityVariant: Record<Priority, "destructive" | "secondary" | "outline">
     low: "outline",
   };
 
-function CheckButton({
-  done,
-  onClick,
-  label,
-}: {
-  done: boolean;
-  onClick: () => void;
-  label: string;
-}) {
-  return (
-    <button
-      aria-label={label}
-      aria-pressed={done}
-      className={cn(
-        "flex size-5 shrink-0 items-center justify-center rounded-md border transition-colors",
-        done
-          ? "border-primary bg-primary text-primary-foreground"
-          : "border-input hover:border-ring",
-      )}
-      onClick={onClick}
-      type="button"
-    >
-      {done && <Check className="size-3.5" />}
-    </button>
-  );
-}
+// A subtle accent dot per column so the three are quick to tell apart.
+const columnDot: Record<TaskStatus, string> = {
+  todo: "bg-muted-foreground",
+  in_progress: "bg-primary",
+  done: "bg-success",
+};
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -99,10 +82,12 @@ function AddTaskDialog({
   open,
   onOpenChange,
   onAdd,
+  initialStatus,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAdd: (task: TaskInput) => void;
+  initialStatus: TaskStatus;
 }) {
   const { t } = useTranslation();
   const [title, setTitle] = useState("");
@@ -111,6 +96,12 @@ function AddTaskDialog({
   const [department, setDepartment] = useState<string>("reception");
   const [due, setDue] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
+  const [status, setStatus] = useState<TaskStatus>(initialStatus);
+
+  // Re-seed the column when the dialog is opened from a specific column.
+  useEffect(() => {
+    if (open) setStatus(initialStatus);
+  }, [open, initialStatus]);
 
   const reset = () => {
     setTitle("");
@@ -119,6 +110,7 @@ function AddTaskDialog({
     setDepartment("reception");
     setDue("");
     setPriority("medium");
+    setStatus(initialStatus);
   };
 
   const submit = (event: FormEvent) => {
@@ -137,6 +129,7 @@ function AddTaskDialog({
       assigneeRole: assigneeMode === "self" ? null : department,
       due: due.trim() || "No due date",
       priority,
+      status,
     });
     notify.success(t("tasks.toast.addedTitle"), title.trim());
     reset();
@@ -208,7 +201,7 @@ function AddTaskDialog({
                 </TabsPanel>
               </Tabs>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <Field label={t("tasks.dialog.due")}>
                 <Input
                   onChange={(e) => setDue(e.target.value)}
@@ -227,6 +220,19 @@ function AddTaskDialog({
                   <option value="low">{t("tasks.priority.low")}</option>
                 </select>
               </Field>
+              <Field label={t("tasks.dialog.statusLabel")}>
+                <select
+                  className={controlClass}
+                  onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                  value={status}
+                >
+                  {COLUMNS.map((s) => (
+                    <option key={s} value={s}>
+                      {t(`tasks.status.${s}`)}
+                    </option>
+                  ))}
+                </select>
+              </Field>
             </div>
           </DialogPanel>
 
@@ -242,13 +248,68 @@ function AddTaskDialog({
   );
 }
 
+// One draggable task card on the board.
+function TaskCard({
+  task,
+  onOpen,
+  onDragStart,
+}: {
+  task: Task;
+  onOpen: () => void;
+  onDragStart: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div
+      className="group flex cursor-pointer flex-col gap-2 rounded-2xl border bg-card p-3 transition-colors hover:border-ring"
+      draggable
+      onClick={onOpen}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", task.id);
+        e.dataTransfer.effectAllowed = "move";
+        onDragStart();
+      }}
+    >
+      <span
+        className={cn(
+          "text-sm",
+          task.done
+            ? "text-muted-foreground line-through"
+            : "font-medium text-foreground",
+        )}
+      >
+        {task.title}
+      </span>
+      <span className="truncate text-muted-foreground text-xs">
+        {task.assigneeRole
+          ? t("tasks.list.forDept", { dept: deptLabel(task.assigneeRole) })
+          : t("tasks.list.personal")}
+        {task.createdByName
+          ? ` · ${t("tasks.list.byCreator", { name: task.createdByName })}`
+          : ""}
+      </span>
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-1 text-muted-foreground text-xs">
+          <CalendarClock className="size-3.5 shrink-0" />
+          <span className="truncate">{task.due}</span>
+        </span>
+        <Badge className="shrink-0" variant={priorityVariant[task.priority]}>
+          {t(`tasks.priority.${task.priority}`)}
+        </Badge>
+      </div>
+    </div>
+  );
+}
+
 export function TasksView() {
   const { t } = useTranslation();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [filter, setFilter] = useState<Filter>("all");
   const [addOpen, setAddOpen] = useState(false);
+  const [addStatus, setAddStatus] = useState<TaskStatus>("todo");
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState<TaskStatus | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -266,26 +327,29 @@ export function TasksView() {
 
   const selected = tasks.find((task) => task.id === selectedId) ?? null;
 
-  const visible = useMemo(() => {
-    if (filter === "open") return tasks.filter((task) => !task.done);
-    if (filter === "done") return tasks.filter((task) => task.done);
-    return tasks;
-  }, [tasks, filter]);
+  const byStatus = useMemo(() => {
+    const groups: Record<TaskStatus, Task[]> = {
+      todo: [],
+      in_progress: [],
+      done: [],
+    };
+    for (const task of tasks) groups[task.status]?.push(task);
+    return groups;
+  }, [tasks]);
 
-  // Optimistically flip done, then persist; roll back on failure.
-  const toggle = async (id: string) => {
+  // Optimistically move a task to a new column, then persist; roll back on fail.
+  const moveTask = async (id: string, status: TaskStatus) => {
     const current = tasks.find((task) => task.id === id);
-    if (!current) return;
-    const next = !current.done;
+    if (!current || current.status === status) return;
     setTasks((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, done: next } : row)),
+      prev.map((row) =>
+        row.id === id ? { ...row, status, done: status === "done" } : row,
+      ),
     );
     try {
-      await updateTask(id, { done: next });
+      await updateTask(id, { status });
     } catch {
-      setTasks((prev) =>
-        prev.map((row) => (row.id === id ? { ...row, done: current.done } : row)),
-      );
+      setTasks((prev) => prev.map((row) => (row.id === id ? current : row)));
       notify.error(
         t("tasks.toast.updateFailedTitle"),
         t("tasks.toast.updateFailedBody"),
@@ -310,97 +374,109 @@ export function TasksView() {
     }
   };
 
+  const openAdd = (status: TaskStatus) => {
+    setAddStatus(status);
+    setAddOpen(true);
+  };
+
+  const handleDrop = (event: DragEvent, status: TaskStatus) => {
+    event.preventDefault();
+    setDragOver(null);
+    const id = dragId ?? event.dataTransfer.getData("text/plain");
+    setDragId(null);
+    if (id) void moveTask(id, status);
+  };
+
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="font-semibold text-2xl tracking-tight">
-            {t("tasks.title")}
-          </h1>
-          <p className="text-muted-foreground text-sm">{t("tasks.subtitle")}</p>
-        </div>
-        <Button
-          className="rounded-3xl"
-          onClick={() => setAddOpen(true)}
-          type="button"
-        >
-          <Plus className="size-4" />
-          {t("tasks.new")}
-        </Button>
+    <div className="flex h-full w-full flex-col gap-6 px-6 py-8">
+      <div className="flex flex-col gap-1">
+        <h1 className="font-semibold text-2xl tracking-tight">
+          {t("tasks.title")}
+        </h1>
+        <p className="text-muted-foreground text-sm">{t("tasks.subtitle")}</p>
       </div>
 
-      <div className="flex w-full items-center gap-1 rounded-2xl border bg-card/30 p-1 sm:w-fit">
-        {(["all", "open", "done"] as Filter[]).map((f) => (
-          <Button
-            className="flex-1 sm:flex-none"
-            key={f}
-            onClick={() => setFilter(f)}
-            size="sm"
-            type="button"
-            variant={filter === f ? "secondary" : "ghost"}
-          >
-            {t(`tasks.filters.${f}`)}
-          </Button>
-        ))}
-      </div>
-
-      <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
-        {visible.length === 0 ? (
-          <p className="px-4 py-10 text-center text-muted-foreground text-sm">
-            {t("tasks.empty")}
-          </p>
-        ) : (
-          visible.map((task) => (
-            <div className="flex items-center gap-3 px-4 py-3" key={task.id}>
-              <CheckButton
-                done={task.done}
-                label={
-                  task.done ? t("tasks.markNotDone") : t("tasks.markDone")
-                }
-                onClick={() => toggle(task.id)}
-              />
-              <button
-                className="flex min-w-0 flex-1 flex-col text-left"
-                onClick={() => openTask(task.id)}
-                type="button"
-              >
-                <span
-                  className={cn(
-                    "truncate text-sm",
-                    task.done
-                      ? "text-muted-foreground line-through"
-                      : "font-medium text-foreground",
-                  )}
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 md:grid-cols-3">
+        {COLUMNS.map((status) => {
+          const column = byStatus[status];
+          return (
+            <section
+              className={cn(
+                "flex min-h-0 flex-col gap-3 rounded-2xl border bg-card/30 p-3 transition-colors",
+                dragOver === status && "border-ring bg-accent/40",
+              )}
+              key={status}
+              onDragLeave={() => setDragOver((s) => (s === status ? null : s))}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragOver(status);
+              }}
+              onDrop={(e) => handleDrop(e, status)}
+            >
+              <div className="flex items-center justify-between gap-2 px-1">
+                <div className="flex items-center gap-2">
+                  <span
+                    className={cn("size-2 rounded-full", columnDot[status])}
+                  />
+                  <span className="font-medium text-sm">
+                    {t(`tasks.status.${status}`)}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    {column.length}
+                  </span>
+                </div>
+                <Button
+                  aria-label={t("tasks.board.addTask")}
+                  onClick={() => openAdd(status)}
+                  size="icon-sm"
+                  type="button"
+                  variant="ghost"
                 >
-                  {task.title}
-                </span>
-                <span className="truncate text-muted-foreground text-xs">
-                  {task.assigneeRole
-                    ? t("tasks.list.forDept", {
-                        dept: deptLabel(task.assigneeRole),
-                      })
-                    : t("tasks.list.personal")}
-                  {task.createdByName
-                    ? ` · ${t("tasks.list.byCreator", { name: task.createdByName })}`
-                    : ""}
-                </span>
-              </button>
-              <Badge
-                className="shrink-0"
-                variant={priorityVariant[task.priority]}
-              >
-                {t(`tasks.priority.${task.priority}`)}
-              </Badge>
-            </div>
-          ))
-        )}
+                  <Plus className="size-4" />
+                </Button>
+              </div>
+
+              <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+                {column.length === 0 ? (
+                  <p className="px-1 py-6 text-center text-muted-foreground text-xs">
+                    {t("tasks.board.emptyColumn")}
+                  </p>
+                ) : (
+                  column.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      onDragStart={() => setDragId(task.id)}
+                      onOpen={() => openTask(task.id)}
+                      task={task}
+                    />
+                  ))
+                )}
+                <Button
+                  className="justify-start text-muted-foreground"
+                  onClick={() => openAdd(status)}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  <Plus className="size-4" />
+                  {t("tasks.board.addTask")}
+                </Button>
+              </div>
+            </section>
+          );
+        })}
       </div>
 
-      <AddTaskDialog onAdd={addTask} onOpenChange={setAddOpen} open={addOpen} />
+      <AddTaskDialog
+        initialStatus={addStatus}
+        onAdd={addTask}
+        onOpenChange={setAddOpen}
+        open={addOpen}
+      />
 
       <TaskDetailSheet
+        onMove={moveTask}
         onOpenChange={setSheetOpen}
-        onToggle={toggle}
         open={sheetOpen}
         task={selected}
       />

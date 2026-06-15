@@ -542,6 +542,16 @@
     "empty": "No tasks here.",
     "markDone": "Mark as done",
     "markNotDone": "Mark as not done",
+    "status": {
+      "todo": "To Do",
+      "in_progress": "In Progress",
+      "done": "Done"
+    },
+    "board": {
+      "addTask": "Add task",
+      "moveTo": "Move to",
+      "emptyColumn": "No tasks."
+    },
     "filters": {
       "all": "All",
       "open": "Open",
@@ -566,6 +576,7 @@
       "due": "Due",
       "duePlaceholder": "e.g. Today",
       "priorityLabel": "Priority",
+      "statusLabel": "Status",
       "cancel": "Cancel",
       "add": "Add task"
     },
@@ -588,7 +599,8 @@
       "patient": "Patient",
       "details": "Details",
       "reopen": "Reopen task",
-      "complete": "Mark complete"
+      "complete": "Mark complete",
+      "moveTo": "Move to"
     },
     "toast": {
       "needSubjectTitle": "Add a subject",

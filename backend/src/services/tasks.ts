@@ -26,6 +26,7 @@ function toTask(row: TaskRow): Task {
     assigneeRole: row.assigneeRole,
     due: row.due,
     priority: row.priority,
+    status: row.status,
     patient: row.patient,
     notes: row.notes,
     done: row.done,
@@ -74,6 +75,9 @@ export async function createTask(
       assigneeRole: input.assigneeRole ?? null,
       due: input.due,
       priority: input.priority,
+      status: input.status,
+      // Keep the legacy `done` flag in lock-step with the board column.
+      done: input.status === "done",
       patient: input.patient ?? null,
       notes: input.notes ?? null,
       createdBy: creator.id,
@@ -100,7 +104,15 @@ export async function updateTask(
   if (patch.priority !== undefined) set.priority = patch.priority;
   if (patch.patient !== undefined) set.patient = patch.patient ?? null;
   if (patch.notes !== undefined) set.notes = patch.notes ?? null;
-  if (patch.done !== undefined) set.done = patch.done;
+  // Keep `status` and the legacy `done` flag in sync: a status patch wins and
+  // sets done; a bare done toggle maps to done/todo.
+  if (patch.status !== undefined) {
+    set.status = patch.status;
+    set.done = patch.status === "done";
+  } else if (patch.done !== undefined) {
+    set.done = patch.done;
+    set.status = patch.done ? "done" : "todo";
+  }
 
   if (Object.keys(set).length === 0) {
     const [row] = await db

@@ -17,6 +17,7 @@ export const taskInputSchema = z.object({
   assigneeRole: z.enum(TASK_DEPARTMENTS).nullish(),
   due: z.string().trim().max(120).default("No due date"),
   priority: z.enum(["high", "medium", "low"]).default("medium"),
+  status: z.enum(["todo", "in_progress", "done"]).default("todo"),
   patient: z.string().trim().max(200).nullish(),
   notes: z.string().max(5000).nullish(),
 });

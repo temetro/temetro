@@ -3,6 +3,8 @@ import { apiFetch } from "@/lib/api-client";
 // A care-team task. Mirrors the backend `src/types/task.ts`. Scoped to the active
 // clinic (shared across the care team).
 export type Priority = "high" | "medium" | "low";
+// Board column the task sits in. `done` mirrors `status === "done"`.
+export type TaskStatus = "todo" | "in_progress" | "done";
 
 export type Task = {
   id: string;
@@ -12,6 +14,7 @@ export type Task = {
   assigneeRole: string | null;
   due: string;
   priority: Priority;
+  status: TaskStatus;
   patient: string | null;
   notes: string | null;
   done: boolean;
@@ -28,6 +31,7 @@ export type TaskInput = {
   assigneeRole?: string | null;
   due?: string;
   priority?: Priority;
+  status?: TaskStatus;
   patient?: string | null;
   notes?: string | null;
 };
