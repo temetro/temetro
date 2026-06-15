@@ -1,6 +1,8 @@
 import {
   boolean,
   index,
+  integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
@@ -8,6 +10,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import type { MessageAttachment } from "../../types/messaging.js";
 import { organization, user } from "./auth.js";
 
 // A conversation between clinic staff, scoped to a clinic (organization). `name`
@@ -64,8 +67,31 @@ export const messages = pgTable(
     senderId: text("sender_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    body: text("body").notNull(),
+    body: text("body").notNull().default(""),
+    // File references / shared appointment snapshots. Null when none.
+    attachments: jsonb("attachments").$type<MessageAttachment[]>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [index("messages_conv_idx").on(t.conversationId, t.createdAt)],
+);
+
+// Stored uploaded files referenced by a message attachment. Bytes are kept as
+// base64 text (simple, dependency-free; fine for the app's scale). Org-scoped.
+export const messageAttachments = pgTable(
+  "message_attachments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    uploaderId: text("uploader_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    fileName: text("file_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    size: integer("size").notNull(),
+    data: text("data").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("message_attachments_org_idx").on(t.organizationId)],
 );

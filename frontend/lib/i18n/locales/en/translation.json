@@ -638,7 +638,25 @@
       "noMembers": "No other clinic members yet. Invite colleagues from Settings → Care team."
     },
     "startFailedTitle": "Couldn't start conversation",
-    "startFailedBody": "Please try again."
+    "startFailedBody": "Please try again.",
+    "attach": {
+      "menu": "Attach",
+      "file": "Files",
+      "appointment": "Appointments",
+      "remove": "Remove",
+      "uploading": "Uploading…",
+      "uploadFailedTitle": "Couldn't attach file",
+      "uploadFailedBody": "The file may be too large (max 10MB). Please try again.",
+      "tooLargeTitle": "File too large",
+      "tooLargeBody": "Attachments are limited to 10MB.",
+      "download": "Download",
+      "apptDialogTitle": "Share an appointment",
+      "apptDialogDescription": "Search by patient name, then pick an appointment to attach.",
+      "apptSearchPlaceholder": "Patient name…",
+      "apptNoMatches": "No appointments match.",
+      "apptEmpty": "No appointments yet.",
+      "apptCardLabel": "Appointment"
+    }
   },
   "analysis": {
     "title": "Analysis",

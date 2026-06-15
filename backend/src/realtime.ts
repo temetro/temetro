@@ -7,6 +7,7 @@ import { auth } from "./auth.js";
 import { env } from "./env.js";
 import * as messaging from "./services/messaging.js";
 import { createNotification } from "./services/notifications.js";
+import type { MessageAttachment } from "./types/messaging.js";
 
 let io: Server | null = null;
 
@@ -79,13 +80,21 @@ export function initRealtime(httpServer: HttpServer): Server {
     socket.on(
       "message:send",
       async (
-        payload: { conversationId?: string; body?: string },
+        payload: {
+          conversationId?: string;
+          body?: string;
+          attachments?: MessageAttachment[];
+        },
         ack?: Ack,
       ) => {
         try {
           const conversationId = String(payload?.conversationId ?? "");
           const body = String(payload?.body ?? "").trim();
-          if (!(conversationId && body && orgId)) {
+          const attachments = Array.isArray(payload?.attachments)
+            ? payload.attachments
+            : undefined;
+          // Allow attachment-only messages; the service re-validates.
+          if (!(conversationId && orgId && (body || attachments?.length))) {
             ack?.({ ok: false });
             return;
           }
@@ -95,6 +104,7 @@ export function initRealtime(httpServer: HttpServer): Server {
             userName,
             conversationId,
             body,
+            attachments,
           );
           emitToConversation(conversationId, "message:new", message);
 
