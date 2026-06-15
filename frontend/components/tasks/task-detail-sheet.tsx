@@ -12,8 +12,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { ROLE_LABELS } from "@/lib/access";
+import type { TaskStatus } from "@/lib/tasks";
 import { cn } from "@/lib/utils";
 import type { Priority, Task } from "@/components/tasks/tasks-view";
+
+const STATUSES: TaskStatus[] = ["todo", "in_progress", "done"];
 
 const priorityVariant: Record<Priority, "destructive" | "secondary" | "outline"> =
   {
@@ -33,12 +36,12 @@ export function TaskDetailSheet({
   task,
   open,
   onOpenChange,
-  onToggle,
+  onMove,
 }: {
   task: Task | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onToggle: (id: string) => void;
+  onMove: (id: string, status: TaskStatus) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -67,9 +70,7 @@ export function TaskDetailSheet({
                   {t("tasks.detail.status")}
                 </dt>
                 <dd className="text-foreground">
-                  {task.done
-                    ? t("tasks.detail.completed")
-                    : t("tasks.detail.open")}
+                  {t(`tasks.status.${task.status}`)}
                 </dd>
                 <dt className="text-muted-foreground">
                   {t("tasks.detail.assignedTo")}
@@ -110,16 +111,23 @@ export function TaskDetailSheet({
                 </div>
               )}
 
-              <div>
-                <Button
-                  onClick={() => onToggle(task.id)}
-                  type="button"
-                  variant={task.done ? "outline" : "default"}
-                >
-                  {task.done
-                    ? t("tasks.detail.reopen")
-                    : t("tasks.detail.complete")}
-                </Button>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-muted-foreground text-xs">
+                  {t("tasks.detail.moveTo")}
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {STATUSES.map((s) => (
+                    <Button
+                      key={s}
+                      onClick={() => onMove(task.id, s)}
+                      size="sm"
+                      type="button"
+                      variant={task.status === s ? "default" : "outline"}
+                    >
+                      {t(`tasks.status.${s}`)}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
           )}

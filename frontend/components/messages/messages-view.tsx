@@ -1,7 +1,17 @@
 "use client";
 
-import { Mail, Plus, Search, SendHorizonal } from "lucide-react";
 import {
+  CalendarClock,
+  Download,
+  FileText,
+  Mail,
+  Plus,
+  Search,
+  SendHorizonal,
+  X,
+} from "lucide-react";
+import {
+  type ChangeEvent,
   type FormEvent,
   Fragment,
   useEffect,
@@ -30,19 +40,26 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
+import { Menu, MenuItem, MenuPopup, MenuTrigger } from "@/components/ui/menu";
+import { type Appointment, listAppointments } from "@/lib/appointments";
 import { authClient } from "@/lib/auth-client";
 import {
   type ConversationMessage,
   type ConversationSummary,
+  type MessageAttachment,
   type Participant,
   createConversation,
+  downloadAttachment,
   getMessages,
   listClinicMembers,
   listConversations,
+  uploadAttachment,
 } from "@/lib/messages";
 import { getSocket } from "@/lib/socket";
 import { notify } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+
+const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 
 // Up to two-letter initials from a display name.
 function initials(name: string): string {
@@ -68,6 +85,47 @@ function sameDay(a: string, b: string): boolean {
 // Consecutive messages from one sender within this window render as a group:
 // one sender label, one timestamp, tighter spacing.
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
+
+// One sent attachment rendered in the thread: a downloadable file chip or a
+// shared-appointment card. Alignment (left/right) comes from the parent column.
+function SentAttachment({ att }: { att: MessageAttachment }) {
+  const { t } = useTranslation();
+  if (att.kind === "file") {
+    return (
+      <button
+        className="flex max-w-[75%] items-center gap-2 rounded-2xl border bg-card px-3 py-2 text-left text-foreground text-sm transition-colors hover:bg-accent"
+        onClick={() => {
+          void downloadAttachment(att.attachmentId, att.fileName).catch(() => {
+            /* ignore — surfaced by the browser */
+          });
+        }}
+        type="button"
+      >
+        <FileText className="size-4 shrink-0 text-muted-foreground" />
+        <span className="min-w-0 max-w-48 flex-1 truncate">{att.fileName}</span>
+        <Download className="size-4 shrink-0 text-muted-foreground" />
+      </button>
+    );
+  }
+  const a = att.appointment;
+  return (
+    <div className="max-w-[75%] rounded-2xl border bg-card p-3 text-sm">
+      <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+        <CalendarClock className="size-3.5" />
+        {t("messages.attach.apptCardLabel")}
+      </div>
+      <p className="mt-1 font-medium text-foreground">{a.name}</p>
+      <p className="text-muted-foreground text-xs">
+        {[a.date, a.time].filter(Boolean).join(" · ")}
+      </p>
+      {[a.type, a.provider].filter(Boolean).length > 0 && (
+        <p className="text-muted-foreground text-xs">
+          {[a.type, a.provider].filter(Boolean).join(" · ")}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function MessagesView() {
   const { t } = useTranslation();
@@ -100,6 +158,14 @@ export function MessagesView() {
   const [composeOpen, setComposeOpen] = useState(false);
   const [members, setMembers] = useState<Participant[]>([]);
   const [memberQuery, setMemberQuery] = useState("");
+
+  // Pending attachments staged for the next message + the attach UI.
+  const [pending, setPending] = useState<MessageAttachment[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [apptOpen, setApptOpen] = useState(false);
+  const [appts, setAppts] = useState<Appointment[]>([]);
+  const [apptQuery, setApptQuery] = useState("");
 
   // Refs so the socket handler (registered once) reads current values.
   const selectedIdRef = useRef<string | null>(null);
@@ -187,6 +253,7 @@ export function MessagesView() {
     setSelectedId(id);
     selectedIdRef.current = id;
     setDraft("");
+    setPending([]);
     setMessages([]);
     getMessages(id)
       .then(setMessages)
@@ -204,13 +271,78 @@ export function MessagesView() {
   const send = (event: FormEvent) => {
     event.preventDefault();
     const text = draft.trim();
-    if (!(text && selected)) return;
+    if (!((text || pending.length > 0) && selected)) return;
     getSocket().emit("message:send", {
       conversationId: selected.id,
       body: text,
+      attachments: pending.length > 0 ? pending : undefined,
     });
     setDraft("");
+    setPending([]);
   };
+
+  // Open the file picker; on select, upload each and stage it.
+  const onPickFiles = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    event.target.value = "";
+    if (!files?.length) return;
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        if (file.size > MAX_ATTACHMENT_BYTES) {
+          notify.error(
+            t("messages.attach.tooLargeTitle"),
+            t("messages.attach.tooLargeBody"),
+          );
+          continue;
+        }
+        const att = await uploadAttachment(file);
+        setPending((prev) => [...prev, att]);
+      }
+    } catch {
+      notify.error(
+        t("messages.attach.uploadFailedTitle"),
+        t("messages.attach.uploadFailedBody"),
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const openApptPicker = () => {
+    setApptQuery("");
+    setApptOpen(true);
+    listAppointments()
+      .then(setAppts)
+      .catch(() => setAppts([]));
+  };
+
+  const attachAppointment = (a: Appointment) => {
+    setPending((prev) => [
+      ...prev,
+      {
+        kind: "appointment",
+        appointment: {
+          fileNumber: a.fileNumber,
+          name: a.name,
+          date: a.date,
+          time: a.time,
+          type: a.type,
+          provider: a.provider,
+          status: a.status,
+        },
+      },
+    ]);
+    setApptOpen(false);
+  };
+
+  const removePending = (index: number) =>
+    setPending((prev) => prev.filter((_, i) => i !== index));
+
+  const visibleAppts = useMemo(() => {
+    const q = apptQuery.trim().toLowerCase();
+    return q ? appts.filter((a) => a.name.toLowerCase().includes(q)) : appts;
+  }, [appts, apptQuery]);
 
   const openCompose = () => {
     setComposeOpen(true);
@@ -426,20 +558,28 @@ export function MessagesView() {
                             {m.senderName}
                           </span>
                         )}
-                        <div
-                          className={cn(
-                            "max-w-[75%] rounded-2xl px-3 py-2 text-sm",
-                            out
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted text-foreground",
-                            !startsGroup &&
-                              (out ? "rounded-tr-md" : "rounded-tl-md"),
-                            !endsGroup &&
-                              (out ? "rounded-br-md" : "rounded-bl-md"),
-                          )}
-                        >
-                          {m.body}
-                        </div>
+                        {m.body && (
+                          <div
+                            className={cn(
+                              "max-w-[75%] rounded-2xl px-3 py-2 text-sm",
+                              out
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted text-foreground",
+                              !startsGroup &&
+                                (out ? "rounded-tr-md" : "rounded-tl-md"),
+                              !endsGroup &&
+                                (out ? "rounded-br-md" : "rounded-bl-md"),
+                            )}
+                          >
+                            {m.body}
+                          </div>
+                        )}
+                        {m.attachments?.map((att, ai) => (
+                          <SentAttachment
+                            att={att}
+                            key={`${m.id}-att-${ai}`}
+                          />
+                        ))}
                         {endsGroup && (
                           <span className="px-1 text-muted-foreground text-[11px]">
                             {formatTime(m.createdAt)}
@@ -453,26 +593,92 @@ export function MessagesView() {
             </div>
 
             <form
-              className="flex items-center gap-2 rounded-2xl border bg-card/30 p-2"
+              className="flex flex-col gap-2 rounded-2xl border bg-card/30 p-2"
               onSubmit={send}
             >
-              <Input
-                aria-label={t("messages.newMessage")}
-                className="border-0 bg-transparent shadow-none before:hidden"
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder={t("messages.messagePlaceholder", {
-                  name: selected.name,
-                })}
-                value={draft}
-              />
-              <Button
-                aria-label={t("messages.send")}
-                disabled={!draft.trim()}
-                size="icon"
-                type="submit"
-              >
-                <SendHorizonal className="size-4" />
-              </Button>
+              {pending.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 px-1 pt-1">
+                  {pending.map((att, i) => (
+                    <span
+                      className="flex items-center gap-1.5 rounded-lg bg-muted px-2 py-1 text-foreground text-xs"
+                      key={`pending-${i}`}
+                    >
+                      {att.kind === "file" ? (
+                        <FileText className="size-3.5 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <CalendarClock className="size-3.5 shrink-0 text-muted-foreground" />
+                      )}
+                      <span className="max-w-40 truncate">
+                        {att.kind === "file"
+                          ? att.fileName
+                          : att.appointment.name}
+                      </span>
+                      <button
+                        aria-label={t("messages.attach.remove")}
+                        className="text-muted-foreground transition-colors hover:text-foreground"
+                        onClick={() => removePending(i)}
+                        type="button"
+                      >
+                        <X className="size-3.5" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <input
+                  aria-label={t("messages.attach.file")}
+                  className="hidden"
+                  multiple
+                  onChange={onPickFiles}
+                  ref={fileInputRef}
+                  type="file"
+                />
+                <Menu>
+                  <MenuTrigger
+                    render={
+                      <Button
+                        aria-label={t("messages.attach.menu")}
+                        disabled={uploading}
+                        size="icon"
+                        type="button"
+                        variant="ghost"
+                      />
+                    }
+                  >
+                    <Plus className="size-4" />
+                  </MenuTrigger>
+                  <MenuPopup align="start" side="top">
+                    <MenuItem onClick={() => fileInputRef.current?.click()}>
+                      <FileText className="size-4 text-muted-foreground" />
+                      {t("messages.attach.file")}
+                    </MenuItem>
+                    <MenuItem onClick={openApptPicker}>
+                      <CalendarClock className="size-4 text-muted-foreground" />
+                      {t("messages.attach.appointment")}
+                    </MenuItem>
+                  </MenuPopup>
+                </Menu>
+                <Input
+                  aria-label={t("messages.newMessage")}
+                  className="border-0 bg-transparent shadow-none before:hidden"
+                  onChange={(e) => setDraft(e.target.value)}
+                  placeholder={
+                    uploading
+                      ? t("messages.attach.uploading")
+                      : t("messages.messagePlaceholder", { name: selected.name })
+                  }
+                  value={draft}
+                />
+                <Button
+                  aria-label={t("messages.send")}
+                  disabled={!draft.trim() && pending.length === 0}
+                  size="icon"
+                  type="submit"
+                >
+                  <SendHorizonal className="size-4" />
+                </Button>
+              </div>
             </form>
           </div>
         ) : (
@@ -541,6 +747,60 @@ export function MessagesView() {
                     </Avatar>
                     <span className="truncate text-foreground text-sm">
                       {m.name}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          </DialogPanel>
+        </DialogPopup>
+      </Dialog>
+
+      {/* Share an appointment: search by patient, pick one to attach */}
+      <Dialog onOpenChange={setApptOpen} open={apptOpen}>
+        <DialogPopup className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("messages.attach.apptDialogTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("messages.attach.apptDialogDescription")}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogPanel className="flex flex-col gap-2">
+            <div className="relative">
+              <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+              <Input
+                aria-label={t("messages.attach.apptSearchPlaceholder")}
+                className="pl-9"
+                onChange={(e) => setApptQuery(e.target.value)}
+                placeholder={t("messages.attach.apptSearchPlaceholder")}
+                size="sm"
+                value={apptQuery}
+              />
+            </div>
+            <div className="flex max-h-80 flex-col gap-1 overflow-y-auto">
+              {appts.length === 0 ? (
+                <p className="px-1 py-4 text-center text-muted-foreground text-sm">
+                  {t("messages.attach.apptEmpty")}
+                </p>
+              ) : visibleAppts.length === 0 ? (
+                <p className="px-1 py-4 text-center text-muted-foreground text-sm">
+                  {t("messages.attach.apptNoMatches")}
+                </p>
+              ) : (
+                visibleAppts.map((a) => (
+                  <button
+                    className="flex w-full flex-col gap-0.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
+                    key={a.id}
+                    onClick={() => attachAppointment(a)}
+                    type="button"
+                  >
+                    <span className="font-medium text-foreground text-sm">
+                      {a.name}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      {[a.date, a.time, a.type, a.provider]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </span>
                   </button>
                 ))

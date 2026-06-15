@@ -120,6 +120,27 @@
       "when": 1781464772532,
       "tag": "0016_past_maestro",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1781537419038,
+      "tag": "0017_wealthy_northstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1781537902724,
+      "tag": "0018_clean_doctor_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1781538797034,
+      "tag": "0019_black_mole_man",
+      "breakpoints": true
     }
   ]
 }

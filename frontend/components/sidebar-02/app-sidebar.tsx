@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useAiAccess } from "@/lib/ai-policy";
 import { useActiveRole, visibleNavItems } from "@/lib/roles";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -28,10 +29,14 @@ export function DashboardSidebar() {
   const { state } = useSidebar();
   const { t } = useTranslation();
   const role = useActiveRole();
+  const { allowed: aiAllowed } = useAiAccess();
   const isCollapsed = state === "collapsed";
 
   // Hide clinical nav from non-clinical roles (e.g. reception). See lib/roles.ts.
-  const dashboardRoutes: Route[] = visibleNavItems(role).map((item) => ({
+  // Also drop the AI "New chat" entry when the clinic's AI kill-switch applies.
+  const dashboardRoutes: Route[] = visibleNavItems(role)
+    .filter((item) => aiAllowed || item.id !== "new-chat")
+    .map((item) => ({
     id: item.id,
     title: t(item.labelKey),
     icon: <item.icon className="size-4" />,
@@ -92,7 +97,7 @@ export function DashboardSidebar() {
       </SidebarHeader>
       <SidebarContent className="gap-4 px-2 py-4">
         <DashboardNavigation routes={dashboardRoutes} />
-        <NavChatHistory />
+        {aiAllowed && <NavChatHistory />}
       </SidebarContent>
       <SidebarFooter className="p-2">
         <NavUser />

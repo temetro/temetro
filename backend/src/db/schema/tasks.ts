@@ -7,7 +7,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { TaskPriority } from "../../types/task.js";
+import type { TaskPriority, TaskStatus } from "../../types/task.js";
 import { organization, user } from "./auth.js";
 
 // One row per care-team to-do, scoped to a clinic (organization). Shared across
@@ -27,6 +27,9 @@ export const tasks = pgTable(
     assigneeRole: text("assignee_role"),
     due: text("due").notNull().default("No due date"),
     priority: text("priority").$type<TaskPriority>().notNull(),
+    // Board column: todo | in_progress | done. Kept in sync with `done`
+    // (done === status === "done") so the legacy toggle still works.
+    status: text("status").$type<TaskStatus>().notNull().default("todo"),
     patient: text("patient"),
     notes: text("notes"),
     done: boolean("done").notNull().default(false),

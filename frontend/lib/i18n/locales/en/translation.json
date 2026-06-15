@@ -542,6 +542,16 @@
     "empty": "No tasks here.",
     "markDone": "Mark as done",
     "markNotDone": "Mark as not done",
+    "status": {
+      "todo": "To Do",
+      "in_progress": "In Progress",
+      "done": "Done"
+    },
+    "board": {
+      "addTask": "Add task",
+      "moveTo": "Move to",
+      "emptyColumn": "No tasks."
+    },
     "filters": {
       "all": "All",
       "open": "Open",
@@ -566,6 +576,7 @@
       "due": "Due",
       "duePlaceholder": "e.g. Today",
       "priorityLabel": "Priority",
+      "statusLabel": "Status",
       "cancel": "Cancel",
       "add": "Add task"
     },
@@ -588,7 +599,8 @@
       "patient": "Patient",
       "details": "Details",
       "reopen": "Reopen task",
-      "complete": "Mark complete"
+      "complete": "Mark complete",
+      "moveTo": "Move to"
     },
     "toast": {
       "needSubjectTitle": "Add a subject",
@@ -626,7 +638,25 @@
       "noMembers": "No other clinic members yet. Invite colleagues from Settings → Care team."
     },
     "startFailedTitle": "Couldn't start conversation",
-    "startFailedBody": "Please try again."
+    "startFailedBody": "Please try again.",
+    "attach": {
+      "menu": "Attach",
+      "file": "Files",
+      "appointment": "Appointments",
+      "remove": "Remove",
+      "uploading": "Uploading…",
+      "uploadFailedTitle": "Couldn't attach file",
+      "uploadFailedBody": "The file may be too large (max 10MB). Please try again.",
+      "tooLargeTitle": "File too large",
+      "tooLargeBody": "Attachments are limited to 10MB.",
+      "download": "Download",
+      "apptDialogTitle": "Share an appointment",
+      "apptDialogDescription": "Search by patient name, then pick an appointment to attach.",
+      "apptSearchPlaceholder": "Patient name…",
+      "apptNoMatches": "No appointments match.",
+      "apptEmpty": "No appointments yet.",
+      "apptCardLabel": "Appointment"
+    }
   },
   "analysis": {
     "title": "Analysis",
@@ -795,7 +825,8 @@
     },
     "queue": {
       "label": "Queued · {{count}}",
-      "remove": "Remove from queue"
+      "remove": "Remove from queue",
+      "attachmentsOnly": "{{count}} attachment(s)"
     },
     "veil": {
       "title": "Veil",
@@ -810,14 +841,17 @@
         "appointment": "Proposed appointment",
         "task": "Proposed task",
         "prescription": "Proposed prescription",
-        "invoice": "Proposed invoice"
+        "invoice": "Proposed invoice",
+        "inventory": "Proposed inventory"
       },
       "kind": {
         "appointment": "Appointment added.",
         "task": "Task added.",
         "prescription": "Prescription added.",
-        "invoice": "Invoice added."
+        "invoice": "Invoice added.",
+        "inventory": "Inventory updated."
       },
+      "inventoryItems": "{{count}} item(s)",
       "approve": "Add",
       "adding": "Adding…",
       "discard": "Discard",
@@ -1258,6 +1292,19 @@
       "backupDesc": "Export an encrypted backup of your signing key to restore it on a new device."
     },
     "ai": {
+      "availability": {
+        "title": "Availability",
+        "description": "Control who in your clinic can use the AI assistant. When disabled, the AI page and sidebar entry are hidden and the assistant cannot be reached.",
+        "enabled": "Enable AI assistant",
+        "enabledHint": "Turn the AI assistant on for your clinic. Off hides it for everyone.",
+        "employeesOnly": "Disable for employees only",
+        "employeesOnlyHint": "Hide the AI from staff; owners and admins keep access.",
+        "savedTitle": "AI availability updated",
+        "savedBody": "The change applies across your clinic.",
+        "readonlyEnabled": "The AI assistant is enabled for your clinic.",
+        "readonlyEmployeesOnly": "The AI assistant is restricted to owners and admins.",
+        "readonlyDisabled": "The AI assistant is disabled for your clinic."
+      },
       "modeTitle": "Inference mode",
       "modeDescription": "Choose how temetro runs the AI. A cloud API key sends data off your infrastructure; a local model keeps everything on your machine.",
       "mode": "Mode",

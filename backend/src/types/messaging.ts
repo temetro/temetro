@@ -5,12 +5,35 @@ export type Participant = {
   name: string;
 };
 
+// A shared appointment is stored as a snapshot so the card renders without an
+// extra fetch and survives the appointment later being changed/deleted.
+export type AppointmentSnapshot = {
+  fileNumber: string;
+  name: string;
+  date: string;
+  time: string;
+  type: string;
+  provider: string;
+  status: string;
+};
+
+export type MessageAttachment =
+  | {
+      kind: "file";
+      attachmentId: string;
+      fileName: string;
+      mimeType: string;
+      size: number;
+    }
+  | { kind: "appointment"; appointment: AppointmentSnapshot };
+
 export type ConversationMessage = {
   id: string;
   conversationId: string;
   senderId: string;
   senderName: string;
   body: string;
+  attachments?: MessageAttachment[] | null;
   createdAt: string;
 };
 

@@ -21,6 +21,7 @@ import {
 import { recordActivity } from "../services/activity.js";
 import * as aiChat from "../services/ai-chat.js";
 import { getAiSettings } from "../services/ai/config.js";
+import { aiAllowedFor, getPolicy } from "../services/ai/policy.js";
 import { resolveModel } from "../services/ai/provider.js";
 import { createChatTools } from "../services/ai/tools.js";
 import { createVeil } from "../services/ai/veil.js";
@@ -32,6 +33,50 @@ import {
 export const chatRouter = Router();
 
 chatRouter.use(requireAuth, requireOrg, requirePermission({ patient: ["read"] }));
+
+// Text-like uploads (CSV/JSON/TXT/…) the model should read as parseable text
+// rather than an opaque data URL. Images/PDFs are left as file parts so
+// vision-capable providers read them directly.
+const TEXT_LIKE_MEDIA = /^(text\/|application\/(json|xml|csv|x-ndjson))/i;
+const TEXT_LIKE_EXT = /\.(csv|tsv|json|txt|md|xml|ndjson|tab)$/i;
+
+function decodeDataUrl(url: string): string {
+  const comma = url.indexOf(",");
+  if (comma === -1) return "";
+  const meta = url.slice(0, comma);
+  const data = url.slice(comma + 1);
+  return meta.includes("base64")
+    ? Buffer.from(data, "base64").toString("utf8")
+    : decodeURIComponent(data);
+}
+
+// Replace text-like file parts with a text part carrying the file's content
+// (capped) so the agent can parse uploads (e.g. a medications list to add to
+// inventory, or a database export to import). Display/storage are unaffected —
+// this only shapes what the model sees.
+function inlineTextFiles(messages: UIMessage[]): UIMessage[] {
+  return messages.map((message) => {
+    if (!Array.isArray(message.parts)) return message;
+    const parts = message.parts.flatMap((part) => {
+      if (
+        part.type === "file" &&
+        typeof part.url === "string" &&
+        (TEXT_LIKE_MEDIA.test(part.mediaType ?? "") ||
+          TEXT_LIKE_EXT.test(part.filename ?? ""))
+      ) {
+        const content = decodeDataUrl(part.url).slice(0, 200_000);
+        return [
+          {
+            type: "text" as const,
+            text: `--- File: ${part.filename ?? "file"} ---\n${content}`,
+          },
+        ];
+      }
+      return [part];
+    });
+    return { ...message, parts } as UIMessage;
+  });
+}
 
 function systemPrompt(veilActive: boolean, providerLabel: string): string {
   return [
@@ -55,10 +100,15 @@ function systemPrompt(veilActive: boolean, providerLabel: string): string {
     "  asks to add/book/create one. They show an approval card; the record is only",
     "  written after the clinician clicks Add. NEVER say you added/booked/created",
     "  something — say you've drafted it for their approval.",
+    "- proposeInventory: when the clinician wants to ADD STOCK to the clinic's",
+    "  inventory — e.g. they upload a list of medications/supplies with quantities",
+    "  (and optionally prices) to stock. Parse it into items {name, form, strength,",
+    "  unit, stockQuantity, reorderThreshold, expiresAt} and call proposeInventory.",
     "- proposeInvoice: when the clinician wants to bill someone — e.g. they upload",
     "  a list of purchased medications/items. Parse it into line items",
     "  {description, quantity, unitPrice} (use the prices in the document) and call",
-    "  proposeInvoice with the patient/client name.",
+    "  proposeInvoice with the patient/client name. (Stocking inventory vs. billing a",
+    "  patient are different — pick proposeInventory for the former.)",
     "- previewImport: when the clinician wants to import/migrate an existing",
     "  patient database file, or add a single patient. Parse the uploaded content",
     "  into our patient shape and call previewImport.",
@@ -97,6 +147,13 @@ chatRouter.post("/", async (req, res, next) => {
       return;
     }
 
+    // Honour the clinic's AI kill-switch — employees can't reach the agent even
+    // by bypassing the (also-gated) UI.
+    const policy = await getPolicy(req.organizationId!);
+    if (!aiAllowedFor(policy, req.memberRole)) {
+      throw new HttpError(403, "The AI assistant is disabled for your account.");
+    }
+
     const settings = await getAiSettings(req.user!.id);
     const modelId = requestedModel || settings.defaultModel;
     const resolved = resolveModel(settings, modelId);
@@ -113,7 +170,7 @@ chatRouter.post("/", async (req, res, next) => {
       },
     };
 
-    const modelMessages = await convertToModelMessages(messages);
+    const modelMessages = await convertToModelMessages(inlineTextFiles(messages));
     const system = systemPrompt(veil.active, resolved.providerLabel);
 
     const stream = createUIMessageStream({

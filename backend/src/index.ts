@@ -53,7 +53,9 @@ app.use((req, _res, next) => {
 // named wildcard ("*splat") rather than a bare "*".
 app.all("/api/auth/*splat", toNodeHandler(auth));
 
-app.use(express.json());
+// 15mb accommodates base64-encoded message attachments (capped at 10mb of bytes
+// in the conversations route, which is ~13.3mb once base64-encoded).
+app.use(express.json({ limit: "15mb" }));
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });

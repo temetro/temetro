@@ -8,6 +8,7 @@ import { db } from "../../db/index.js";
 import { organization } from "../../db/schema/auth.js";
 import { appointmentInputSchema } from "../../lib/appointment-validation.js";
 import { initialsFromName } from "../../lib/initials.js";
+import { inventoryInputSchema } from "../../lib/inventory-validation.js";
 import { invoiceInputSchema } from "../../lib/invoice-validation.js";
 import { patientInputSchema } from "../../lib/patient-validation.js";
 import { prescriptionInputSchema } from "../../lib/prescription-validation.js";
@@ -470,6 +471,77 @@ export function createChatTools(ctx: ToolContext) {
             stock: i.stockQuantity,
             reorderThreshold: i.reorderThreshold,
           })),
+        };
+      },
+    }),
+
+    proposeInventory: tool({
+      description:
+        "Propose adding one or more items to the clinic's inventory (medications/supplies) for the clinician to approve — e.g. parse an uploaded stock or purchase list into stock items. Does NOT save; it shows an approval card the clinician confirms. Each item needs a name; form/strength/unit/stockQuantity/reorderThreshold/location/expiresAt (YYYY-MM-DD)/notes are optional. Use this for STOCKING inventory; use proposeInvoice instead when billing a patient for purchased items.",
+      inputSchema: z.object({
+        items: z
+          .array(
+            z.object({
+              name: z.string().describe("Item / medication name"),
+              form: z
+                .string()
+                .optional()
+                .describe("Dosage form, e.g. Tablet, Capsule, Syrup"),
+              strength: z.string().optional().describe("e.g. 500mg"),
+              unit: z
+                .string()
+                .optional()
+                .describe("Dispensing unit, e.g. box, bottle"),
+              stockQuantity: z
+                .number()
+                .optional()
+                .describe("Units currently in stock"),
+              reorderThreshold: z
+                .number()
+                .optional()
+                .describe("Low-stock reorder level"),
+              location: z.string().optional().describe("Storage location"),
+              expiresAt: z
+                .string()
+                .nullish()
+                .describe("Expiry date, YYYY-MM-DD"),
+              notes: z.string().nullish(),
+            }),
+          )
+          .describe("Inventory items to add (prices/quantities from the document)"),
+      }),
+      execute: async ({ items }) => {
+        step(`Drafting ${items.length} inventory item(s)`);
+        // Inventory is non-PHI — no Veil resolution needed.
+        const validated: unknown[] = [];
+        const issues: string[] = [];
+        items.forEach((item, index) => {
+          const parsed = inventoryInputSchema.safeParse(item);
+          if (parsed.success) {
+            validated.push(parsed.data);
+          } else {
+            issues.push(
+              ...parsed.error.issues.map(
+                (i) =>
+                  `item ${index + 1} ${i.path.join(".") || "(root)"}: ${i.message}`,
+              ),
+            );
+          }
+        });
+        writer.write({
+          type: "data-actionPreview",
+          data: {
+            token: `inventory-${stepSeq}`,
+            kind: "inventory" as const,
+            record: { items: validated.length ? validated : items },
+            issues,
+          },
+        });
+        return {
+          ok: issues.length === 0,
+          count: validated.length,
+          issues,
+          note: "Preview only — awaiting clinician approval before any write.",
         };
       },
     }),

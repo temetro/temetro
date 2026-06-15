@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useRef } from "react";
 
+import { useAiAccess } from "@/lib/ai-policy";
 import { authClient } from "@/lib/auth-client";
 import { canAccessRoute, defaultLandingFor, useActiveRole } from "@/lib/roles";
 
@@ -14,6 +15,7 @@ export function AppAuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const role = useActiveRole();
+  const { allowed: aiAllowed, loading: aiLoading } = useAiAccess();
   const { data: session, isPending } = authClient.useSession();
   const { data: orgs, isPending: orgsPending } =
     authClient.useListOrganizations();
@@ -52,8 +54,14 @@ export function AppAuthGuard({ children }: { children: ReactNode }) {
     if (!ready || role == null) return;
     if (!canAccessRoute(pathname, role)) {
       router.replace(defaultLandingFor(role));
+      return;
     }
-  }, [ready, role, pathname, router]);
+    // AI kill-switch: the chat home ("/") is off for this user — send them to
+    // patients (clinical roles always have it; non-clinical never land on "/").
+    if (!aiLoading && !aiAllowed && pathname === "/") {
+      router.replace("/patients");
+    }
+  }, [ready, role, pathname, router, aiAllowed, aiLoading]);
 
   if (!ready) {
     return (

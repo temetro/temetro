@@ -18,9 +18,54 @@ import {
   saveAiConfig,
   toAiConfig,
 } from "../services/ai/config.js";
+import { getPolicy, savePolicy } from "../services/ai/policy.js";
 import * as patients from "../services/patients.js";
 
 export const aiRouter = Router();
+
+// --- Clinic-wide AI policy (admin-controlled kill-switch) -------------------
+// Any member can READ the policy (the frontend needs it to gate nav/routes);
+// only owners/admins can change it.
+aiRouter.get("/policy", requireAuth, requireOrg, async (req, res, next) => {
+  try {
+    res.json(await getPolicy(req.organizationId!));
+  } catch (err) {
+    next(err);
+  }
+});
+
+aiRouter.put("/policy", requireAuth, requireOrg, async (req, res, next) => {
+  try {
+    const roles = String(req.memberRole ?? "")
+      .split(",")
+      .map((s) => s.trim());
+    const isAdmin = roles.some((r) => r === "owner" || r === "admin");
+    if (!isAdmin) {
+      throw new HttpError(403, "Only owners and admins can change this.");
+    }
+    const body = req.body as {
+      aiEnabled?: unknown;
+      disabledForEmployees?: unknown;
+    };
+    const saved = await savePolicy(req.organizationId!, {
+      aiEnabled: Boolean(body.aiEnabled),
+      disabledForEmployees: Boolean(body.disabledForEmployees),
+    });
+    void recordActivity({
+      orgId: req.organizationId!,
+      actor: { id: req.user!.id, name: req.user!.name },
+      action: saved.aiEnabled
+        ? saved.disabledForEmployees
+          ? "Restricted AI to owners and admins"
+          : "Enabled the AI assistant clinic-wide"
+        : "Disabled the AI assistant clinic-wide",
+      entityType: "patient",
+    });
+    res.json(saved);
+  } catch (err) {
+    next(err);
+  }
+});
 
 // --- Per-user AI config (no clinic/RBAC needed, like /api/settings) ---------
 aiRouter.get("/config", requireAuth, async (req, res, next) => {

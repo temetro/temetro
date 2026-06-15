@@ -5,12 +5,14 @@ import { member, user } from "../db/schema/auth.js";
 import {
   conversationParticipants,
   conversations,
+  messageAttachments,
   messages,
 } from "../db/schema/messaging.js";
 import { HttpError } from "../lib/http-error.js";
 import type {
   ConversationMessage,
   ConversationSummary,
+  MessageAttachment,
   Participant,
 } from "../types/messaging.js";
 
@@ -106,6 +108,7 @@ async function buildSummaries(
           senderId: messages.senderId,
           senderName: user.name,
           body: messages.body,
+          attachments: messages.attachments,
           createdAt: messages.createdAt,
         })
         .from(messages)
@@ -231,6 +234,7 @@ export async function getMessages(
       senderId: messages.senderId,
       senderName: user.name,
       body: messages.body,
+      attachments: messages.attachments,
       createdAt: messages.createdAt,
     })
     .from(messages)
@@ -351,6 +355,7 @@ export async function createMessage(
   senderName: string,
   conversationId: string,
   body: string,
+  attachments?: MessageAttachment[] | null,
 ): Promise<{ message: ConversationMessage; recipientIds: string[] }> {
   if (!(await conversationInOrg(orgId, conversationId))) {
     throw new HttpError(404, "Conversation not found.");
@@ -358,10 +363,14 @@ export async function createMessage(
   if (!(await isParticipant(conversationId, userId))) {
     throw new HttpError(403, "You are not part of this conversation.");
   }
+  const list = attachments && attachments.length > 0 ? attachments : null;
+  if (!body.trim() && !list) {
+    throw new HttpError(400, "Message can't be empty.");
+  }
   const now = new Date();
   const [row] = await db
     .insert(messages)
-    .values({ conversationId, senderId: userId, body })
+    .values({ conversationId, senderId: userId, body, attachments: list })
     .returning();
   // Bump conversation recency and mark the sender's own read pointer.
   await Promise.all([
@@ -388,10 +397,72 @@ export async function createMessage(
       senderId: userId,
       senderName,
       body: row!.body,
+      attachments: row!.attachments,
       createdAt: row!.createdAt.toISOString(),
     },
     recipientIds: ids.filter((id) => id !== userId),
   };
+}
+
+// --- File attachments ------------------------------------------------------
+
+// Store an uploaded file (base64) and return its metadata. The bytes live in the
+// message_attachments table; messages reference them by id.
+export async function createAttachment(
+  orgId: string,
+  uploaderId: string,
+  input: { fileName: string; mimeType: string; size: number; data: string },
+): Promise<{
+  attachmentId: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+}> {
+  const [row] = await db
+    .insert(messageAttachments)
+    .values({
+      organizationId: orgId,
+      uploaderId,
+      fileName: input.fileName,
+      mimeType: input.mimeType,
+      size: input.size,
+      data: input.data,
+    })
+    .returning({
+      id: messageAttachments.id,
+      fileName: messageAttachments.fileName,
+      mimeType: messageAttachments.mimeType,
+      size: messageAttachments.size,
+    });
+  return {
+    attachmentId: row!.id,
+    fileName: row!.fileName,
+    mimeType: row!.mimeType,
+    size: row!.size,
+  };
+}
+
+// Fetch an attachment's bytes for download. Scoped to the caller's clinic; ids
+// are unguessable uuids, so org membership is a sufficient gate.
+export async function getAttachment(
+  orgId: string,
+  attachmentId: string,
+): Promise<{ fileName: string; mimeType: string; data: string } | null> {
+  if (!UUID_RE.test(attachmentId)) return null;
+  const [row] = await db
+    .select({
+      fileName: messageAttachments.fileName,
+      mimeType: messageAttachments.mimeType,
+      data: messageAttachments.data,
+    })
+    .from(messageAttachments)
+    .where(
+      and(
+        eq(messageAttachments.id, attachmentId),
+        eq(messageAttachments.organizationId, orgId),
+      ),
+    );
+  return row ?? null;
 }
 
 export async function markRead(
