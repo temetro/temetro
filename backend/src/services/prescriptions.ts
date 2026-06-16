@@ -22,6 +22,8 @@ function toPrescription(row: PrescriptionRow): Prescription {
     frequency: row.frequency,
     prescriber: row.prescriber,
     prescribedAt: row.prescribedAt,
+    startDate: row.startDate,
+    endDate: row.endDate,
     status: row.status,
     duration: row.duration,
     notes: row.notes,
@@ -45,6 +47,8 @@ function columns(orgId: string, input: PrescriptionInput, createdBy?: string) {
     duration: input.duration ?? null,
     notes: input.notes ?? null,
     source: input.source,
+    startDate: input.startDate ?? null,
+    endDate: input.endDate ?? null,
     // Only set prescribedAt when supplied; otherwise the column default (today).
     ...(input.prescribedAt ? { prescribedAt: input.prescribedAt } : {}),
     ...(createdBy ? { createdBy } : {}),

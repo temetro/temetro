@@ -141,6 +141,13 @@
       "when": 1781538797034,
       "tag": "0019_black_mole_man",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1781629630102,
+      "tag": "0020_freezing_tomas",
+      "breakpoints": true
     }
   ]
 }

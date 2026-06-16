@@ -5,6 +5,7 @@ export * from "./appointments.js";
 export * from "./prescriptions.js";
 export * from "./invoices.js";
 export * from "./inventory.js";
+export * from "./dispenses.js";
 export * from "./tasks.js";
 export * from "./activity.js";
 export * from "./messaging.js";
