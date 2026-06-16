@@ -141,29 +141,27 @@ export function ChatInput({
           </div>
         )}
 
-        {/* Visually hidden (not `display:none`) so programmatic `.click()` from
-            the attach button works reliably across browsers — a `display:none`
-            file input can refuse to open the picker. */}
-        <input
-          aria-label={t("chat.input.attachFiles")}
-          className="sr-only"
-          multiple
-          onChange={handleFilesSelected}
-          ref={fileInputRef}
-          tabIndex={-1}
-          type="file"
-        />
-
         <div className="flex items-center justify-between gap-2 px-3 pb-3">
           <div className="flex min-w-0 items-center gap-1">
-            <button
+            {/* The attach control is a real <label> wrapping the file input, so
+                the browser opens the picker natively on click. A programmatic
+                `inputRef.click()` gets dropped when the textarea is focused with
+                text (the click blurs it first, losing the user-activation), which
+                is why attaching failed while typing. A label has no such gate. */}
+            <label
               aria-label={t("chat.input.attachFile")}
-              className={iconButton}
-              onClick={() => fileInputRef.current?.click()}
-              type="button"
+              className={cn(iconButton, "cursor-pointer")}
             >
               <Plus className="size-[18px]" />
-            </button>
+              <input
+                aria-label={t("chat.input.attachFiles")}
+                className="sr-only"
+                multiple
+                onChange={handleFilesSelected}
+                ref={fileInputRef}
+                type="file"
+              />
+            </label>
             <button
               className={cn(contextPill, "ml-0.5")}
               onClick={() => {
