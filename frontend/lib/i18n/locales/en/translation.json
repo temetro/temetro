@@ -385,7 +385,8 @@
       "prescriber": "Prescriber",
       "date": "Date",
       "status": "Status",
-      "notes": "Notes"
+      "notes": "Notes",
+      "courseDates": "Course"
     },
     "dialog": {
       "title": "New prescription",
@@ -413,7 +414,16 @@
       "needMedBody": "Enter the medication name.",
       "needDurationTitle": "Add a duration",
       "needDurationBody": "Enter the custom duration.",
-      "addedTitle": "Prescription added"
+      "addedTitle": "Prescription added",
+      "badDatesTitle": "Check the dates",
+      "badDatesBody": "The end date can't be before the start date.",
+      "outOfStock": "Out of stock",
+      "inStock": "{{count}} in stock",
+      "courseDates": "Course dates",
+      "removeDates": "Remove",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "addDates": "Add start/end dates"
     }
   },
   "pharmacy": {
@@ -422,7 +432,7 @@
     "searchPlaceholder": "Search prescriptions",
     "kpi": {
       "active": "Active prescriptions",
-      "expiring": "Expiring within 7 days",
+      "expiring": "Expiring soon",
       "patients": "Patients on medication"
     },
     "queue": {
@@ -436,7 +446,15 @@
     "completedTitle": "Prescription completed",
     "completedBody": "{{medication}} for {{name}} marked as completed.",
     "completeFailedTitle": "Couldn't update prescription",
-    "completeFailedBody": "Please try again."
+    "completeFailedBody": "Please try again.",
+    "dispense": "Dispense",
+    "dispensedTitle": "Dispensed",
+    "dispensedBody": "{{medication}} dispensed to {{name}}.",
+    "dispensed": {
+      "title": "Recently dispensed",
+      "description": "Medications handed to patients at the pharmacy.",
+      "empty": "Nothing dispensed yet."
+    }
   },
   "inventory": {
     "title": "Inventory",
@@ -485,6 +503,11 @@
       "addedTitle": "Item added",
       "failedTitle": "Could not add item",
       "failedBody": "Something went wrong. Please try again."
+    },
+    "detail": {
+      "description": "Stock item",
+      "notes": "Notes",
+      "close": "Close"
     }
   },
   "lab": {
@@ -493,7 +516,14 @@
     "queue": {
       "title": "Work queue",
       "description": "Tasks assigned to the Lab department.",
-      "empty": "No lab tasks right now."
+      "empty": "No lab tasks right now.",
+      "noNotes": "No details provided.",
+      "meta": {
+        "status": "Status",
+        "patient": "Patient",
+        "assignee": "Assignee",
+        "createdBy": "Created by"
+      }
     },
     "addResult": {
       "button": "Add result",
@@ -550,7 +580,8 @@
     "board": {
       "addTask": "Add task",
       "moveTo": "Move to",
-      "emptyColumn": "No tasks."
+      "emptyColumn": "No tasks.",
+      "newTask": "New task"
     },
     "filters": {
       "all": "All",
@@ -884,7 +915,9 @@
       "noTasks": "No tasks.",
       "noPrescriptions": "No prescriptions.",
       "inventory": "Inventory",
-      "noInventory": "No inventory items."
+      "noInventory": "No inventory items.",
+      "moreAppointments": "+{{count}} more",
+      "viewInCalendar": "View in calendar"
     },
     "clinicCard": {
       "title": "Clinic",

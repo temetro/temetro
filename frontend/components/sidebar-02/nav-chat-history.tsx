@@ -50,7 +50,7 @@ export function NavChatHistory() {
   };
 
   return (
-    <div className="flex min-h-0 flex-col gap-0.5 overflow-y-auto px-2">
+    <div className="flex flex-col gap-0.5 px-2">
       <span className="px-2 py-1 font-medium text-muted-foreground text-xs">
         {t("chat.history.title")}
       </span>

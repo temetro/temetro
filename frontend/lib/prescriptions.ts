@@ -14,6 +14,8 @@ export type Prescription = {
   frequency: string;
   prescriber: string;
   prescribedAt: string; // YYYY-MM-DD
+  startDate: string | null; // YYYY-MM-DD, optional course start
+  endDate: string | null; // YYYY-MM-DD, optional course end (drives expiry)
   status: RxStatus;
   duration: string | null;
   notes: string | null;
@@ -35,6 +37,8 @@ export type PrescriptionInput = {
   notes?: string | null;
   prescriber?: string;
   prescribedAt?: string;
+  startDate?: string | null;
+  endDate?: string | null;
   status?: RxStatus;
   source?: "manual" | "ai";
 };

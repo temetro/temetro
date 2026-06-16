@@ -626,12 +626,15 @@ export function MessagesView() {
                 </div>
               )}
               <div className="flex items-center gap-2">
+                {/* Visually hidden (not `display:none`) so the programmatic
+                    `.click()` reliably opens the picker across browsers. */}
                 <input
                   aria-label={t("messages.attach.file")}
-                  className="hidden"
+                  className="sr-only"
                   multiple
                   onChange={onPickFiles}
                   ref={fileInputRef}
+                  tabIndex={-1}
                   type="file"
                 />
                 <Menu>
@@ -649,11 +652,20 @@ export function MessagesView() {
                     <Plus className="size-4" />
                   </MenuTrigger>
                   <MenuPopup align="start" side="top">
-                    <MenuItem onClick={() => fileInputRef.current?.click()}>
+                    {/* Defer past the menu's close/unmount so the file picker
+                        and the appointment dialog aren't swallowed by the
+                        closing overlay's focus handling. */}
+                    <MenuItem
+                      onClick={() =>
+                        requestAnimationFrame(() => fileInputRef.current?.click())
+                      }
+                    >
                       <FileText className="size-4 text-muted-foreground" />
                       {t("messages.attach.file")}
                     </MenuItem>
-                    <MenuItem onClick={openApptPicker}>
+                    <MenuItem
+                      onClick={() => requestAnimationFrame(openApptPicker)}
+                    >
                       <CalendarClock className="size-4 text-muted-foreground" />
                       {t("messages.attach.appointment")}
                     </MenuItem>

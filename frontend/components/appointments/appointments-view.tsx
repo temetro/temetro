@@ -9,6 +9,7 @@ import {
   Stethoscope,
   Users,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -192,8 +193,14 @@ function Section({
 
 export function AppointmentsView() {
   const { t } = useTranslation();
+  // Deep-link from the AI chat appointment card: `?calendar=1&date=YYYY-MM-DD`
+  // opens the month calendar on that date.
+  const searchParams = useSearchParams();
+  const dateParam = searchParams.get("date");
   const [addOpen, setAddOpen] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(
+    () => searchParams.get("calendar") != null,
+  );
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [query, setQuery] = useState("");
   const [selectedAppt, setSelectedAppt] = useState<Appointment | null>(null);
@@ -381,6 +388,7 @@ export function AppointmentsView() {
 
       <CalendarDialog
         appointments={appointments}
+        initialDate={dateParam}
         onOpenChange={setCalendarOpen}
         open={calendarOpen}
       />
