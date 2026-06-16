@@ -18,6 +18,14 @@ export const prescriptionInputSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD.")
     .optional(),
+  startDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD.")
+    .nullish(),
+  endDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD.")
+    .nullish(),
   status: z.enum(["active", "completed", "expired"]).default("active"),
   duration: z.string().trim().max(120).nullish(),
   notes: z.string().max(5000).nullish(),

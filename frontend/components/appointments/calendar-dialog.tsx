@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -53,18 +53,32 @@ export function CalendarDialog({
   open,
   onOpenChange,
   appointments,
+  initialDate,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   appointments: Appointment[];
+  // Optional deep-link target (YYYY-MM-DD): when set, the calendar opens on this
+  // date's month with the day selected (e.g. from the AI chat appointment card).
+  initialDate?: string | null;
 }) {
   const { t } = useTranslation();
-  // First-of-month for the displayed month; defaults to TODAY's month.
+  const startKey =
+    initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate) ? initialDate : TODAY;
+  // First-of-month for the displayed month; defaults to the deep-link/TODAY month.
   const [viewMonth, setViewMonth] = useState<Date>(() => {
-    const t = parseKey(TODAY);
-    return new Date(t.getFullYear(), t.getMonth(), 1);
+    const d = parseKey(startKey);
+    return new Date(d.getFullYear(), d.getMonth(), 1);
   });
-  const [selectedKey, setSelectedKey] = useState<string>(TODAY);
+  const [selectedKey, setSelectedKey] = useState<string>(startKey);
+
+  // When opened via a deep-link date, jump the view to that month/day.
+  useEffect(() => {
+    if (!open || !initialDate || !/^\d{4}-\d{2}-\d{2}$/.test(initialDate)) return;
+    const d = parseKey(initialDate);
+    setViewMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+    setSelectedKey(initialDate);
+  }, [open, initialDate]);
 
   const byDate = useMemo(() => {
     const map = new Map<string, Appointment[]>();

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AddInventoryDialog } from "@/components/pharmacy/add-inventory-dialog";
+import { InventoryDetailDialog } from "@/components/pharmacy/inventory-detail-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -52,12 +53,29 @@ function Kpi({
   );
 }
 
-function ItemRow({ item }: { item: InventoryItem }) {
+function ItemRow({
+  item,
+  onOpen,
+}: {
+  item: InventoryItem;
+  onOpen: () => void;
+}) {
   const { t } = useTranslation();
   const availability = availabilityOf(item);
   const descriptor = [item.strength, item.form].filter(Boolean).join(" · ");
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
+    <div
+      className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/50"
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
       <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-background text-muted-foreground">
         <Pill className="size-4" />
       </div>
@@ -96,6 +114,13 @@ export function InventoryView() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [query, setQuery] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [selected, setSelected] = useState<InventoryItem | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  const openItem = (item: InventoryItem) => {
+    setSelected(item);
+    setDetailOpen(true);
+  };
 
   // Persist a new item, then prepend the saved record so it appears immediately.
   const addItem = async (input: InventoryInput) => {
@@ -180,6 +205,12 @@ export function InventoryView() {
         open={addOpen}
       />
 
+      <InventoryDetailDialog
+        item={selected}
+        onOpenChange={setDetailOpen}
+        open={detailOpen}
+      />
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {kpis.map((k) => (
           <Kpi key={k.label} {...k} />
@@ -197,7 +228,7 @@ export function InventoryView() {
         </div>
         <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
           {results.map((item) => (
-            <ItemRow item={item} key={item.id} />
+            <ItemRow item={item} key={item.id} onOpen={() => openItem(item)} />
           ))}
           {results.length === 0 && (
             <p className="p-6 text-center text-muted-foreground text-sm">

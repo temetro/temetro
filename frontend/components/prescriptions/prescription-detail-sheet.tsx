@@ -89,6 +89,21 @@ export function PrescriptionDetailSheet({
                   {t("prescriptions.detail.duration")}
                 </dt>
                 <dd className="text-foreground">{rx.duration || "—"}</dd>
+                {(rx.startDate || rx.endDate) && (
+                  <>
+                    <dt className="text-muted-foreground">
+                      {t("prescriptions.detail.courseDates")}
+                    </dt>
+                    <dd className="text-foreground">
+                      {[
+                        rx.startDate ? formatPrescribedAt(rx.startDate) : null,
+                        rx.endDate ? formatPrescribedAt(rx.endDate) : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" → ") || "—"}
+                    </dd>
+                  </>
+                )}
                 <dt className="text-muted-foreground">
                   {t("prescriptions.detail.prescriber")}
                 </dt>

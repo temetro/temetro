@@ -28,6 +28,11 @@ export const prescriptions = pgTable(
     frequency: text("frequency").notNull(),
     prescriber: text("prescriber").notNull(),
     prescribedAt: date("prescribed_at").defaultNow().notNull(),
+    // Optional explicit course window. When set, `endDate` drives expiry instead
+    // of parsing the free-text `duration`. Both are opt-in (the dialog reveals
+    // them behind a toggle), so they stay nullable.
+    startDate: date("start_date"),
+    endDate: date("end_date"),
     status: text("status").$type<PrescriptionStatus>().notNull(),
     duration: text("duration"),
     notes: text("notes"),

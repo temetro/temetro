@@ -1,7 +1,14 @@
 "use client";
 
-import { AlertTriangle, Search } from "lucide-react";
-import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { AlertTriangle, CalendarPlus, Search, X } from "lucide-react";
+import {
+  type FormEvent,
+  type KeyboardEvent,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -18,8 +25,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { type InventoryItem, listInventory } from "@/lib/inventory";
 import { listPatients, type Patient } from "@/lib/patients";
 import { notify } from "@/lib/toast";
+import { cn } from "@/lib/utils";
 
 export type NewPrescription = {
   fileNumber: string;
@@ -29,6 +38,8 @@ export type NewPrescription = {
   dose: string;
   frequency: string;
   duration: string;
+  startDate: string;
+  endDate: string;
   notes: string;
 };
 
@@ -125,16 +136,25 @@ export function AddPrescriptionDialog({
 }) {
   const { t } = useTranslation();
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(0);
   const [selected, setSelected] = useState<Patient | null>(null);
   const [medication, setMedication] = useState("");
+  const [medFocused, setMedFocused] = useState(false);
+  const [medIndex, setMedIndex] = useState(0);
   const [dose, setDose] = useState("");
   const [frequency, setFrequency] = useState(FREQUENCIES[0]);
   const [durationChoice, setDurationChoice] = useState(DURATIONS[0]);
   const [durationCustom, setDurationCustom] = useState("");
+  const [showDates, setShowDates] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [notes, setNotes] = useState("");
 
-  // Load patients lazily when the dialog opens (for the quick search).
+  // Load patients + inventory lazily when the dialog opens (for the quick
+  // searches). Inventory backs the medication combobox; it still accepts free
+  // text when there's no match (or no stock recorded yet).
   useEffect(() => {
     if (!open) return;
     let active = true;
@@ -144,6 +164,13 @@ export function AddPrescriptionDialog({
       })
       .catch(() => {
         /* search just stays empty */
+      });
+    listInventory()
+      .then((data) => {
+        if (active) setInventory(data);
+      })
+      .catch(() => {
+        /* no inventory → medication stays free text */
       });
     return () => {
       active = false;
@@ -160,6 +187,76 @@ export function AddPrescriptionDialog({
       .slice(0, 6);
   }, [patients, query]);
 
+  // Inventory suggestions for the medication field: match by name/strength while
+  // typing, but never block free text (no exact match required).
+  const medMatches = useMemo(() => {
+    const q = medication.trim().toLowerCase();
+    if (!q) return [];
+    return inventory
+      .filter(
+        (i) =>
+          i.name.toLowerCase().includes(q) ||
+          `${i.name} ${i.strength}`.toLowerCase().includes(q),
+      )
+      .filter((i) => `${i.name} ${i.strength}`.trim().toLowerCase() !== q)
+      .slice(0, 6);
+  }, [inventory, medication]);
+
+  // Keep the highlighted option in range as the result lists change.
+  useEffect(() => setActiveIndex(0), [query]);
+  useEffect(() => setMedIndex(0), [medication]);
+
+  const pickPatient = (p: Patient) => {
+    setSelected(p);
+    setQuery("");
+  };
+
+  const onPatientKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (matches.length === 0) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, matches.length - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, 0));
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      const match = matches[activeIndex];
+      if (match) pickPatient(match);
+    } else if (event.key === "Escape") {
+      setQuery("");
+    }
+  };
+
+  // Fill the medication (and dose, when the item carries a strength) from an
+  // inventory suggestion.
+  const pickMedication = (item: InventoryItem) => {
+    setMedication([item.name, item.strength].filter(Boolean).join(" ").trim());
+    if (item.strength && !dose.trim()) setDose(item.strength);
+    setMedFocused(false);
+  };
+
+  const onMedKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (medMatches.length === 0) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setMedIndex((i) => Math.min(i + 1, medMatches.length - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setMedIndex((i) => Math.max(i - 1, 0));
+    } else if (event.key === "Enter") {
+      // Only intercept Enter when a suggestion is highlighted; otherwise let the
+      // free-text value stand (and don't submit the form).
+      const match = medMatches[medIndex];
+      if (match) {
+        event.preventDefault();
+        pickMedication(match);
+      }
+    } else if (event.key === "Escape") {
+      setMedFocused(false);
+    }
+  };
+
   const conflicts = useMemo(
     () => (selected ? findConflicts(medication, selected) : []),
     [medication, selected],
@@ -167,12 +264,18 @@ export function AddPrescriptionDialog({
 
   const reset = () => {
     setQuery("");
+    setActiveIndex(0);
     setSelected(null);
     setMedication("");
+    setMedFocused(false);
+    setMedIndex(0);
     setDose("");
     setFrequency(FREQUENCIES[0]);
     setDurationChoice(DURATIONS[0]);
     setDurationCustom("");
+    setShowDates(false);
+    setStartDate("");
+    setEndDate("");
     setNotes("");
   };
 
@@ -201,6 +304,14 @@ export function AddPrescriptionDialog({
       );
       return;
     }
+    // When both optional dates are set, the end must not precede the start.
+    if (showDates && startDate && endDate && endDate < startDate) {
+      notify.error(
+        t("prescriptions.dialog.badDatesTitle"),
+        t("prescriptions.dialog.badDatesBody"),
+      );
+      return;
+    }
     onAdd({
       fileNumber: selected.fileNumber,
       name: selected.name,
@@ -209,6 +320,8 @@ export function AddPrescriptionDialog({
       dose: dose.trim(),
       frequency,
       duration,
+      startDate: showDates ? startDate : "",
+      endDate: showDates ? endDate : "",
       notes: notes.trim(),
     });
     notify.success(
@@ -267,9 +380,11 @@ export function AddPrescriptionDialog({
                   <div className="relative">
                     <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
                     <Input
+                      aria-autocomplete="list"
                       autoFocus
                       className="pl-9"
                       onChange={(event) => setQuery(event.target.value)}
+                      onKeyDown={onPatientKeyDown}
                       placeholder={t("prescriptions.dialog.searchPlaceholder")}
                       value={query}
                     />
@@ -281,14 +396,17 @@ export function AddPrescriptionDialog({
                           {t("prescriptions.dialog.noPatients")}
                         </p>
                       ) : (
-                        matches.map((p) => (
+                        matches.map((p, i) => (
                           <button
-                            className="flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent"
+                            className={cn(
+                              "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left transition-colors",
+                              i === activeIndex
+                                ? "bg-accent"
+                                : "hover:bg-accent",
+                            )}
                             key={p.fileNumber}
-                            onClick={() => {
-                              setSelected(p);
-                              setQuery("");
-                            }}
+                            onClick={() => pickPatient(p)}
+                            onMouseEnter={() => setActiveIndex(i)}
                             type="button"
                           >
                             <span className="truncate text-foreground text-sm">
@@ -307,11 +425,61 @@ export function AddPrescriptionDialog({
             </Field>
 
             <Field label={t("prescriptions.dialog.medication")}>
-              <Input
-                onChange={(event) => setMedication(event.target.value)}
-                placeholder={t("prescriptions.dialog.medicationPlaceholder")}
-                value={medication}
-              />
+              <div className="relative">
+                <Input
+                  aria-autocomplete="list"
+                  onBlur={() => setTimeout(() => setMedFocused(false), 120)}
+                  onChange={(event) => setMedication(event.target.value)}
+                  onFocus={() => setMedFocused(true)}
+                  onKeyDown={onMedKeyDown}
+                  placeholder={t("prescriptions.dialog.medicationPlaceholder")}
+                  value={medication}
+                />
+                {medFocused && medMatches.length > 0 && (
+                  <div className="absolute z-10 mt-1 max-h-56 w-full overflow-y-auto rounded-2xl border bg-popover p-1 shadow-md">
+                    {medMatches.map((item, i) => {
+                      const out = item.stockQuantity <= 0;
+                      return (
+                        <button
+                          className={cn(
+                            "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left transition-colors",
+                            i === medIndex ? "bg-accent" : "hover:bg-accent",
+                          )}
+                          // Use onMouseDown so the pick fires before the input's
+                          // blur closes the list.
+                          key={item.id}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            pickMedication(item);
+                          }}
+                          onMouseEnter={() => setMedIndex(i)}
+                          type="button"
+                        >
+                          <span className="truncate text-foreground text-sm">
+                            {[item.name, item.strength]
+                              .filter(Boolean)
+                              .join(" ")}
+                          </span>
+                          <span
+                            className={cn(
+                              "shrink-0 text-xs",
+                              out
+                                ? "text-destructive"
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            {out
+                              ? t("prescriptions.dialog.outOfStock")
+                              : t("prescriptions.dialog.inStock", {
+                                  count: item.stockQuantity,
+                                })}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
@@ -358,6 +526,60 @@ export function AddPrescriptionDialog({
                 />
               )}
             </Field>
+
+            {/* Optional explicit course window. When set, the end date drives
+                expiry on the pharmacy queue instead of parsing the duration. */}
+            {showDates ? (
+              <div className="flex flex-col gap-3 rounded-2xl border bg-input/20 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground text-xs">
+                    {t("prescriptions.dialog.courseDates")}
+                  </span>
+                  <button
+                    className="flex items-center gap-1 text-muted-foreground text-xs transition-colors hover:text-foreground"
+                    onClick={() => {
+                      setShowDates(false);
+                      setStartDate("");
+                      setEndDate("");
+                    }}
+                    type="button"
+                  >
+                    <X className="size-3.5" />
+                    {t("prescriptions.dialog.removeDates")}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label={t("prescriptions.dialog.startDate")}>
+                    <input
+                      className={controlClass}
+                      onChange={(event) => setStartDate(event.target.value)}
+                      type="date"
+                      value={startDate}
+                    />
+                  </Field>
+                  <Field label={t("prescriptions.dialog.endDate")}>
+                    <input
+                      className={controlClass}
+                      min={startDate || undefined}
+                      onChange={(event) => setEndDate(event.target.value)}
+                      type="date"
+                      value={endDate}
+                    />
+                  </Field>
+                </div>
+              </div>
+            ) : (
+              <Button
+                className="self-start"
+                onClick={() => setShowDates(true)}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <CalendarPlus className="size-4" />
+                {t("prescriptions.dialog.addDates")}
+              </Button>
+            )}
 
             <Field label={t("prescriptions.dialog.notes")}>
               <Textarea

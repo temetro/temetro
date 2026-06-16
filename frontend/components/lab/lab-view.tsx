@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, FlaskConical, Plus, Search } from "lucide-react";
+import { Check, ChevronDown, FlaskConical, Plus, Search } from "lucide-react";
 import {
   type FormEvent,
   type KeyboardEvent,
@@ -14,6 +14,11 @@ import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogClose,
@@ -119,6 +124,16 @@ function CheckButton({
     >
       {done && <Check className="size-3.5" />}
     </button>
+  );
+}
+
+// One labelled field in a work-queue item's expanded detail.
+function QueueMeta({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col">
+      <dt className="text-muted-foreground text-xs">{label}</dt>
+      <dd className="truncate text-foreground text-sm">{value}</dd>
+    </div>
   );
 }
 
@@ -541,39 +556,76 @@ export function LabView() {
             </div>
           ) : (
             queue.map((task) => (
-              <div className="flex items-center gap-3 px-4 py-3" key={task.id}>
-                <CheckButton
-                  done={task.done}
-                  label={
-                    task.done ? t("tasks.markNotDone") : t("tasks.markDone")
-                  }
-                  onClick={() => toggle(task.id)}
-                />
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <span
-                    className={cn(
-                      "truncate text-sm",
-                      task.done
-                        ? "text-muted-foreground line-through"
-                        : "font-medium text-foreground",
-                    )}
-                  >
-                    {task.title}
-                  </span>
-                  <span className="truncate text-muted-foreground text-xs">
-                    {task.due}
-                    {task.createdByName
-                      ? ` · ${t("tasks.list.byCreator", { name: task.createdByName })}`
-                      : ""}
-                  </span>
+              <Collapsible key={task.id}>
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <CheckButton
+                    done={task.done}
+                    label={
+                      task.done ? t("tasks.markNotDone") : t("tasks.markDone")
+                    }
+                    onClick={() => toggle(task.id)}
+                  />
+                  <CollapsibleTrigger className="group flex min-w-0 flex-1 items-center gap-3 text-left">
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <span
+                        className={cn(
+                          "truncate text-sm",
+                          task.done
+                            ? "text-muted-foreground line-through"
+                            : "font-medium text-foreground",
+                        )}
+                      >
+                        {task.title}
+                      </span>
+                      <span className="truncate text-muted-foreground text-xs">
+                        {task.due}
+                        {task.createdByName
+                          ? ` · ${t("tasks.list.byCreator", { name: task.createdByName })}`
+                          : ""}
+                      </span>
+                    </div>
+                    <Badge
+                      className="shrink-0"
+                      variant={priorityVariant[task.priority]}
+                    >
+                      {t(`tasks.priority.${task.priority}`)}
+                    </Badge>
+                    <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-data-[panel-open]:rotate-180" />
+                  </CollapsibleTrigger>
                 </div>
-                <Badge
-                  className="shrink-0"
-                  variant={priorityVariant[task.priority]}
-                >
-                  {t(`tasks.priority.${task.priority}`)}
-                </Badge>
-              </div>
+                <CollapsibleContent>
+                  <div className="space-y-3 px-4 pb-4 pl-12 text-sm">
+                    <p
+                      className={cn(
+                        "whitespace-pre-wrap",
+                        task.notes
+                          ? "text-foreground"
+                          : "text-muted-foreground italic",
+                      )}
+                    >
+                      {task.notes || t("lab.queue.noNotes")}
+                    </p>
+                    <dl className="grid grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2">
+                      <QueueMeta
+                        label={t("lab.queue.meta.status")}
+                        value={t(`tasks.status.${task.status}`)}
+                      />
+                      <QueueMeta
+                        label={t("lab.queue.meta.patient")}
+                        value={task.patient || "—"}
+                      />
+                      <QueueMeta
+                        label={t("lab.queue.meta.assignee")}
+                        value={task.assignee || task.assigneeRole || "—"}
+                      />
+                      <QueueMeta
+                        label={t("lab.queue.meta.createdBy")}
+                        value={task.createdByName || "—"}
+                      />
+                    </dl>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             ))
           )}
         </div>

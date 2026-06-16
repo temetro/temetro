@@ -415,7 +415,10 @@ export function SidebarContent({
     <ScrollArea className="min-h-0 flex-1" fill scrollFade>
       <div
         className={cn(
-          "flex h-full flex-col gap-2 group-data-[collapsible=icon]:overflow-hidden",
+          // `min-h-full` (not `h-full`) so the content can grow taller than the
+          // viewport and the surrounding ScrollArea actually scrolls, rather than
+          // pinning to the viewport height and clipping a tall nav.
+          "flex min-h-full flex-col gap-2 group-data-[collapsible=icon]:overflow-hidden",
           className,
         )}
         data-sidebar="content"

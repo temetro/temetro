@@ -13,6 +13,8 @@ export type Prescription = {
   frequency: string;
   prescriber: string;
   prescribedAt: string; // YYYY-MM-DD
+  startDate: string | null; // YYYY-MM-DD, optional course start
+  endDate: string | null; // YYYY-MM-DD, optional course end (drives expiry)
   status: PrescriptionStatus;
   duration: string | null;
   notes: string | null;

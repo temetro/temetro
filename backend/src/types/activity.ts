@@ -8,6 +8,7 @@ export type ActivityEntityType =
   | "prescription"
   | "invoice"
   | "inventory"
+  | "dispense"
   | "task";
 
 export type ActivityEntry = {

@@ -106,10 +106,10 @@ export function ChatInput({
         event.preventDefault();
         submit();
       }}
-      className="w-full shrink-0 overflow-hidden rounded-[28px] border border-border bg-input shadow-sm"
+      className="w-full shrink-0 overflow-hidden rounded-[28px] border border-input bg-background shadow-sm transition-shadow focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/24 dark:bg-input/30"
     >
       {/* Textarea + toolbar, filling the rounded card. */}
-      <div className="bg-input">
+      <div>
         <textarea
           aria-label={t("chat.input.message")}
           className="field-sizing-content block max-h-48 min-h-16 w-full resize-none bg-transparent px-5 pt-5 pb-2 text-base text-foreground outline-none placeholder:text-muted-foreground"
@@ -141,12 +141,16 @@ export function ChatInput({
           </div>
         )}
 
+        {/* Visually hidden (not `display:none`) so programmatic `.click()` from
+            the attach button works reliably across browsers — a `display:none`
+            file input can refuse to open the picker. */}
         <input
           aria-label={t("chat.input.attachFiles")}
-          className="hidden"
+          className="sr-only"
           multiple
           onChange={handleFilesSelected}
           ref={fileInputRef}
+          tabIndex={-1}
           type="file"
         />
 

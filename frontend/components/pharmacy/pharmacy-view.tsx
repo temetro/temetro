@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleCheck, Clock, Pill, Search, Users } from "lucide-react";
+import { CircleCheck, Clock, PackageCheck, Pill, Search, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -10,6 +10,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import {
+  type Dispense,
+  createDispense,
+  listDispenses,
+} from "@/lib/dispenses";
 import {
   type Prescription,
   formatPrescribedAt,
@@ -32,13 +37,37 @@ function parseDurationDays(duration: string | null): number | null {
   return n * unit;
 }
 
-// When an active course runs out, or null if it has no parseable end.
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+// When an active course runs out, or null if it has no determinable end. An
+// explicit `endDate` wins; otherwise we add the parsed duration to the start
+// (the optional `startDate`, else `prescribedAt`).
 function expiresAt(rx: Prescription): Date | null {
+  if (rx.endDate && ISO_DATE.test(rx.endDate)) {
+    return new Date(`${rx.endDate}T00:00:00`);
+  }
   const days = parseDurationDays(rx.duration);
   if (days == null) return null;
-  const end = new Date(`${rx.prescribedAt}T00:00:00`);
+  const base =
+    rx.startDate && ISO_DATE.test(rx.startDate)
+      ? rx.startDate
+      : rx.prescribedAt;
+  const end = new Date(`${base}T00:00:00`);
   end.setDate(end.getDate() + days);
   return end;
+}
+
+// ISO timestamp -> "Jun 16, 2026, 2:30 PM" for the dispensed feed.
+function formatDispensedAt(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 function Kpi({
@@ -123,7 +152,7 @@ function QueueRow({
         variant="outline"
       >
         <CircleCheck className="size-4" />
-        {t("pharmacy.markCompleted")}
+        {t("pharmacy.dispense")}
       </Button>
     </div>
   );
@@ -136,6 +165,7 @@ function QueueRow({
 export function PharmacyView() {
   const { t } = useTranslation();
   const [list, setList] = useState<Prescription[]>([]);
+  const [dispenses, setDispenses] = useState<Dispense[]>([]);
   const [selected, setSelected] = useState<Prescription | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -149,6 +179,13 @@ export function PharmacyView() {
       .catch(() => {
         /* api-client redirects on 401; otherwise leave the list empty */
       });
+    listDispenses()
+      .then((data) => {
+        if (active) setDispenses(data);
+      })
+      .catch(() => {
+        /* leave the dispensed feed empty */
+      });
     return () => {
       active = false;
     };
@@ -159,12 +196,13 @@ export function PharmacyView() {
   // already elapsed by a few hours).
   const startOfToday = new Date(now);
   startOfToday.setHours(0, 0, 0, 0);
-  const soon = new Date(now);
-  soon.setDate(soon.getDate() + 7);
+  // Only flag courses genuinely about to run out (≤2 days left), not every
+  // freshly-issued short course — which made the badge fire on nearly every row.
+  const soon = new Date(startOfToday);
+  soon.setDate(soon.getDate() + 2);
   const isExpiringSoon = (rx: Prescription) => {
     if (rx.status !== "active") return false;
     const end = expiresAt(rx);
-    // Only courses ending in the next 7 days — not ones that already elapsed.
     return end != null && end >= startOfToday && end <= soon;
   };
 
@@ -212,9 +250,19 @@ export function PharmacyView() {
     setSheetOpen(true);
   };
 
-  // PUT requires the full record — resend the row with the new status.
-  const markCompleted = async (rx: Prescription) => {
+  // Dispensing records who received which medication (the fulfilment ledger) and
+  // completes the course. PUT requires the full record — resend with the new
+  // status.
+  const dispense = async (rx: Prescription) => {
     try {
+      const record = await createDispense({
+        fileNumber: rx.fileNumber,
+        name: rx.name,
+        initials: rx.initials,
+        medication: rx.medication,
+        dose: rx.dose,
+        prescriptionId: rx.id,
+      });
       const updated = await updatePrescription(rx.id, {
         fileNumber: rx.fileNumber,
         name: rx.name,
@@ -224,14 +272,17 @@ export function PharmacyView() {
         frequency: rx.frequency,
         prescriber: rx.prescriber,
         prescribedAt: rx.prescribedAt,
+        startDate: rx.startDate,
+        endDate: rx.endDate,
         status: "completed",
         duration: rx.duration,
         notes: rx.notes,
       });
       setList((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      setDispenses((prev) => [record, ...prev]);
       notify.success(
-        t("pharmacy.completedTitle"),
-        t("pharmacy.completedBody", { medication: rx.medication, name: rx.name }),
+        t("pharmacy.dispensedTitle"),
+        t("pharmacy.dispensedBody", { medication: rx.medication, name: rx.name }),
       );
     } catch {
       notify.error(t("pharmacy.completeFailedTitle"), t("pharmacy.completeFailedBody"));
@@ -278,7 +329,7 @@ export function PharmacyView() {
             <QueueRow
               expiring={isExpiringSoon(rx)}
               key={rx.id}
-              onComplete={() => markCompleted(rx)}
+              onComplete={() => dispense(rx)}
               onOpen={() => openRx(rx)}
               rx={rx}
             />
@@ -286,6 +337,54 @@ export function PharmacyView() {
           {queue.length === 0 && (
             <p className="p-6 text-center text-muted-foreground text-sm">
               {search ? t("pharmacy.queue.noMatches") : t("pharmacy.queue.empty")}
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <div>
+          <h2 className="font-semibold text-lg tracking-tight">
+            {t("pharmacy.dispensed.title")}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {t("pharmacy.dispensed.description")}
+          </p>
+        </div>
+        <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
+          {dispenses.map((d) => (
+            <div className="flex items-center gap-3 px-4 py-3" key={d.id}>
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border bg-background text-muted-foreground">
+                <PackageCheck className="size-4" />
+              </span>
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate font-medium text-foreground text-sm">
+                  {d.medication}
+                  {d.dose && (
+                    <span className="font-normal text-muted-foreground">
+                      {" "}
+                      · {d.dose}
+                    </span>
+                  )}
+                </span>
+                <span className="truncate text-muted-foreground text-xs">
+                  {d.name}
+                  {d.fileNumber ? ` · #${d.fileNumber}` : ""}
+                </span>
+              </div>
+              <div className="hidden min-w-0 flex-col items-end sm:flex">
+                <span className="truncate text-foreground text-xs">
+                  {d.dispensedByName || "—"}
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  {formatDispensedAt(d.dispensedAt)}
+                </span>
+              </div>
+            </div>
+          ))}
+          {dispenses.length === 0 && (
+            <p className="p-6 text-center text-muted-foreground text-sm">
+              {t("pharmacy.dispensed.empty")}
             </p>
           )}
         </div>

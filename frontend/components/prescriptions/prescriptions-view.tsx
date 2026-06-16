@@ -162,6 +162,8 @@ export function PrescriptionsView() {
         dose: rx.dose,
         frequency: rx.frequency,
         duration: rx.duration || null,
+        startDate: rx.startDate || null,
+        endDate: rx.endDate || null,
         notes: rx.notes || null,
       });
       setList((prev) => [created, ...prev]);
