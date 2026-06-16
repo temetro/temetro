@@ -85,12 +85,17 @@ export function ChatInput({
 
   const handleFilesSelected = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      const selected = event.target.files;
-      if (selected && selected.length > 0) {
-        setFiles((prev) => [...prev, ...Array.from(selected)]);
-      }
+      // Copy the files out NOW: `event.target.files` is a live FileList, and the
+      // `event.target.value = ""` reset below empties it. React runs the
+      // functional setState updater during a later render, so reading the
+      // FileList inside the updater would see it already cleared (no file added,
+      // no chip). Snapshot to a plain array first.
+      const picked = Array.from(event.target.files ?? []);
       // Reset so picking the same file again still fires onChange.
       event.target.value = "";
+      if (picked.length > 0) {
+        setFiles((prev) => [...prev, ...picked]);
+      }
     },
     []
   );

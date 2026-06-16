@@ -283,12 +283,15 @@ export function MessagesView() {
 
   // Open the file picker; on select, upload each and stage it.
   const onPickFiles = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
+    // Snapshot before resetting: `event.target.files` is a live FileList that
+    // `event.target.value = ""` empties, so reading it afterwards (or in a later
+    // tick) yields nothing.
+    const picked = Array.from(event.target.files ?? []);
     event.target.value = "";
-    if (!files?.length) return;
+    if (picked.length === 0) return;
     setUploading(true);
     try {
-      for (const file of Array.from(files)) {
+      for (const file of picked) {
         if (file.size > MAX_ATTACHMENT_BYTES) {
           notify.error(
             t("messages.attach.tooLargeTitle"),
