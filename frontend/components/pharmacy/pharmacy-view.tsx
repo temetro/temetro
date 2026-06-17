@@ -1,6 +1,14 @@
 "use client";
 
-import { CircleCheck, Clock, PackageCheck, Pill, Search, Users } from "lucide-react";
+import {
+  CircleCheck,
+  Clock,
+  PackageCheck,
+  Pill,
+  Search,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -9,10 +17,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import {
   type Dispense,
   createDispense,
+  deleteDispense,
   listDispenses,
 } from "@/lib/dispenses";
 import {
@@ -169,6 +179,8 @@ export function PharmacyView() {
   const [selected, setSelected] = useState<Prescription | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [query, setQuery] = useState("");
+  // Dispense ledger entry staged for deletion (drives the confirm dialog).
+  const [toDelete, setToDelete] = useState<Dispense | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -289,6 +301,25 @@ export function PharmacyView() {
     }
   };
 
+  // Remove a dispense ledger entry (a correction — the medication itself isn't
+  // un-dispensed, just the record).
+  const confirmDelete = async () => {
+    if (!toDelete) return;
+    const id = toDelete.id;
+    try {
+      await deleteDispense(id);
+      setDispenses((prev) => prev.filter((d) => d.id !== id));
+      notify.success(t("pharmacy.dispensed.deletedTitle"), toDelete.medication);
+    } catch {
+      notify.error(
+        t("pharmacy.dispensed.deleteFailedTitle"),
+        t("pharmacy.dispensed.deleteFailedBody"),
+      );
+    } finally {
+      setToDelete(null);
+    }
+  };
+
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -380,6 +411,14 @@ export function PharmacyView() {
                   {formatDispensedAt(d.dispensedAt)}
                 </span>
               </div>
+              <button
+                aria-label={t("pharmacy.dispensed.delete")}
+                className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive-foreground"
+                onClick={() => setToDelete(d)}
+                type="button"
+              >
+                <Trash2 className="size-4" />
+              </button>
             </div>
           ))}
           {dispenses.length === 0 && (
@@ -394,6 +433,25 @@ export function PharmacyView() {
         onOpenChange={setSheetOpen}
         open={sheetOpen}
         rx={selected}
+      />
+
+      <ConfirmDialog
+        cancelLabel={t("pharmacy.dispensed.deleteCancel")}
+        confirmLabel={t("pharmacy.dispensed.deleteConfirm")}
+        description={
+          toDelete
+            ? t("pharmacy.dispensed.deleteBody", {
+                medication: toDelete.medication,
+                name: toDelete.name,
+              })
+            : undefined
+        }
+        onConfirm={confirmDelete}
+        onOpenChange={(o) => {
+          if (!o) setToDelete(null);
+        }}
+        open={toDelete !== null}
+        title={t("pharmacy.dispensed.deleteTitle")}
       />
     </div>
   );

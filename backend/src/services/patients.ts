@@ -566,6 +566,41 @@ export async function appendLabs(
   return getPatient(orgId, fileNumber);
 }
 
+// Remove a single lab result from a patient, identified by its
+// name/value/takenAt (the frontend has no row id). Scoped to the org via the
+// owning patient. Returns the reloaded patient, or null when the chart is gone.
+export async function deleteLab(
+  orgId: string,
+  fileNumber: string,
+  match: { name: string; value: string; takenAt: string },
+): Promise<Patient | null> {
+  const [existing] = await db
+    .select({ id: patients.id })
+    .from(patients)
+    .where(
+      and(
+        eq(patients.organizationId, orgId),
+        eq(patients.fileNumber, fileNumber),
+      ),
+    );
+  if (!existing) return null;
+  await db
+    .delete(labs)
+    .where(
+      and(
+        eq(labs.patientId, existing.id),
+        eq(labs.name, match.name),
+        eq(labs.value, match.value),
+        eq(labs.takenAt, match.takenAt),
+      ),
+    );
+  await db
+    .update(patients)
+    .set({ updatedAt: new Date() })
+    .where(eq(patients.id, existing.id));
+  return getPatient(orgId, fileNumber);
+}
+
 export async function deletePatient(
   orgId: string,
   fileNumber: string,

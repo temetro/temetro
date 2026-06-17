@@ -44,3 +44,7 @@ export function createDispense(input: DispenseInput): Promise<Dispense> {
     body: JSON.stringify(input),
   });
 }
+
+export function deleteDispense(id: string): Promise<void> {
+  return apiFetch<void>(`/api/dispenses/${id}`, { method: "DELETE" });
+}

@@ -24,6 +24,7 @@ import {
   DialogPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -35,6 +36,7 @@ import {
   type TaskInput,
   type TaskStatus,
   createTask,
+  deleteTask,
   listTasks,
   updateTask,
 } from "@/lib/tasks";
@@ -306,6 +308,7 @@ export function TasksView() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [addStatus, setAddStatus] = useState<TaskStatus>("todo");
   const [dragId, setDragId] = useState<string | null>(null);
@@ -360,6 +363,24 @@ export function TasksView() {
   const openTask = (id: string) => {
     setSelectedId(id);
     setSheetOpen(true);
+  };
+
+  const removeTask = async () => {
+    if (!selected) return;
+    const id = selected.id;
+    try {
+      await deleteTask(id);
+      setTasks((prev) => prev.filter((task) => task.id !== id));
+      setSheetOpen(false);
+      notify.success(t("tasks.delete.doneTitle"), selected.title);
+    } catch {
+      notify.error(
+        t("tasks.delete.failedTitle"),
+        t("tasks.delete.failedBody"),
+      );
+    } finally {
+      setConfirmOpen(false);
+    }
   };
 
   const addTask = async (task: TaskInput) => {
@@ -481,10 +502,25 @@ export function TasksView() {
       />
 
       <TaskDetailSheet
+        onDelete={() => setConfirmOpen(true)}
         onMove={moveTask}
         onOpenChange={setSheetOpen}
         open={sheetOpen}
         task={selected}
+      />
+
+      <ConfirmDialog
+        cancelLabel={t("tasks.delete.cancel")}
+        confirmLabel={t("tasks.delete.confirm")}
+        description={
+          selected
+            ? t("tasks.delete.body", { title: selected.title })
+            : undefined
+        }
+        onConfirm={removeTask}
+        onOpenChange={setConfirmOpen}
+        open={confirmOpen}
+        title={t("tasks.delete.title")}
       />
     </div>
   );

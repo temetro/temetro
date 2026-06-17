@@ -1,6 +1,6 @@
 "use client";
 
-import { Pill } from "lucide-react";
+import { Pill, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -47,10 +47,12 @@ export function InventoryDetailDialog({
   item,
   open,
   onOpenChange,
+  onDelete,
 }: {
   item: InventoryItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDelete?: () => void;
 }) {
   const { t } = useTranslation();
   if (!item) return null;
@@ -120,7 +122,18 @@ export function InventoryDetailDialog({
           </div>
         </DialogPanel>
 
-        <DialogFooter>
+        <DialogFooter variant={onDelete ? "bare" : undefined}>
+          {onDelete && (
+            <Button
+              className="me-auto"
+              onClick={onDelete}
+              type="button"
+              variant="destructive"
+            >
+              <Trash2 className="size-4" />
+              {t("inventory.detail.delete")}
+            </Button>
+          )}
           <DialogClose render={<Button type="button" variant="outline" />}>
             {t("inventory.detail.close")}
           </DialogClose>

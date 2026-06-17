@@ -5,6 +5,7 @@ import {
   Download,
   FileText,
   Mail,
+  Paperclip,
   Plus,
   Search,
   SendHorizonal,
@@ -21,6 +22,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 
+import { AppointmentDetailDialog } from "@/components/messages/appointment-detail-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +42,6 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
-import { Menu, MenuItem, MenuPopup, MenuTrigger } from "@/components/ui/menu";
 import { type Appointment, listAppointments } from "@/lib/appointments";
 import { authClient } from "@/lib/auth-client";
 import {
@@ -90,6 +91,7 @@ const GROUP_WINDOW_MS = 5 * 60 * 1000;
 // shared-appointment card. Alignment (left/right) comes from the parent column.
 function SentAttachment({ att }: { att: MessageAttachment }) {
   const { t } = useTranslation();
+  const [apptOpen, setApptOpen] = useState(false);
   if (att.kind === "file") {
     return (
       <button
@@ -109,21 +111,32 @@ function SentAttachment({ att }: { att: MessageAttachment }) {
   }
   const a = att.appointment;
   return (
-    <div className="max-w-[75%] rounded-2xl border bg-card p-3 text-sm">
-      <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-        <CalendarClock className="size-3.5" />
-        {t("messages.attach.apptCardLabel")}
-      </div>
-      <p className="mt-1 font-medium text-foreground">{a.name}</p>
-      <p className="text-muted-foreground text-xs">
-        {[a.date, a.time].filter(Boolean).join(" · ")}
-      </p>
-      {[a.type, a.provider].filter(Boolean).length > 0 && (
+    <>
+      <button
+        className="max-w-[75%] rounded-2xl border bg-card p-3 text-left text-sm transition-colors hover:bg-accent"
+        onClick={() => setApptOpen(true)}
+        type="button"
+      >
+        <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+          <CalendarClock className="size-3.5" />
+          {t("messages.attach.apptCardLabel")}
+        </div>
+        <p className="mt-1 font-medium text-foreground">{a.name}</p>
         <p className="text-muted-foreground text-xs">
-          {[a.type, a.provider].filter(Boolean).join(" · ")}
+          {[a.date, a.time].filter(Boolean).join(" · ")}
         </p>
-      )}
-    </div>
+        {[a.type, a.provider].filter(Boolean).length > 0 && (
+          <p className="text-muted-foreground text-xs">
+            {[a.type, a.provider].filter(Boolean).join(" · ")}
+          </p>
+        )}
+      </button>
+      <AppointmentDetailDialog
+        appointment={a}
+        onOpenChange={setApptOpen}
+        open={apptOpen}
+      />
+    </>
   );
 }
 
@@ -283,12 +296,15 @@ export function MessagesView() {
 
   // Open the file picker; on select, upload each and stage it.
   const onPickFiles = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
+    // Snapshot before resetting: `event.target.files` is a live FileList that
+    // `event.target.value = ""` empties, so reading it afterwards (or in a later
+    // tick) yields nothing.
+    const picked = Array.from(event.target.files ?? []);
     event.target.value = "";
-    if (!files?.length) return;
+    if (picked.length === 0) return;
     setUploading(true);
     try {
-      for (const file of Array.from(files)) {
+      for (const file of picked) {
         if (file.size > MAX_ATTACHMENT_BYTES) {
           notify.error(
             t("messages.attach.tooLargeTitle"),
@@ -626,51 +642,38 @@ export function MessagesView() {
                 </div>
               )}
               <div className="flex items-center gap-2">
-                {/* Visually hidden (not `display:none`) so the programmatic
-                    `.click()` reliably opens the picker across browsers. */}
-                <input
+                {/* The attach control is a native <label> wrapping the file
+                    input, so the browser opens the picker on a trusted click.
+                    A programmatic `inputRef.click()` (the old menu item) gets
+                    dropped by user-activation gating once the menu closes —
+                    which is why attaching silently failed and no chip appeared. */}
+                <label
                   aria-label={t("messages.attach.file")}
-                  className="sr-only"
-                  multiple
-                  onChange={onPickFiles}
-                  ref={fileInputRef}
-                  tabIndex={-1}
-                  type="file"
-                />
-                <Menu>
-                  <MenuTrigger
-                    render={
-                      <Button
-                        aria-label={t("messages.attach.menu")}
-                        disabled={uploading}
-                        size="icon"
-                        type="button"
-                        variant="ghost"
-                      />
-                    }
-                  >
-                    <Plus className="size-4" />
-                  </MenuTrigger>
-                  <MenuPopup align="start" side="top">
-                    {/* Defer past the menu's close/unmount so the file picker
-                        and the appointment dialog aren't swallowed by the
-                        closing overlay's focus handling. */}
-                    <MenuItem
-                      onClick={() =>
-                        requestAnimationFrame(() => fileInputRef.current?.click())
-                      }
-                    >
-                      <FileText className="size-4 text-muted-foreground" />
-                      {t("messages.attach.file")}
-                    </MenuItem>
-                    <MenuItem
-                      onClick={() => requestAnimationFrame(openApptPicker)}
-                    >
-                      <CalendarClock className="size-4 text-muted-foreground" />
-                      {t("messages.attach.appointment")}
-                    </MenuItem>
-                  </MenuPopup>
-                </Menu>
+                  className={cn(
+                    "inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+                    uploading && "pointer-events-none opacity-50",
+                  )}
+                >
+                  <Paperclip className="size-4" />
+                  <input
+                    aria-label={t("messages.attach.file")}
+                    className="sr-only"
+                    multiple
+                    onChange={onPickFiles}
+                    ref={fileInputRef}
+                    type="file"
+                  />
+                </label>
+                <Button
+                  aria-label={t("messages.attach.appointment")}
+                  disabled={uploading}
+                  onClick={openApptPicker}
+                  size="icon"
+                  type="button"
+                  variant="ghost"
+                >
+                  <CalendarClock className="size-4" />
+                </Button>
                 <Input
                   aria-label={t("messages.newMessage")}
                   className="border-0 bg-transparent shadow-none before:hidden"

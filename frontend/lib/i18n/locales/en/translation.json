@@ -206,6 +206,16 @@
       "successBody": "{{name}} is now with {{provider}}.",
       "errorTitle": "Couldn't transfer patient",
       "error": "Please try again."
+    },
+    "delete": {
+      "action": "Delete patient",
+      "title": "Delete patient?",
+      "body": "Permanently delete {{name}}'s chart and all of its records. This cannot be undone.",
+      "confirm": "Delete patient",
+      "cancel": "Cancel",
+      "doneTitle": "Patient deleted",
+      "failedTitle": "Couldn't delete patient",
+      "failedBody": "Please try again."
     }
   },
   "appointments": {
@@ -351,7 +361,16 @@
       "deleteFailedTitle": "Couldn't delete invoice",
       "deleteFailedBody": "Please try again.",
       "paid": "Paid",
-      "unpaid": "Unpaid"
+      "unpaid": "Unpaid",
+      "markPaid": "Mark paid",
+      "paidTitle": "Invoice marked paid",
+      "payFailedTitle": "Couldn't record payment",
+      "payFailedBody": "Please try again.",
+      "payInstallment": "Pay",
+      "installmentPaid": "Paid",
+      "installmentPaidTitle": "Installment paid",
+      "overdue": "Overdue",
+      "timeframe": "{{count}} payments · due through {{date}}"
     }
   },
   "prescriptions": {
@@ -386,7 +405,17 @@
       "date": "Date",
       "status": "Status",
       "notes": "Notes",
-      "courseDates": "Course"
+      "courseDates": "Course",
+      "delete": "Delete prescription"
+    },
+    "delete": {
+      "title": "Delete prescription?",
+      "body": "Permanently delete the {{medication}} prescription for {{name}}. This cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel",
+      "doneTitle": "Prescription deleted",
+      "failedTitle": "Couldn't delete prescription",
+      "failedBody": "Please try again."
     },
     "dialog": {
       "title": "New prescription",
@@ -453,7 +482,15 @@
     "dispensed": {
       "title": "Recently dispensed",
       "description": "Medications handed to patients at the pharmacy.",
-      "empty": "Nothing dispensed yet."
+      "empty": "Nothing dispensed yet.",
+      "delete": "Delete record",
+      "deleteTitle": "Delete dispense record?",
+      "deleteBody": "Remove the {{medication}} dispense record for {{name}}. This only corrects the ledger.",
+      "deleteConfirm": "Delete",
+      "deleteCancel": "Cancel",
+      "deletedTitle": "Dispense record deleted",
+      "deleteFailedTitle": "Couldn't delete record",
+      "deleteFailedBody": "Please try again."
     }
   },
   "inventory": {
@@ -507,7 +544,17 @@
     "detail": {
       "description": "Stock item",
       "notes": "Notes",
-      "close": "Close"
+      "close": "Close",
+      "delete": "Delete item"
+    },
+    "delete": {
+      "title": "Delete inventory item?",
+      "body": "Permanently delete {{name}} from inventory. This cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel",
+      "doneTitle": "Item deleted",
+      "failedTitle": "Couldn't delete item",
+      "failedBody": "Please try again."
     }
   },
   "lab": {
@@ -558,7 +605,16 @@
     "recent": {
       "title": "Recent results",
       "description": "Analyses recorded on patient records, newest first.",
-      "empty": "No results recorded yet."
+      "empty": "No results recorded yet.",
+      "delete": "Delete result",
+      "deleteTitle": "Delete lab result?",
+      "deleteBody": "Remove the {{test}} result from {{name}}'s record. This cannot be undone.",
+      "deleteConfirm": "Delete",
+      "deleteCancel": "Cancel",
+      "deletedTitle": "Result deleted",
+      "deletedBody": "Removed {{test}} from {{name}}'s record.",
+      "deleteFailedTitle": "Couldn't delete result",
+      "deleteFailedBody": "Please try again."
     },
     "toast": {
       "updateFailedTitle": "Couldn't update the task",
@@ -631,7 +687,17 @@
       "details": "Details",
       "reopen": "Reopen task",
       "complete": "Mark complete",
-      "moveTo": "Move to"
+      "moveTo": "Move to",
+      "delete": "Delete task"
+    },
+    "delete": {
+      "title": "Delete task?",
+      "body": "Permanently delete \"{{title}}\". This cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel",
+      "doneTitle": "Task deleted",
+      "failedTitle": "Couldn't delete task",
+      "failedBody": "Please try again."
     },
     "toast": {
       "needSubjectTitle": "Add a subject",
@@ -686,19 +752,22 @@
       "apptSearchPlaceholder": "Patient name…",
       "apptNoMatches": "No appointments match.",
       "apptEmpty": "No appointments yet.",
-      "apptCardLabel": "Appointment"
+      "apptCardLabel": "Appointment",
+      "apptDetailTitle": "Appointment details",
+      "apptWhen": "When",
+      "apptType": "Type",
+      "apptProvider": "Provider",
+      "apptPatient": "Patient",
+      "apptStatus": "Status"
     }
   },
   "analysis": {
     "title": "Analysis",
     "subtitle": "Clinic performance at a glance, computed from your clinic's data.",
-    "live": {
-      "title": "Live",
-      "subtitle": "Patients currently in the building, updating in real time.",
-      "label": "In the building now",
-      "start": "Go live",
-      "pause": "Pause",
-      "idle": "Live stream paused — press Go live to start."
+    "area": {
+      "title": "Patient visits",
+      "subtitle": "Visit volume over the last six months.",
+      "label": "Total visits"
     },
     "patientVolume": {
       "title": "Patient volume",
@@ -819,6 +888,21 @@
       "send": "Send",
       "stop": "Stop",
       "model": "Model",
+      "mode": "Mode",
+      "modes": {
+        "chat": {
+          "label": "Chat",
+          "description": "Ask and retrieve patient information."
+        },
+        "analysis": {
+          "label": "Analysis",
+          "description": "Interpret patterns across a patient's history."
+        },
+        "graph": {
+          "label": "Graph",
+          "description": "See how problems and visits connect."
+        }
+      },
       "moreModels": "More models",
       "effort": "Effort",
       "effortOptions": {
@@ -842,6 +926,9 @@
     "thinking": "Thinking…",
     "steps": "Steps",
     "reasoning": "Reasoning",
+    "graphCard": {
+      "label": "Record graph"
+    },
     "history": {
       "title": "Chats",
       "untitled": "New chat",
@@ -1021,6 +1108,23 @@
       "title": "Recent visits",
       "recent": "{{count}} recent",
       "empty": "No visits yet."
+    },
+    "graph": {
+      "title": "Record graph",
+      "hint": "How this patient's problems and visits connect. Drag nodes; scroll to pan.",
+      "empty": "Not enough record data to graph yet."
+    },
+    "appointments": {
+      "title": "Appointments",
+      "empty": "No appointments on file."
+    },
+    "prescriptions": {
+      "title": "Prescriptions",
+      "empty": "No prescriptions on file."
+    },
+    "invoices": {
+      "title": "Invoices",
+      "empty": "No invoices on file."
     },
     "trend": {
       "empty": "No trend data yet.",

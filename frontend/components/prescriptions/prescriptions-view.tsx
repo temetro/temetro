@@ -14,11 +14,13 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import {
   type Prescription,
   type RxStatus,
   createPrescription,
+  deletePrescription,
   formatPrescribedAt,
   listPrescriptions,
 } from "@/lib/prescriptions";
@@ -130,6 +132,7 @@ export function PrescriptionsView() {
   const [list, setList] = useState<Prescription[]>([]);
   const [selected, setSelected] = useState<Prescription | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -149,6 +152,24 @@ export function PrescriptionsView() {
   const openRx = (rx: Prescription) => {
     setSelected(rx);
     setSheetOpen(true);
+  };
+
+  const removeRx = async () => {
+    if (!selected) return;
+    const id = selected.id;
+    try {
+      await deletePrescription(id);
+      setList((prev) => prev.filter((r) => r.id !== id));
+      setSheetOpen(false);
+      notify.success(t("prescriptions.delete.doneTitle"), selected.medication);
+    } catch {
+      notify.error(
+        t("prescriptions.delete.failedTitle"),
+        t("prescriptions.delete.failedBody"),
+      );
+    } finally {
+      setConfirmOpen(false);
+    }
   };
 
   // Persist a new prescription, then add the saved record to the top of the list.
@@ -273,9 +294,27 @@ export function PrescriptionsView() {
       />
 
       <PrescriptionDetailSheet
+        onDelete={() => setConfirmOpen(true)}
         onOpenChange={setSheetOpen}
         open={sheetOpen}
         rx={selected}
+      />
+
+      <ConfirmDialog
+        cancelLabel={t("prescriptions.delete.cancel")}
+        confirmLabel={t("prescriptions.delete.confirm")}
+        description={
+          selected
+            ? t("prescriptions.delete.body", {
+                medication: selected.medication,
+                name: selected.name,
+              })
+            : undefined
+        }
+        onConfirm={removeRx}
+        onOpenChange={setConfirmOpen}
+        open={confirmOpen}
+        title={t("prescriptions.delete.title")}
       />
     </div>
   );

@@ -78,7 +78,23 @@ function inlineTextFiles(messages: UIMessage[]): UIMessage[] {
   });
 }
 
-function systemPrompt(veilActive: boolean, providerLabel: string): string {
+// A short directive for the clinician's chosen "situation" mode, appended to the
+// base prompt. Chat mode adds nothing.
+function modeDirective(mode: string | undefined): string {
+  if (mode === "analysis") {
+    return "Mode — Analysis: the clinician wants interpretation, not just retrieval. After fetching a patient's data, surface patterns and correlations across their problems, labs and visits (e.g. recurring complaints, trends, likely links) and call out anything notable. Stay grounded in the tool results.";
+  }
+  if (mode === "graph") {
+    return "Mode — Graph: the clinician wants to see how a patient's problems and visits connect. When they reference a patient, call getPatient (its record graph renders automatically) and briefly describe the key relationships between illnesses and encounters.";
+  }
+  return "";
+}
+
+function systemPrompt(
+  veilActive: boolean,
+  providerLabel: string,
+  mode?: string,
+): string {
   return [
     "You are temetro, a clinical assistant that helps clinicians retrieve,",
     "organize, and add patient information. You operate over a real patient",
@@ -130,6 +146,7 @@ function systemPrompt(veilActive: boolean, providerLabel: string): string {
     veilActive
       ? `Privacy: this conversation runs on an external provider (${providerLabel}). Patient identifiers are de-identified as tokens like [PATIENT_1] / [MRN_1]; refer to patients generically ("this patient") rather than repeating tokens.`
       : "",
+    modeDirective(mode),
   ]
     .filter(Boolean)
     .join("\n");
@@ -137,10 +154,11 @@ function systemPrompt(veilActive: boolean, providerLabel: string): string {
 
 chatRouter.post("/", async (req, res, next) => {
   try {
-    const { messages, model: requestedModel } = req.body as {
+    const { messages, model: requestedModel, mode } = req.body as {
       messages: UIMessage[];
       model?: string;
       effort?: string;
+      mode?: string;
     };
     if (!Array.isArray(messages)) {
       res.status(400).json({ error: "messages must be an array." });
@@ -171,7 +189,7 @@ chatRouter.post("/", async (req, res, next) => {
     };
 
     const modelMessages = await convertToModelMessages(inlineTextFiles(messages));
-    const system = systemPrompt(veil.active, resolved.providerLabel);
+    const system = systemPrompt(veil.active, resolved.providerLabel, mode);
 
     const stream = createUIMessageStream({
       execute: async ({ writer }) => {

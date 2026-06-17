@@ -1,11 +1,13 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
+  SheetFooter,
   SheetHeader,
   SheetPanel,
   SheetPopup,
@@ -37,11 +39,13 @@ export function TaskDetailSheet({
   open,
   onOpenChange,
   onMove,
+  onDelete,
 }: {
   task: Task | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onMove: (id: string, status: TaskStatus) => void;
+  onDelete?: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -132,6 +136,14 @@ export function TaskDetailSheet({
             </div>
           )}
         </SheetPanel>
+        {task && onDelete && (
+          <SheetFooter>
+            <Button onClick={onDelete} type="button" variant="destructive">
+              <Trash2 className="size-4" />
+              {t("tasks.detail.delete")}
+            </Button>
+          </SheetFooter>
+        )}
       </SheetPopup>
     </Sheet>
   );

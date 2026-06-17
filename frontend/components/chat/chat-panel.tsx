@@ -61,6 +61,7 @@ import { InventoryListCard } from "@/components/chat/inventory-list-card";
 import { ImportPreviewCard } from "@/components/chat/import-preview-card";
 import { LabChartCard } from "@/components/chat/lab-chart-card";
 import { PatientResult } from "@/components/chat/patient-cards";
+import { RecordGraph } from "@/components/graph/record-graph";
 import {
   AppointmentListCard,
   PrescriptionListCard,
@@ -79,6 +80,7 @@ import {
   type Effort,
   getModel,
 } from "@/lib/ai-models";
+import { type ChatMode, DEFAULT_MODE } from "@/lib/chat-modes";
 import type { ActionPreviewData, TemetroUIMessage } from "@/lib/ai-chat";
 import {
   getThread,
@@ -114,6 +116,9 @@ export function ChatPanel() {
   const { t } = useTranslation();
   const [model, setModel] = useState<string>(DEFAULT_MODEL_ID);
   const [effort, setEffort] = useState<Effort>(DEFAULT_EFFORT);
+  // The clinician-facing "situation" mode (Chat / Analysis / Graph). The model
+  // itself comes from Settings → AI; this shapes what the assistant does.
+  const [mode, setMode] = useState<ChatMode>(DEFAULT_MODE);
 
   // Veil consent: cloud models de-identify + send data externally. We ask once
   // per session before the first such send — inline (no modal). `pendingConsent`
@@ -185,10 +190,10 @@ export function ChatPanel() {
       const fileParts = await Promise.all(files.map(fileToPart));
       sendMessage(
         { text, files: fileParts },
-        { body: { model: modelId, effort, threadId: threadIdRef.current } },
+        { body: { model: modelId, effort, mode, threadId: threadIdRef.current } },
       );
     },
-    [sendMessage, effort],
+    [sendMessage, effort, mode],
   );
 
   const send = useCallback(
@@ -223,7 +228,11 @@ export function ChatPanel() {
             id: nanoid(),
             role: "assistant",
             parts: patient
-              ? [{ type: "data-patientCard", data: patient }]
+              ? [
+                  mode === "graph"
+                    ? { type: "data-recordGraph", data: patient }
+                    : { type: "data-patientCard", data: patient },
+                ]
               : [
                   {
                     type: "text",
@@ -245,6 +254,7 @@ export function ChatPanel() {
     [
       consented,
       isCloudModel,
+      mode,
       model,
       pendingConsent,
       runAgentWith,
@@ -353,10 +363,8 @@ export function ChatPanel() {
 
   const promptInput = (
     <ChatInput
-      effort={effort}
-      model={model}
-      onEffortChange={setEffort}
-      onModelChange={setModel}
+      mode={mode}
+      onModeChange={setMode}
       onStop={stop}
       onSubmit={send}
       status={status}
@@ -543,6 +551,26 @@ export function ChatPanel() {
                   patient={part.data}
                   status="ready"
                 />
+              );
+            }
+            if (part.type === "data-recordGraph") {
+              return (
+                <div
+                  className="w-full overflow-hidden rounded-2xl border bg-card/30"
+                  key={key}
+                >
+                  <div className="flex items-center justify-between gap-2 px-4 pt-3">
+                    <span className="font-medium text-foreground text-sm">
+                      {part.data.name}
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      {t("chat.graphCard.label")}
+                    </span>
+                  </div>
+                  <div className="p-3">
+                    <RecordGraph patient={part.data} />
+                  </div>
+                </div>
               );
             }
             if (part.type === "data-labCard") {

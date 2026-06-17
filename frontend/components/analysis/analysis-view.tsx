@@ -4,7 +4,6 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { EarningsChart } from "@/components/analysis/earnings-chart";
-import { LiveHospitalChart } from "@/components/analysis/live-hospital-chart";
 import { Area, AreaChart } from "@/components/charts/area-chart";
 import { Bar } from "@/components/charts/bar";
 import { BarChart } from "@/components/charts/bar-chart";
@@ -14,6 +13,7 @@ import { ChartTooltip } from "@/components/charts/tooltip";
 import { XAxis } from "@/components/charts/x-axis";
 import { Card } from "@/components/ui/card";
 import { type Analytics, getAnalytics } from "@/lib/analytics";
+import { type Appointment, listAppointments } from "@/lib/appointments";
 import { formatMoney } from "@/lib/invoices";
 
 // Clinic analytics computed on the server from real data (patients,
@@ -90,6 +90,7 @@ function ChartCard({
 export function AnalysisView() {
   const { t } = useTranslation();
   const [data, setData] = useState<Analytics | null>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -100,12 +101,41 @@ export function AnalysisView() {
       .catch(() => {
         /* api-client redirects on 401; otherwise leave it loading */
       });
+    listAppointments()
+      .then((a) => {
+        if (active) setAppointments(a);
+      })
+      .catch(() => {
+        /* leave the visits chart empty on failure */
+      });
     return () => {
       active = false;
     };
   }, []);
 
   const n = (v: number | undefined) => String(v ?? 0);
+
+  // Patient visits per month over the last six months, aggregated from real
+  // appointments (no server-side monthly series exists yet).
+  const visitData = useMemo(() => {
+    const now = new Date();
+    const months = Array.from({ length: 6 }, (_, i) => ({
+      date: new Date(now.getFullYear(), now.getMonth() - (5 - i), 1),
+      visits: 0,
+    }));
+    for (const a of appointments) {
+      const d = new Date(`${a.date}T00:00:00`);
+      if (Number.isNaN(d.getTime())) continue;
+      const m = months.find(
+        (mo) =>
+          mo.date.getFullYear() === d.getFullYear() &&
+          mo.date.getMonth() === d.getMonth(),
+      );
+      if (m) m.visits += 1;
+    }
+    return months;
+  }, [appointments]);
+  const visitTotal = visitData.reduce((sum, p) => sum + p.visits, 0);
 
   // The area chart needs real Date x-values: synthesise one month per point,
   // ending with the current month.
@@ -147,17 +177,27 @@ export function AnalysisView() {
       <section className="flex flex-col gap-3">
         <div>
           <h2 className="font-semibold text-lg tracking-tight">
-            {t("analysis.live.title")}
+            {t("analysis.area.title")}
           </h2>
           <p className="text-muted-foreground text-sm">
-            {t("analysis.live.subtitle")}
+            {t("analysis.area.subtitle")}
           </p>
         </div>
         <Card className="gap-3 p-4">
-          <span className="text-muted-foreground text-sm">
-            {t("analysis.live.label")}
-          </span>
-          <LiveHospitalChart />
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-muted-foreground text-sm">
+              {t("analysis.area.label")}
+            </span>
+            <span className="font-semibold text-foreground text-xl tabular-nums">
+              {visitTotal}
+            </span>
+          </div>
+          <AreaChart aspectRatio="3 / 1" data={visitData}>
+            <Grid horizontal />
+            <Area dataKey="visits" fill="var(--chart-line-primary)" />
+            <XAxis numTicks={Math.max(visitData.length, 2)} tickMode="data" />
+            <ChartTooltip showDatePill={false} />
+          </AreaChart>
         </Card>
       </section>
 

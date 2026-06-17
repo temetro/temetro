@@ -11,19 +11,17 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 
-import { ModelPicker } from "@/components/chat/model-picker";
+import { ModePicker } from "@/components/chat/mode-picker";
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
-import type { Effort } from "@/lib/ai-models";
+import type { ChatMode } from "@/lib/chat-modes";
 import { cn } from "@/lib/utils";
 
 type ChatInputProps = {
   onSubmit: (text: string, files: File[]) => void;
   status: ChatStatus;
   onStop?: () => void;
-  model: string;
-  effort: Effort;
-  onModelChange: (model: string) => void;
-  onEffortChange: (effort: Effort) => void;
+  mode: ChatMode;
+  onModeChange: (mode: ChatMode) => void;
 };
 
 const iconButton =
@@ -37,10 +35,8 @@ export function ChatInput({
   onSubmit,
   status,
   onStop,
-  model,
-  effort,
-  onModelChange,
-  onEffortChange,
+  mode,
+  onModeChange,
 }: ChatInputProps) {
   const { t } = useTranslation();
 
@@ -85,12 +81,17 @@ export function ChatInput({
 
   const handleFilesSelected = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      const selected = event.target.files;
-      if (selected && selected.length > 0) {
-        setFiles((prev) => [...prev, ...Array.from(selected)]);
-      }
+      // Copy the files out NOW: `event.target.files` is a live FileList, and the
+      // `event.target.value = ""` reset below empties it. React runs the
+      // functional setState updater during a later render, so reading the
+      // FileList inside the updater would see it already cleared (no file added,
+      // no chip). Snapshot to a plain array first.
+      const picked = Array.from(event.target.files ?? []);
       // Reset so picking the same file again still fires onChange.
       event.target.value = "";
+      if (picked.length > 0) {
+        setFiles((prev) => [...prev, ...picked]);
+      }
     },
     []
   );
@@ -141,29 +142,27 @@ export function ChatInput({
           </div>
         )}
 
-        {/* Visually hidden (not `display:none`) so programmatic `.click()` from
-            the attach button works reliably across browsers — a `display:none`
-            file input can refuse to open the picker. */}
-        <input
-          aria-label={t("chat.input.attachFiles")}
-          className="sr-only"
-          multiple
-          onChange={handleFilesSelected}
-          ref={fileInputRef}
-          tabIndex={-1}
-          type="file"
-        />
-
         <div className="flex items-center justify-between gap-2 px-3 pb-3">
           <div className="flex min-w-0 items-center gap-1">
-            <button
+            {/* The attach control is a real <label> wrapping the file input, so
+                the browser opens the picker natively on click. A programmatic
+                `inputRef.click()` gets dropped when the textarea is focused with
+                text (the click blurs it first, losing the user-activation), which
+                is why attaching failed while typing. A label has no such gate. */}
+            <label
               aria-label={t("chat.input.attachFile")}
-              className={iconButton}
-              onClick={() => fileInputRef.current?.click()}
-              type="button"
+              className={cn(iconButton, "cursor-pointer")}
             >
               <Plus className="size-[18px]" />
-            </button>
+              <input
+                aria-label={t("chat.input.attachFiles")}
+                className="sr-only"
+                multiple
+                onChange={handleFilesSelected}
+                ref={fileInputRef}
+                type="file"
+              />
+            </label>
             <button
               className={cn(contextPill, "ml-0.5")}
               onClick={() => {
@@ -178,11 +177,9 @@ export function ChatInput({
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
-            <ModelPicker
-              effort={effort}
-              model={model}
-              onEffortChange={onEffortChange}
-              onModelChange={onModelChange}
+            <ModePicker
+              mode={mode}
+              onModeChange={onModeChange}
               triggerClassName={cn(pillButton, "mr-1")}
             />
             <button

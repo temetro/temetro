@@ -7,6 +7,7 @@ import { AiBadge } from "@/components/ai-badge";
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import { PatientDetail } from "@/components/patients/patient-detail";
 import { TransferPatientDialog } from "@/components/patients/transfer-patient-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Sheet,
   SheetHeader,
@@ -15,8 +16,12 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getPatient, type Patient } from "@/lib/patients";
+import { type Appointment, listAppointments } from "@/lib/appointments";
+import { type Invoice, listInvoices } from "@/lib/invoices";
+import { deletePatient, getPatient, type Patient } from "@/lib/patients";
+import { listPrescriptions, type Prescription } from "@/lib/prescriptions";
 import { hasClinicalAccess, useActiveRole } from "@/lib/roles";
+import { notify } from "@/lib/toast";
 
 type Status = "loading" | "ready" | "not-found";
 
@@ -60,10 +65,18 @@ export function PatientDetailSheet({
   const role = useActiveRole();
   // Clinical roles can reassign a chart; show optimistically while role loads.
   const canTransfer = role == null || hasClinicalAccess(role);
+  // Deleting a chart is destructive — only offer it once we know the role is
+  // a full clinician (patient:delete), never optimistically.
+  const canDelete = role != null && hasClinicalAccess(role);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [status, setStatus] = useState<Status>("loading");
   const [editOpen, setEditOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  // Related records aggregated into the sheet for a 360° view.
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   // Bumped on open so the editor remounts with the latest patient data.
   const [editKey, setEditKey] = useState(0);
 
@@ -72,6 +85,9 @@ export function PatientDetailSheet({
     let active = true;
     setStatus("loading");
     setPatient(null);
+    setPrescriptions([]);
+    setAppointments([]);
+    setInvoices([]);
     getPatient(fileNumber)
       .then((data) => {
         if (!active) return;
@@ -81,10 +97,36 @@ export function PatientDetailSheet({
       .catch(() => {
         if (active) setStatus("not-found");
       });
+    // Pull related records in parallel; filter to this chart. Best-effort — a
+    // missing permission (e.g. reception + prescriptions) just leaves it empty.
+    const forFile = (fn: string) => fn === fileNumber;
+    listPrescriptions()
+      .then((rx) => active && setPrescriptions(rx.filter((r) => forFile(r.fileNumber))))
+      .catch(() => {});
+    listAppointments()
+      .then((a) => active && setAppointments(a.filter((r) => forFile(r.fileNumber))))
+      .catch(() => {});
+    listInvoices()
+      .then((i) => active && setInvoices(i.filter((r) => forFile(r.fileNumber))))
+      .catch(() => {});
     return () => {
       active = false;
     };
   }, [open, fileNumber]);
+
+  const remove = async () => {
+    if (!patient) return;
+    try {
+      await deletePatient(patient.fileNumber);
+      notify.success(t("patients.delete.doneTitle"), patient.name);
+      onOpenChange(false);
+    } catch {
+      notify.error(
+        t("patients.delete.failedTitle"),
+        t("patients.delete.failedBody"),
+      );
+    }
+  };
 
   const title =
     status === "ready" && patient
@@ -112,6 +154,9 @@ export function PatientDetailSheet({
             )}
             {status === "ready" && patient && (
               <PatientDetail
+                appointments={appointments}
+                invoices={invoices}
+                onDelete={canDelete ? () => setConfirmOpen(true) : undefined}
                 onEdit={() => {
                   setEditKey((k) => k + 1);
                   setEditOpen(true);
@@ -120,6 +165,7 @@ export function PatientDetailSheet({
                   canTransfer ? () => setTransferOpen(true) : undefined
                 }
                 patient={patient}
+                prescriptions={prescriptions}
               />
             )}
           </SheetPanel>
@@ -143,6 +189,18 @@ export function PatientDetailSheet({
           onTransferred={(updated) => setPatient(updated)}
           open={transferOpen}
           patient={patient}
+        />
+      )}
+
+      {patient && (
+        <ConfirmDialog
+          cancelLabel={t("patients.delete.cancel")}
+          confirmLabel={t("patients.delete.confirm")}
+          description={t("patients.delete.body", { name: patient.name })}
+          onConfirm={remove}
+          onOpenChange={setConfirmOpen}
+          open={confirmOpen}
+          title={t("patients.delete.title")}
         />
       )}
     </>

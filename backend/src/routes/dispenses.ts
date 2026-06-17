@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { dispenseInputSchema } from "../lib/dispense-validation.js";
+import { HttpError } from "../lib/http-error.js";
 import {
   requireAuth,
   requireOrg,
@@ -48,6 +49,30 @@ dispensesRouter.post(
         patientFileNumber: created.fileNumber || null,
       });
       res.status(201).json(created);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+dispensesRouter.delete(
+  "/:id",
+  requirePermission({ inventory: ["write"] }),
+  async (req, res, next) => {
+    try {
+      const ok = await service.deleteDispense(
+        req.organizationId!,
+        req.params.id as string,
+      );
+      if (!ok) throw new HttpError(404, "Dispense not found.");
+      await recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: "Voided a dispense record",
+        entityType: "dispense",
+        entityId: req.params.id as string,
+      });
+      res.status(204).end();
     } catch (err) {
       next(err);
     }

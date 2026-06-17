@@ -1,14 +1,22 @@
 "use client";
 
-import { ArrowLeftRight, Pencil } from "lucide-react";
+import { ArrowLeftRight, Pencil, Trash2 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Sparkline } from "@/components/chat/sparkline";
+import { RecordGraph } from "@/components/graph/record-graph";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { Appointment } from "@/lib/appointments";
+import {
+  formatMoney,
+  type Invoice,
+  invoiceTotal,
+} from "@/lib/invoices";
 import type { AllergySeverity, LabFlag, Patient, Trend } from "@/lib/patients";
+import type { Prescription } from "@/lib/prescriptions";
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
@@ -82,10 +90,18 @@ export function PatientDetail({
   patient,
   onEdit,
   onTransfer,
+  onDelete,
+  prescriptions,
+  appointments,
+  invoices,
 }: {
   patient: Patient;
   onEdit?: () => void;
   onTransfer?: () => void;
+  onDelete?: () => void;
+  prescriptions?: Prescription[];
+  appointments?: Appointment[];
+  invoices?: Invoice[];
 }) {
   const { t } = useTranslation();
   const sex = t(`patientCard.sex.${patient.sex}`);
@@ -135,6 +151,17 @@ export function PatientDetail({
               {t("patientCard.edit")}
             </Button>
           )}
+          {onDelete && (
+            <Button
+              aria-label={t("patients.delete.action")}
+              onClick={onDelete}
+              size="sm"
+              type="button"
+              variant="destructive"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -157,6 +184,13 @@ export function PatientDetail({
             value={patient.problems.length}
           />
         </div>
+      </Section>
+
+      <Section title={t("patientCard.graph.title")}>
+        <p className="mb-3 text-muted-foreground text-xs">
+          {t("patientCard.graph.hint")}
+        </p>
+        <RecordGraph patient={patient} />
       </Section>
 
       <Section title={t("patientCard.vitals.title")}>
@@ -301,6 +335,87 @@ export function PatientDetail({
           </div>
         )}
       </Section>
+
+      {appointments && (
+        <Section title={t("patientCard.appointments.title")}>
+          {appointments.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              {t("patientCard.appointments.empty")}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {appointments.map((appt) => (
+                <Row
+                  key={appt.id}
+                  label={`${appt.date} · ${appt.time}`}
+                  value={
+                    <span className="flex items-center gap-2">
+                      {appt.type}
+                      <Badge variant="outline">
+                        {t(`appointments.status.${appt.status}`)}
+                      </Badge>
+                    </span>
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {prescriptions && (
+        <Section title={t("patientCard.prescriptions.title")}>
+          {prescriptions.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              {t("patientCard.prescriptions.empty")}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {prescriptions.map((rx) => (
+                <Row
+                  key={rx.id}
+                  label={rx.medication}
+                  value={
+                    <span className="flex items-center gap-2">
+                      {`${rx.dose} · ${rx.frequency}`}
+                      <Badge variant="outline">
+                        {t(`prescriptions.status.${rx.status}`)}
+                      </Badge>
+                    </span>
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {invoices && (
+        <Section title={t("patientCard.invoices.title")}>
+          {invoices.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              {t("patientCard.invoices.empty")}
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {invoices.map((inv) => (
+                <Row
+                  key={inv.id}
+                  label={inv.number}
+                  value={
+                    <span className="flex items-center gap-2 tabular-nums">
+                      {formatMoney(invoiceTotal(inv))}
+                      <Badge variant="outline">
+                        {t(`invoices.status.${inv.status}`)}
+                      </Badge>
+                    </span>
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
     </div>
   );
 }

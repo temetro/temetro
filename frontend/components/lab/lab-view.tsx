@@ -1,6 +1,13 @@
 "use client";
 
-import { Check, ChevronDown, FlaskConical, Plus, Search } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  FlaskConical,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
 import {
   type FormEvent,
   type KeyboardEvent,
@@ -19,6 +26,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogClose,
@@ -37,6 +45,7 @@ import {
   type LabFlag,
   type Patient,
   appendLabs,
+  deleteLab,
   listPatients,
 } from "@/lib/patients";
 import { type Priority, type Task, listTasks, updateTask } from "@/lib/tasks";
@@ -454,6 +463,8 @@ export function LabView() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [recent, setRecent] = useState<RecentResult[]>([]);
   const [addOpen, setAddOpen] = useState(false);
+  // The result staged for deletion (drives the confirm dialog).
+  const [toDelete, setToDelete] = useState<RecentResult | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -495,6 +506,37 @@ export function LabView() {
       .catch(() => {
         /* keep the optimistic feed if the refresh fails */
       });
+  };
+
+  // Remove a result from the feed + the patient's record.
+  const confirmDelete = async () => {
+    if (!toDelete) return;
+    const { patient, lab } = toDelete;
+    try {
+      await deleteLab(patient.fileNumber, lab);
+      setRecent((prev) =>
+        prev.filter(
+          (r) =>
+            !(
+              r.patient.fileNumber === patient.fileNumber &&
+              r.lab.name === lab.name &&
+              r.lab.value === lab.value &&
+              r.lab.takenAt === lab.takenAt
+            ),
+        ),
+      );
+      notify.success(
+        t("lab.recent.deletedTitle"),
+        t("lab.recent.deletedBody", { test: lab.name, name: patient.name }),
+      );
+    } catch {
+      notify.error(
+        t("lab.recent.deleteFailedTitle"),
+        t("lab.recent.deleteFailedBody"),
+      );
+    } finally {
+      setToDelete(null);
+    }
   };
 
   // Optimistically flip done, then persist; roll back on failure.
@@ -669,6 +711,14 @@ export function LabView() {
                 <Badge className="shrink-0" variant={flagVariant[lab.flag]}>
                   {t(`patientCard.labFlag.${lab.flag}`)}
                 </Badge>
+                <button
+                  aria-label={t("lab.recent.delete")}
+                  className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive-foreground"
+                  onClick={() => setToDelete({ patient, lab })}
+                  type="button"
+                >
+                  <Trash2 className="size-4" />
+                </button>
               </div>
             ))
           )}
@@ -680,6 +730,25 @@ export function LabView() {
         onOpenChange={setAddOpen}
         open={addOpen}
         patients={patients}
+      />
+
+      <ConfirmDialog
+        cancelLabel={t("lab.recent.deleteCancel")}
+        confirmLabel={t("lab.recent.deleteConfirm")}
+        description={
+          toDelete
+            ? t("lab.recent.deleteBody", {
+                test: toDelete.lab.name,
+                name: toDelete.patient.name,
+              })
+            : undefined
+        }
+        onConfirm={confirmDelete}
+        onOpenChange={(o) => {
+          if (!o) setToDelete(null);
+        }}
+        open={toDelete !== null}
+        title={t("lab.recent.deleteTitle")}
       />
     </div>
   );

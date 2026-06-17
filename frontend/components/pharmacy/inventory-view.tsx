@@ -10,12 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   type Availability,
   type InventoryInput,
   type InventoryItem,
   availabilityOf,
   createInventory,
+  deleteInventory,
   listInventory,
 } from "@/lib/inventory";
 import { notify } from "@/lib/toast";
@@ -116,10 +118,29 @@ export function InventoryView() {
   const [addOpen, setAddOpen] = useState(false);
   const [selected, setSelected] = useState<InventoryItem | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const openItem = (item: InventoryItem) => {
     setSelected(item);
     setDetailOpen(true);
+  };
+
+  const removeItem = async () => {
+    if (!selected) return;
+    const id = selected.id;
+    try {
+      await deleteInventory(id);
+      setItems((prev) => prev.filter((it) => it.id !== id));
+      setDetailOpen(false);
+      notify.success(t("inventory.delete.doneTitle"), selected.name);
+    } catch {
+      notify.error(
+        t("inventory.delete.failedTitle"),
+        t("inventory.delete.failedBody"),
+      );
+    } finally {
+      setConfirmOpen(false);
+    }
   };
 
   // Persist a new item, then prepend the saved record so it appears immediately.
@@ -207,8 +228,23 @@ export function InventoryView() {
 
       <InventoryDetailDialog
         item={selected}
+        onDelete={() => setConfirmOpen(true)}
         onOpenChange={setDetailOpen}
         open={detailOpen}
+      />
+
+      <ConfirmDialog
+        cancelLabel={t("inventory.delete.cancel")}
+        confirmLabel={t("inventory.delete.confirm")}
+        description={
+          selected
+            ? t("inventory.delete.body", { name: selected.name })
+            : undefined
+        }
+        onConfirm={removeItem}
+        onOpenChange={setConfirmOpen}
+        open={confirmOpen}
+        title={t("inventory.delete.title")}
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
