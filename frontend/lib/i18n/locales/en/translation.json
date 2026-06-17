@@ -705,7 +705,13 @@
       "apptSearchPlaceholder": "Patient name…",
       "apptNoMatches": "No appointments match.",
       "apptEmpty": "No appointments yet.",
-      "apptCardLabel": "Appointment"
+      "apptCardLabel": "Appointment",
+      "apptDetailTitle": "Appointment details",
+      "apptWhen": "When",
+      "apptType": "Type",
+      "apptProvider": "Provider",
+      "apptPatient": "Patient",
+      "apptStatus": "Status"
     }
   },
   "analysis": {
