@@ -140,6 +140,27 @@ export async function deletePatient(fileNumber: string): Promise<void> {
   );
 }
 
+// Remove a single lab result from a patient's record. The lab has no id on the
+// client, so it's identified by name + value + takenAt (DELETE
+// /api/patients/:fileNumber/labs, gated by `lab:write`). Returns the updated
+// patient.
+export async function deleteLab(
+  fileNumber: string,
+  lab: Pick<Lab, "name" | "value" | "takenAt">,
+): Promise<Patient> {
+  return apiFetch<Patient>(
+    `/api/patients/${encodeURIComponent(fileNumber.trim())}/labs`,
+    {
+      method: "DELETE",
+      body: JSON.stringify({
+        name: lab.name,
+        value: lab.value,
+        takenAt: lab.takenAt,
+      }),
+    },
+  );
+}
+
 // Reassign a patient to another clinician (sets their primary provider + PCP).
 export async function transferPatient(
   fileNumber: string,

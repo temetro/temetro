@@ -405,7 +405,17 @@
       "date": "Date",
       "status": "Status",
       "notes": "Notes",
-      "courseDates": "Course"
+      "courseDates": "Course",
+      "delete": "Delete prescription"
+    },
+    "delete": {
+      "title": "Delete prescription?",
+      "body": "Permanently delete the {{medication}} prescription for {{name}}. This cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel",
+      "doneTitle": "Prescription deleted",
+      "failedTitle": "Couldn't delete prescription",
+      "failedBody": "Please try again."
     },
     "dialog": {
       "title": "New prescription",
@@ -472,7 +482,15 @@
     "dispensed": {
       "title": "Recently dispensed",
       "description": "Medications handed to patients at the pharmacy.",
-      "empty": "Nothing dispensed yet."
+      "empty": "Nothing dispensed yet.",
+      "delete": "Delete record",
+      "deleteTitle": "Delete dispense record?",
+      "deleteBody": "Remove the {{medication}} dispense record for {{name}}. This only corrects the ledger.",
+      "deleteConfirm": "Delete",
+      "deleteCancel": "Cancel",
+      "deletedTitle": "Dispense record deleted",
+      "deleteFailedTitle": "Couldn't delete record",
+      "deleteFailedBody": "Please try again."
     }
   },
   "inventory": {
@@ -526,7 +544,17 @@
     "detail": {
       "description": "Stock item",
       "notes": "Notes",
-      "close": "Close"
+      "close": "Close",
+      "delete": "Delete item"
+    },
+    "delete": {
+      "title": "Delete inventory item?",
+      "body": "Permanently delete {{name}} from inventory. This cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel",
+      "doneTitle": "Item deleted",
+      "failedTitle": "Couldn't delete item",
+      "failedBody": "Please try again."
     }
   },
   "lab": {
@@ -577,7 +605,16 @@
     "recent": {
       "title": "Recent results",
       "description": "Analyses recorded on patient records, newest first.",
-      "empty": "No results recorded yet."
+      "empty": "No results recorded yet.",
+      "delete": "Delete result",
+      "deleteTitle": "Delete lab result?",
+      "deleteBody": "Remove the {{test}} result from {{name}}'s record. This cannot be undone.",
+      "deleteConfirm": "Delete",
+      "deleteCancel": "Cancel",
+      "deletedTitle": "Result deleted",
+      "deletedBody": "Removed {{test}} from {{name}}'s record.",
+      "deleteFailedTitle": "Couldn't delete result",
+      "deleteFailedBody": "Please try again."
     },
     "toast": {
       "updateFailedTitle": "Couldn't update the task",
@@ -650,7 +687,17 @@
       "details": "Details",
       "reopen": "Reopen task",
       "complete": "Mark complete",
-      "moveTo": "Move to"
+      "moveTo": "Move to",
+      "delete": "Delete task"
+    },
+    "delete": {
+      "title": "Delete task?",
+      "body": "Permanently delete \"{{title}}\". This cannot be undone.",
+      "confirm": "Delete",
+      "cancel": "Cancel",
+      "doneTitle": "Task deleted",
+      "failedTitle": "Couldn't delete task",
+      "failedBody": "Please try again."
     },
     "toast": {
       "needSubjectTitle": "Add a subject",

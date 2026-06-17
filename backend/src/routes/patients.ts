@@ -28,6 +28,12 @@ const labsAppendSchema = z.object({
   labs: z.array(labSchema).min(1).max(50),
 });
 
+const labDeleteSchema = z.object({
+  name: z.string().trim().min(1),
+  value: z.string(),
+  takenAt: z.string(),
+});
+
 // Notify the rest of the clinic about a patient record change (best-effort,
 // pushed live over the socket).
 async function notifyClinic(
@@ -249,6 +255,36 @@ patientsRouter.post(
         updated.fileNumber,
       );
       res.status(201).json(updated);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// Remove one lab result. Gated by `lab:write` like appending, so lab staff can
+// correct their own submissions without patient-edit rights.
+patientsRouter.delete(
+  "/:fileNumber/labs",
+  requirePermission({ lab: ["write"] }),
+  async (req, res, next) => {
+    try {
+      const match = labDeleteSchema.parse(req.body);
+      const updated = await service.deleteLab(
+        req.organizationId!,
+        req.params.fileNumber as string,
+        match,
+      );
+      if (!updated) throw new HttpError(404, "Patient not found.");
+      await recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: `Removed lab result ${match.name} for ${updated.name}`,
+        entityType: "patient",
+        entityId: updated.fileNumber,
+        patientName: updated.name,
+        patientFileNumber: updated.fileNumber,
+      });
+      res.json(updated);
     } catch (err) {
       next(err);
     }

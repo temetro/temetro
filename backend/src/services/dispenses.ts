@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { dispenses } from "../db/schema/dispenses.js";
@@ -58,4 +58,15 @@ export async function createDispense(
     })
     .returning();
   return toDispense(row!);
+}
+
+export async function deleteDispense(
+  orgId: string,
+  id: string,
+): Promise<boolean> {
+  const deleted = await db
+    .delete(dispenses)
+    .where(and(eq(dispenses.organizationId, orgId), eq(dispenses.id, id)))
+    .returning({ id: dispenses.id });
+  return deleted.length > 0;
 }

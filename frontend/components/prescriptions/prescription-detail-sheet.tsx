@@ -1,11 +1,14 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Sheet,
+  SheetFooter,
   SheetHeader,
   SheetPanel,
   SheetPopup,
@@ -30,10 +33,14 @@ export function PrescriptionDetailSheet({
   rx,
   open,
   onOpenChange,
+  onDelete,
 }: {
   rx: Prescription | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // Optional: only the Prescriptions page (full clinician) passes this, so the
+  // shared sheet stays read-only when opened from Pharmacy.
+  onDelete?: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -135,6 +142,14 @@ export function PrescriptionDetailSheet({
             </div>
           )}
         </SheetPanel>
+        {rx && onDelete && (
+          <SheetFooter>
+            <Button onClick={onDelete} type="button" variant="destructive">
+              <Trash2 className="size-4" />
+              {t("prescriptions.detail.delete")}
+            </Button>
+          </SheetFooter>
+        )}
       </SheetPopup>
     </Sheet>
   );
