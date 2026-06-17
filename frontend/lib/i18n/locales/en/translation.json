@@ -888,6 +888,21 @@
       "send": "Send",
       "stop": "Stop",
       "model": "Model",
+      "mode": "Mode",
+      "modes": {
+        "chat": {
+          "label": "Chat",
+          "description": "Ask and retrieve patient information."
+        },
+        "analysis": {
+          "label": "Analysis",
+          "description": "Interpret patterns across a patient's history."
+        },
+        "graph": {
+          "label": "Graph",
+          "description": "See how problems and visits connect."
+        }
+      },
       "moreModels": "More models",
       "effort": "Effort",
       "effortOptions": {
@@ -911,6 +926,9 @@
     "thinking": "Thinking…",
     "steps": "Steps",
     "reasoning": "Reasoning",
+    "graphCard": {
+      "label": "Record graph"
+    },
     "history": {
       "title": "Chats",
       "untitled": "New chat",

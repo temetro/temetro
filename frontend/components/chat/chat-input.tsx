@@ -11,19 +11,17 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 
-import { ModelPicker } from "@/components/chat/model-picker";
+import { ModePicker } from "@/components/chat/mode-picker";
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
-import type { Effort } from "@/lib/ai-models";
+import type { ChatMode } from "@/lib/chat-modes";
 import { cn } from "@/lib/utils";
 
 type ChatInputProps = {
   onSubmit: (text: string, files: File[]) => void;
   status: ChatStatus;
   onStop?: () => void;
-  model: string;
-  effort: Effort;
-  onModelChange: (model: string) => void;
-  onEffortChange: (effort: Effort) => void;
+  mode: ChatMode;
+  onModeChange: (mode: ChatMode) => void;
 };
 
 const iconButton =
@@ -37,10 +35,8 @@ export function ChatInput({
   onSubmit,
   status,
   onStop,
-  model,
-  effort,
-  onModelChange,
-  onEffortChange,
+  mode,
+  onModeChange,
 }: ChatInputProps) {
   const { t } = useTranslation();
 
@@ -181,11 +177,9 @@ export function ChatInput({
           </div>
 
           <div className="flex shrink-0 items-center gap-1">
-            <ModelPicker
-              effort={effort}
-              model={model}
-              onEffortChange={onEffortChange}
-              onModelChange={onModelChange}
+            <ModePicker
+              mode={mode}
+              onModeChange={onModeChange}
               triggerClassName={cn(pillButton, "mr-1")}
             />
             <button

@@ -69,6 +69,9 @@ export type ActionPreviewData = {
 // prefixed with `data-` (e.g. `data-patientCard`), per the AI SDK convention.
 export type TemetroDataParts = {
   patientCard: Patient;
+  // The same patient rendered as an Obsidian-style problems↔visits graph (Graph
+  // mode). Carries the full record so the graph renders client-side.
+  recordGraph: Patient;
   labCard: LabCardData;
   importPreview: ImportPreviewData;
   veilNotice: VeilNoticeData;
