@@ -361,7 +361,16 @@
       "deleteFailedTitle": "Couldn't delete invoice",
       "deleteFailedBody": "Please try again.",
       "paid": "Paid",
-      "unpaid": "Unpaid"
+      "unpaid": "Unpaid",
+      "markPaid": "Mark paid",
+      "paidTitle": "Invoice marked paid",
+      "payFailedTitle": "Couldn't record payment",
+      "payFailedBody": "Please try again.",
+      "payInstallment": "Pay",
+      "installmentPaid": "Paid",
+      "installmentPaidTitle": "Installment paid",
+      "overdue": "Overdue",
+      "timeframe": "{{count}} payments · due through {{date}}"
     }
   },
   "prescriptions": {

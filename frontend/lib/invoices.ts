@@ -98,6 +98,55 @@ export function updateInvoice(
   });
 }
 
+// Rebuild the editable input payload from a full invoice, so a partial change
+// (paying it, paying an installment) round-trips through PUT without dropping
+// any fields.
+function invoiceToInput(inv: Invoice): InvoiceInput {
+  return {
+    fileNumber: inv.fileNumber,
+    name: inv.name,
+    initials: inv.initials,
+    number: inv.number,
+    issuedAt: inv.issuedAt,
+    dueAt: inv.dueAt,
+    status: inv.status,
+    lineItems: inv.lineItems,
+    installments: inv.installments,
+    notes: inv.notes,
+    source: inv.source,
+  };
+}
+
+// Mark the whole invoice paid: status → paid and every installment settled.
+export function markInvoicePaid(inv: Invoice): Promise<Invoice> {
+  return updateInvoice(inv.id, {
+    ...invoiceToInput(inv),
+    status: "paid",
+    installments: inv.installments.map((it) => ({ ...it, paid: true })),
+  });
+}
+
+// Settle a single installment. When that clears the last one, the invoice flips
+// to paid automatically.
+export function payInstallment(inv: Invoice, index: number): Promise<Invoice> {
+  const installments = inv.installments.map((it, i) =>
+    i === index ? { ...it, paid: true } : it,
+  );
+  const allPaid = installments.length > 0 && installments.every((it) => it.paid);
+  return updateInvoice(inv.id, {
+    ...invoiceToInput(inv),
+    installments,
+    status: allPaid ? "paid" : inv.status,
+  });
+}
+
+// True when an unpaid installment's due date has passed.
+export function isInstallmentOverdue(it: InvoiceInstallment): boolean {
+  if (it.paid || !it.dueAt) return false;
+  const due = new Date(`${it.dueAt}T23:59:59`);
+  return !Number.isNaN(due.getTime()) && due.getTime() < Date.now();
+}
+
 export function splitInvoice(id: string, count: number): Promise<Invoice> {
   return apiFetch<Invoice>(`/api/invoices/${id}/split`, {
     method: "POST",

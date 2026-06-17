@@ -1,6 +1,12 @@
 "use client";
 
-import { Download, Pencil, Split, Trash2 } from "lucide-react";
+import {
+  CircleCheck,
+  Download,
+  Pencil,
+  Split,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -24,6 +30,9 @@ import {
   type Invoice,
   type InvoiceStatus,
   invoiceTotal,
+  isInstallmentOverdue,
+  markInvoicePaid,
+  payInstallment,
   splitInvoice,
 } from "@/lib/invoices";
 import { notify } from "@/lib/toast";
@@ -74,6 +83,14 @@ export function InvoiceDetailSheet({
   }
 
   const total = invoiceTotal(invoice);
+  const isPaid = invoice.status === "paid";
+  const isSettled = isPaid || invoice.status === "void";
+  // The schedule window: the latest installment due date, for the timeframe hint.
+  const lastDue = invoice.installments.reduce<string | null>(
+    (latest, it) =>
+      it.dueAt && (!latest || it.dueAt > latest) ? it.dueAt : latest,
+    null,
+  );
 
   const split = async () => {
     setBusy(true);
@@ -88,6 +105,41 @@ export function InvoiceDetailSheet({
       notify.error(
         t("invoices.sheet.splitFailedTitle"),
         t("invoices.sheet.splitFailedBody"),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const payAll = async () => {
+    setBusy(true);
+    try {
+      const updated = await markInvoicePaid(invoice);
+      onChanged(updated);
+      notify.success(t("invoices.sheet.paidTitle"), invoice.number);
+    } catch {
+      notify.error(
+        t("invoices.sheet.payFailedTitle"),
+        t("invoices.sheet.payFailedBody"),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const payOne = async (index: number) => {
+    setBusy(true);
+    try {
+      const updated = await payInstallment(invoice, index);
+      onChanged(updated);
+      notify.success(
+        t("invoices.sheet.installmentPaidTitle"),
+        invoice.installments[index]?.label ?? invoice.number,
+      );
+    } catch {
+      notify.error(
+        t("invoices.sheet.payFailedTitle"),
+        t("invoices.sheet.payFailedBody"),
       );
     } finally {
       setBusy(false);
@@ -185,58 +237,98 @@ export function InvoiceDetailSheet({
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <span className="text-muted-foreground text-xs">
-                {t("invoices.sheet.installments")}
-              </span>
-              {invoice.installments.length > 0 ? (
-                <div className="divide-y divide-border overflow-hidden rounded-2xl border">
-                  {invoice.installments.map((it, i) => (
-                    <div
-                      className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
-                      // biome-ignore lint/suspicious/noArrayIndexKey: positional
-                      key={i}
-                    >
-                      <span className="text-foreground">{it.label}</span>
-                      <span className="text-muted-foreground text-xs">
-                        {it.dueAt ? formatInvoiceDate(it.dueAt) : "—"}
-                      </span>
-                      <span className="font-medium text-foreground tabular-nums">
-                        {formatMoney(it.amount)}
-                      </span>
-                    </div>
-                  ))}
+            {/* Installments are a payment plan for an open invoice — once it's
+                settled there's nothing left to schedule, so hide them. */}
+            {isPaid ? null : (
+              <div className="flex flex-col gap-2">
+                <span className="text-muted-foreground text-xs">
+                  {t("invoices.sheet.installments")}
+                </span>
+                {invoice.installments.length > 0 ? (
+                  <div className="divide-y divide-border overflow-hidden rounded-2xl border">
+                    {invoice.installments.map((it, i) => {
+                      const overdue = isInstallmentOverdue(it);
+                      return (
+                        <div
+                          className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
+                          // biome-ignore lint/suspicious/noArrayIndexKey: positional
+                          key={i}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="truncate text-foreground">
+                              {it.label}
+                            </span>
+                            {overdue ? (
+                              <Badge variant="destructive">
+                                {t("invoices.sheet.overdue")}
+                              </Badge>
+                            ) : null}
+                          </span>
+                          <span className="shrink-0 text-muted-foreground text-xs">
+                            {it.dueAt ? formatInvoiceDate(it.dueAt) : "—"}
+                          </span>
+                          <span className="shrink-0 font-medium text-foreground tabular-nums">
+                            {formatMoney(it.amount)}
+                          </span>
+                          {it.paid ? (
+                            <Badge className="shrink-0" variant="outline">
+                              {t("invoices.sheet.installmentPaid")}
+                            </Badge>
+                          ) : (
+                            <Button
+                              className="shrink-0"
+                              disabled={busy}
+                              onClick={() => payOne(i)}
+                              size="sm"
+                              type="button"
+                              variant="outline"
+                            >
+                              {t("invoices.sheet.payInstallment")}
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">
+                    {t("invoices.sheet.noInstallments")}
+                  </p>
+                )}
+                {invoice.installments.length > 0 && lastDue ? (
+                  <p className="text-muted-foreground text-xs">
+                    {t("invoices.sheet.timeframe", {
+                      count: invoice.installments.length,
+                      date: formatInvoiceDate(lastDue),
+                    })}
+                  </p>
+                ) : null}
+                <div className="flex items-end gap-2">
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-muted-foreground text-xs">
+                      {t("invoices.sheet.splitCount")}
+                    </span>
+                    <Input
+                      className="w-20"
+                      max={36}
+                      min={1}
+                      onChange={(e) => setCount(Number(e.target.value) || 1)}
+                      type="number"
+                      value={count}
+                    />
+                  </label>
+                  <Button
+                    disabled={busy}
+                    onClick={split}
+                    type="button"
+                    variant="outline"
+                  >
+                    <Split className="size-4" />
+                    {t("invoices.sheet.split")}
+                  </Button>
                 </div>
-              ) : (
-                <p className="text-muted-foreground text-sm">
-                  {t("invoices.sheet.noInstallments")}
-                </p>
-              )}
-              <div className="flex items-end gap-2">
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-muted-foreground text-xs">
-                    {t("invoices.sheet.splitCount")}
-                  </span>
-                  <Input
-                    className="w-20"
-                    max={36}
-                    min={1}
-                    onChange={(e) => setCount(Number(e.target.value) || 1)}
-                    type="number"
-                    value={count}
-                  />
-                </label>
-                <Button
-                  disabled={busy}
-                  onClick={split}
-                  type="button"
-                  variant="outline"
-                >
-                  <Split className="size-4" />
-                  {t("invoices.sheet.split")}
-                </Button>
               </div>
-            </div>
+            )}
 
             {invoice.notes ? (
               <p className="whitespace-pre-wrap text-foreground text-sm leading-relaxed">
@@ -265,7 +357,17 @@ export function InvoiceDetailSheet({
               <Download className="size-4" />
               {t("invoices.sheet.download")}
             </Button>
-            <Button onClick={() => onEdit(invoice)} type="button">
+            {isSettled ? null : (
+              <Button disabled={busy} onClick={payAll} type="button">
+                <CircleCheck className="size-4" />
+                {t("invoices.sheet.markPaid")}
+              </Button>
+            )}
+            <Button
+              onClick={() => onEdit(invoice)}
+              type="button"
+              variant={isSettled ? "default" : "outline"}
+            >
               <Pencil className="size-4" />
               {t("invoices.sheet.edit")}
             </Button>
