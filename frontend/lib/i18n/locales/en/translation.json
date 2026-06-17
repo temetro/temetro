@@ -702,13 +702,10 @@
   "analysis": {
     "title": "Analysis",
     "subtitle": "Clinic performance at a glance, computed from your clinic's data.",
-    "live": {
-      "title": "Live",
-      "subtitle": "Patients currently in the building, updating in real time.",
-      "label": "In the building now",
-      "start": "Go live",
-      "pause": "Pause",
-      "idle": "Live stream paused — press Go live to start."
+    "area": {
+      "title": "Patient visits",
+      "subtitle": "Visit volume over the last six months.",
+      "label": "Total visits"
     },
     "patientVolume": {
       "title": "Patient volume",
