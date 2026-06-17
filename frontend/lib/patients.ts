@@ -130,6 +130,16 @@ export async function appendLabs(
   );
 }
 
+// Permanently delete a patient's chart. Backed by DELETE
+// /api/patients/:fileNumber (gated by `patient:delete` — the full-clinician
+// marker). Resolves on 204; throws ApiError on failure.
+export async function deletePatient(fileNumber: string): Promise<void> {
+  await apiFetch<void>(
+    `/api/patients/${encodeURIComponent(fileNumber.trim())}`,
+    { method: "DELETE" },
+  );
+}
+
 // Reassign a patient to another clinician (sets their primary provider + PCP).
 export async function transferPatient(
   fileNumber: string,

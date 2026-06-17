@@ -206,6 +206,16 @@
       "successBody": "{{name}} is now with {{provider}}.",
       "errorTitle": "Couldn't transfer patient",
       "error": "Please try again."
+    },
+    "delete": {
+      "action": "Delete patient",
+      "title": "Delete patient?",
+      "body": "Permanently delete {{name}}'s chart and all of its records. This cannot be undone.",
+      "confirm": "Delete patient",
+      "cancel": "Cancel",
+      "doneTitle": "Patient deleted",
+      "failedTitle": "Couldn't delete patient",
+      "failedBody": "Please try again."
     }
   },
   "appointments": {
@@ -1021,6 +1031,23 @@
       "title": "Recent visits",
       "recent": "{{count}} recent",
       "empty": "No visits yet."
+    },
+    "graph": {
+      "title": "Record graph",
+      "hint": "How this patient's problems and visits connect. Drag nodes; scroll to pan.",
+      "empty": "Not enough record data to graph yet."
+    },
+    "appointments": {
+      "title": "Appointments",
+      "empty": "No appointments on file."
+    },
+    "prescriptions": {
+      "title": "Prescriptions",
+      "empty": "No prescriptions on file."
+    },
+    "invoices": {
+      "title": "Invoices",
+      "empty": "No invoices on file."
     },
     "trend": {
       "empty": "No trend data yet.",
