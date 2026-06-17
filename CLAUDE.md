@@ -31,8 +31,12 @@ repository (published as `temetro`).
 ## Layout
 
 `frontend/` and `backend/` were previously separate per-folder git repos; they have been **merged
-into this single monorepo with full history of both preserved**. The marketing **landing page lives
-in its own separate repo** (`temetro-landing`), not here.
+into this single monorepo with full history of both preserved**.
+
+The marketing **landing page is not in this monorepo** — it lives in the sibling Desktop folder
+`../temetro/landing-page` (`/Users/khalidabdi/Desktop/temetro/landing-page`), right next to the
+`../temetro/docs` site. It is **its own git repository** (a Next.js app with the marketing
+`components/landing/`); edit and commit it there, separately from this repo.
 
 - **`frontend/`** — the Next.js product app (the AI chat UI). This is where almost all current work
   happens. **It has its own `CLAUDE.md`** — read `frontend/CLAUDE.md` for the stack, commands,

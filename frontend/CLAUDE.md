@@ -129,8 +129,9 @@ notifications, notes). Keys are grouped by feature (`appointments.*`, `patientCa
   `next build`. There's a `Dockerfile` for the standalone build.
 - **`lucide-react@1.17` dropped brand glyphs** (e.g. `Github`, `Discord`) — import them and you get
   a build error. Use inline SVGs instead.
-- A sibling **`../landing-page/`** directory is a copy of this app with a marketing landing page
-  (`components/landing/`); it is a separate project, not part of this git repo.
+- The marketing **landing page is not in this monorepo** — it lives in the sibling Desktop folder
+  `~/Desktop/temetro/landing-page` (next to `~/Desktop/temetro/docs`), a separate Next.js app /
+  git repo seeded from this app (with `components/landing/`). Edit and commit it there.
 - Multiple lockfiles in the tree produce a harmless Turbopack "inferred workspace root" warning.
 
 ### COSS composition gotchas (hit during the shadcn→COSS migration)
