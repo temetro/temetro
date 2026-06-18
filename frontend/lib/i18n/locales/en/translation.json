@@ -1352,7 +1352,8 @@
           "patient": "Patients",
           "appointment": "Appointments",
           "prescription": "Prescriptions",
-          "task": "Tasks"
+          "task": "Tasks",
+          "lab": "Lab results"
         },
         "actions": {
           "read": "View",
