@@ -214,9 +214,23 @@ export function RecordSummary({
 // The human approval gate for an agent-proposed add. The agent drafts the record
 // (dry run, nothing written); the clinician reviews it here, may edit it, and
 // must approve before it is committed via the matching RBAC-gated create endpoint.
-export function ActionPreviewCard({ data }: { data: ActionPreviewData }) {
+export function ActionPreviewCard({
+  data,
+  onResolved,
+}: {
+  data: ActionPreviewData;
+  // Called once committed/discarded so the parent can persist the resolution
+  // (prevents re-adding after re-render or conversation reload).
+  onResolved?: (resolution: "added" | "discarded") => void;
+}) {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<Status>("pending");
+  const [status, setStatus] = useState<Status>(
+    data.resolved === "added"
+      ? "done"
+      : data.resolved === "discarded"
+        ? "rejected"
+        : "pending",
+  );
   // Editable working copy of the proposed record (edits commit, not the draft).
   const [record, setRecord] = useState<Record<string, unknown>>(
     data.record as Record<string, unknown>,
@@ -230,6 +244,7 @@ export function ActionPreviewCard({ data }: { data: ActionPreviewData }) {
     try {
       await commitAction({ ...data, record });
       setStatus("done");
+      onResolved?.("added");
       notify.success(
         t("chat.actionCard.addedTitle"),
         t(`chat.actionCard.kind.${data.kind}`),
@@ -300,7 +315,10 @@ export function ActionPreviewCard({ data }: { data: ActionPreviewData }) {
           </Button>
           <Button
             disabled={status === "committing"}
-            onClick={() => setStatus("rejected")}
+            onClick={() => {
+              setStatus("rejected");
+              onResolved?.("discarded");
+            }}
             size="sm"
             variant="outline"
           >

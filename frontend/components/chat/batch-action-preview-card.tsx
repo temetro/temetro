@@ -32,11 +32,25 @@ type Status = "pending" | "committing" | "done" | "rejected";
 // the full list in a dialog, removes any they don't want, and adds them all at
 // once. Each commit goes through the same RBAC-gated create endpoint as the
 // single-record card; appointments without a file number create a patient.
-export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }) {
+export function BatchActionPreviewCard({
+  items,
+  onResolved,
+}: {
+  items: ActionPreviewData[];
+  // Called once committed/discarded so the parent can persist the resolution
+  // across re-render and conversation reload (prevents re-adding).
+  onResolved?: (resolution: "added" | "discarded") => void;
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [removed, setRemoved] = useState<Set<string>>(new Set());
-  const [status, setStatus] = useState<Status>("pending");
+  const [status, setStatus] = useState<Status>(
+    items[0]?.resolved === "added"
+      ? "done"
+      : items[0]?.resolved === "discarded"
+        ? "rejected"
+        : "pending",
+  );
   const [result, setResult] = useState<{ added: number; failed: number } | null>(
     null,
   );
@@ -74,6 +88,7 @@ export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }
     setResult({ added, failed });
     setStatus("done");
     setOpen(false);
+    onResolved?.("added");
     if (added > 0) {
       notify.success(
         t("chat.actionCard.addedTitle"),
@@ -90,6 +105,7 @@ export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }
   const discardAll = () => {
     setStatus("rejected");
     setOpen(false);
+    onResolved?.("discarded");
   };
 
   return (
@@ -105,16 +121,19 @@ export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }
         </Badge>
       </div>
 
-      {status === "done" && result ? (
+      {status === "done" ? (
         <p className="flex items-center gap-1.5 text-foreground text-sm">
           <Check className="size-4" />
-          {t("chat.actionCard.batch.done", {
-            added: result.added,
-            total: items.length,
-          })}
-          {result.failed > 0
-            ? ` · ${t("chat.actionCard.batch.failedCount", { count: result.failed })}`
-            : ""}
+          {result
+            ? `${t("chat.actionCard.batch.done", {
+                added: result.added,
+                total: items.length,
+              })}${
+                result.failed > 0
+                  ? ` · ${t("chat.actionCard.batch.failedCount", { count: result.failed })}`
+                  : ""
+              }`
+            : t("chat.actionCard.batch.alreadyAdded")}
         </p>
       ) : status === "rejected" ? (
         <p className="text-muted-foreground text-sm">

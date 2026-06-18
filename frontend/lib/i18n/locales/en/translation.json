@@ -1025,6 +1025,7 @@
         "edited": "Edited",
         "remove": "Remove",
         "done": "Added {{added}} of {{total}}.",
+        "alreadyAdded": "Added.",
         "failedCount": "{{count}} failed",
         "discarded": "Discarded — nothing was saved."
       }
@@ -1087,6 +1088,7 @@
       "rejectedNote": "Import discarded. Nothing was written.",
       "importedTitle": "Records imported",
       "importedBody": "Imported {{count}} patient record(s).",
+      "alreadyImported": "Imported.",
       "failedCount": "{{count}} failed",
       "failedTitle": "Import failed",
       "failedBody": "The records could not be imported. Please try again."

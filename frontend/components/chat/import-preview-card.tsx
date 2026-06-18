@@ -111,9 +111,23 @@ function toPatientDraft(rec: unknown): Patient {
 // (dry run, nothing written); the clinician reviews counts, can open and edit
 // any record (fixing skipped rows), and must approve before anything is
 // inserted via POST /api/ai/import.
-export function ImportPreviewCard({ data }: { data: ImportPreviewData }) {
+export function ImportPreviewCard({
+  data,
+  onResolved,
+}: {
+  data: ImportPreviewData;
+  // Called once imported/discarded so the parent can persist the resolution
+  // across re-render and conversation reload (prevents re-importing).
+  onResolved?: (resolution: "added" | "discarded") => void;
+}) {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<Status>("pending");
+  const [status, setStatus] = useState<Status>(
+    data.resolved === "added"
+      ? "done"
+      : data.resolved === "discarded"
+        ? "rejected"
+        : "pending",
+  );
   const [result, setResult] = useState<{ created: number; failed: number } | null>(
     null,
   );
@@ -161,6 +175,7 @@ export function ImportPreviewCard({ data }: { data: ImportPreviewData }) {
       setResult({ created: res.created.length, failed: res.failed.length });
       setStatus("done");
       setReviewOpen(false);
+      onResolved?.("added");
       notify.success(
         t("chat.importCard.importedTitle"),
         t("chat.importCard.importedBody", { count: res.created.length }),
@@ -216,13 +231,16 @@ export function ImportPreviewCard({ data }: { data: ImportPreviewData }) {
         </p>
       ) : null}
 
-      {status === "done" && result ? (
+      {status === "done" ? (
         <p className="flex items-center gap-1.5 text-sm text-foreground">
           <Check className="size-4" />
-          {t("chat.importCard.importedBody", { count: result.created })}
-          {result.failed > 0
-            ? ` · ${t("chat.importCard.failedCount", { count: result.failed })}`
-            : ""}
+          {result
+            ? `${t("chat.importCard.importedBody", { count: result.created })}${
+                result.failed > 0
+                  ? ` · ${t("chat.importCard.failedCount", { count: result.failed })}`
+                  : ""
+              }`
+            : t("chat.importCard.alreadyImported")}
         </p>
       ) : status === "rejected" ? (
         <p className="text-sm text-muted-foreground">
@@ -241,7 +259,10 @@ export function ImportPreviewCard({ data }: { data: ImportPreviewData }) {
           </Button>
           <Button
             disabled={status === "committing"}
-            onClick={() => setStatus("rejected")}
+            onClick={() => {
+              setStatus("rejected");
+              onResolved?.("discarded");
+            }}
             size="sm"
             variant="outline"
           >
