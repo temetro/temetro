@@ -33,6 +33,9 @@ export type ToolContext = {
   // The signed-in clinician — needed to scope task visibility (and to stamp the
   // creator when an add is committed via the REST endpoints on approval).
   viewer: { userId: string; userName: string; memberRole: string };
+  // The composer's "situation" mode (chat | analysis | graph). In graph mode
+  // getPatient renders the record graph instead of the record cards.
+  mode?: string;
   veil: Veil;
   writer: UIMessageStreamWriter;
 };
@@ -57,7 +60,7 @@ function forModel(p: Patient) {
 }
 
 export function createChatTools(ctx: ToolContext) {
-  const { orgId, demographicsOnly, scopeProviderId, viewer, veil, writer } =
+  const { orgId, demographicsOnly, scopeProviderId, viewer, mode, veil, writer } =
     ctx;
 
   // Emit a Chain-of-Thought step to the UI as the agent works. Steps stream live
@@ -86,7 +89,7 @@ export function createChatTools(ctx: ToolContext) {
     // Look up one patient by file number (MRN) and show their record cards.
     getPatient: tool({
       description:
-        "Retrieve a patient's full record by file number (MRN) and display it as record cards. Use when the clinician asks about a specific patient.",
+        "Retrieve a patient's full record by file number (MRN). Displays it as record cards (or, in Graph mode, as the patient's record graph). Use when the clinician asks about a specific patient.",
       inputSchema: z.object({
         fileNumber: z
           .string()
@@ -102,8 +105,13 @@ export function createChatTools(ctx: ToolContext) {
           scopeProviderId,
         );
         if (!patient) return { found: false as const, fileNumber };
-        // Real data → clinician UI (cards). Redacted data → model.
-        writer.write({ type: "data-patientCard", data: patient });
+        // Real data → clinician UI. In graph mode render the record graph; in
+        // chat/analysis modes render the record cards. Redacted data → model.
+        writer.write(
+          mode === "graph"
+            ? { type: "data-recordGraph", data: patient }
+            : { type: "data-patientCard", data: patient },
+        );
         return { found: true as const, patient: forModel(veil.redactPatient(patient)) };
       },
     }),

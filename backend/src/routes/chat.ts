@@ -90,7 +90,7 @@ function modeDirective(mode: string | undefined): string {
     return "Mode — Analysis: the clinician wants interpretation, not just retrieval. After fetching a patient's data, surface patterns and correlations across their problems, labs and visits (e.g. recurring complaints, trends, likely links) and call out anything notable. Stay grounded in the tool results.";
   }
   if (mode === "graph") {
-    return "Mode — Graph: the clinician wants to see how a patient's problems and visits connect. When they reference a patient, call getPatient (its record graph renders automatically) and briefly describe the key relationships between illnesses and encounters.";
+    return "Mode — Graph: the clinician wants to see how a patient's problems and visits connect. When they reference a patient, call getPatient — in this mode it renders the patient's record GRAPH (not cards) automatically — then briefly describe the key relationships between illnesses and encounters. Do not say you cannot draw a graph; getPatient produces it.";
   }
   return "";
 }
@@ -222,7 +222,7 @@ chatRouter.post("/", async (req, res, next) => {
           });
         }
 
-        const tools = createChatTools({ ...ctx, veil, writer });
+        const tools = createChatTools({ ...ctx, mode, veil, writer });
 
         if (resolved.isExternal && veil.active) {
           // Non-streamed pass so we can rehydrate identifier tokens before the
