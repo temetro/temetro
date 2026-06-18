@@ -7,35 +7,54 @@ const nonEmpty = z.string().trim().min(1);
 const EMPTY_VITALS = { bp: "", hr: "", temp: "", spo2: "", takenAt: "" };
 const EMPTY_TREND = { label: "", unit: "", points: [] as number[] };
 
-export const allergySchema = z.object({
-  substance: nonEmpty,
-  reaction: nonEmpty,
-  severity: z.enum(["mild", "moderate", "severe"]),
-});
+// Coerce a bare string into an object keyed on its primary field, so a sparse
+// export ("Penicillin", "Metformin") still validates — both the AI import and
+// the patient form benefit. Real objects pass through untouched.
+const stringToObject = (key: string) => (value: unknown) =>
+  typeof value === "string" ? { [key]: value } : value;
 
-export const medicationSchema = z.object({
-  name: nonEmpty,
-  dose: nonEmpty,
-  frequency: nonEmpty,
-});
+export const allergySchema = z.preprocess(
+  stringToObject("substance"),
+  z.object({
+    substance: nonEmpty,
+    reaction: z.string().default(""),
+    severity: z.enum(["mild", "moderate", "severe"]).default("mild"),
+  }),
+);
 
-export const problemSchema = z.object({
-  label: nonEmpty,
-  since: nonEmpty,
-});
+export const medicationSchema = z.preprocess(
+  stringToObject("name"),
+  z.object({
+    name: nonEmpty,
+    dose: z.string().default(""),
+    frequency: z.string().default(""),
+  }),
+);
+
+export const problemSchema = z.preprocess(
+  stringToObject("label"),
+  z.object({
+    label: nonEmpty,
+    since: z.string().default(""),
+  }),
+);
 
 export const labSchema = z.object({
   name: nonEmpty,
   value: nonEmpty,
-  flag: z.enum(["normal", "high", "low", "critical"]),
-  takenAt: nonEmpty,
+  flag: z.enum(["normal", "high", "low", "critical"]).default("normal"),
+  takenAt: z.string().default(""),
 });
 
 export const encounterSchema = z.object({
-  date: nonEmpty,
-  type: nonEmpty,
-  provider: nonEmpty,
-  summary: nonEmpty,
+  date: z.string().default(""),
+  // A visit row always has a department/type, but never let it be empty.
+  type: z
+    .string()
+    .default("")
+    .transform((s) => s.trim() || "Visit"),
+  provider: z.string().default(""),
+  summary: z.string().default(""),
 });
 
 export const vitalsSchema = z.object({
@@ -62,14 +81,22 @@ export const trendSchema = z.object({
 // `source: "ai"` and surfaced with an "Added by AI" badge for later editing.
 export const patientInputSchema = z
   .object({
-    fileNumber: z
-      .string()
-      .trim()
-      .regex(/^\d*$/, "File number must be digits")
-      .default(""),
+    // Real-world exports use IDs like "P00001"; keep only the digits (empty ⇒
+    // the patient service auto-generates one). Never reject on stray letters.
+    fileNumber: z.preprocess(
+      (v) => (typeof v === "string" ? v.replace(/\D/g, "") : v),
+      z.string().trim().default(""),
+    ),
     name: nonEmpty,
     age: z.coerce.number().int().min(0).max(150).default(0),
-    sex: z.enum(["M", "F"]).default("M"),
+    // Accept gender words (Male / female / man / F / …), not just M/F.
+    sex: z.preprocess((v) => {
+      if (typeof v !== "string") return v;
+      const s = v.trim().toLowerCase();
+      if (s.startsWith("m")) return "M";
+      if (s.startsWith("f") || s.startsWith("w")) return "F";
+      return v;
+    }, z.enum(["M", "F"]).default("M")),
     pcp: z.string().default(""),
     // Optional link to the responsible clinician (user id). Empty string ⇒ null.
     primaryProviderId: z.preprocess(
