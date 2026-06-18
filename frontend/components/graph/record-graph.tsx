@@ -6,11 +6,19 @@
 // d3-force simulation computed once; rendering + pan/zoom is React Flow. Nodes
 // are round "dots" with the label underneath, and hovering a node highlights it
 // and its neighbours while dimming the rest (the Obsidian focus effect).
+//
+// Hover is driven through React context — NOT through the `nodes`/`edges` props
+// — so the arrays React Flow receives stay referentially stable. That avoids the
+// re-measure/flicker loop you get when hover state recreates the node objects
+// (and the hovered node's transform shifts it out from under the cursor).
 
 import {
   Background,
+  BaseEdge,
   Controls,
   type Edge,
+  type EdgeProps,
+  getStraightPath,
   Handle,
   type Node,
   type NodeProps,
@@ -27,7 +35,8 @@ import {
   type SimulationLinkDatum,
   type SimulationNodeDatum,
 } from "d3-force";
-import { useMemo, useState } from "react";
+import { useTheme } from "next-themes";
+import { createContext, memo, useContext, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { Patient } from "@/lib/patients";
@@ -47,10 +56,14 @@ type RecordNodeData = {
   label: string;
   sub?: string;
   kind: Kind;
-  // Hover focus: "active" = this node or a neighbour, "dim" = unrelated, null =
-  // nothing hovered (everything at full strength).
-  focus: "active" | "dim" | null;
+  // Ids of this node plus its direct neighbours — used to derive hover focus
+  // from the hovered id without recreating the node objects.
+  family: string[];
 };
+
+// The id of the node currently hovered (or null). Read by nodes + edges so the
+// hover highlight never touches the React Flow `nodes`/`edges` props.
+const HoverContext = createContext<string | null>(null);
 
 // Dot size + colour per kind. The patient is the biggest, brightest hub.
 const dotClass: Record<Kind, string> = {
@@ -60,9 +73,14 @@ const dotClass: Record<Kind, string> = {
 };
 
 // A round node with the label below it and hidden connection handles so edges
-// meet the dot's centre cleanly.
-function RecordNode({ data }: NodeProps) {
-  const { label, sub, kind, focus } = data as RecordNodeData;
+// meet the dot's centre cleanly. Memoized; it re-renders only when the hovered
+// id changes (via context), never via React Flow re-measuring.
+const RecordNode = memo(function RecordNode({ id, data }: NodeProps) {
+  const { label, sub, kind, family } = data as RecordNodeData;
+  const hovered = useContext(HoverContext);
+  const focus: "active" | "dim" | null =
+    hovered == null ? null : family.includes(hovered) ? "active" : "dim";
+
   return (
     <div
       className={cn(
@@ -72,9 +90,9 @@ function RecordNode({ data }: NodeProps) {
     >
       <div
         className={cn(
-          "rounded-full ring-1 ring-background/60 transition-transform duration-200",
+          "rounded-full ring-1 ring-background/60 transition-shadow duration-200",
           dotClass[kind],
-          focus === "active" && "scale-125",
+          focus === "active" && "ring-2 ring-foreground/40",
         )}
       >
         <Handle className="!opacity-0" position={Position.Top} type="target" />
@@ -103,9 +121,36 @@ function RecordNode({ data }: NodeProps) {
       </div>
     </div>
   );
-}
+});
+
+// A straight edge that brightens when it touches the hovered node and dims when
+// it doesn't. Reads the hovered id from context so the `edges` prop stays stable.
+const RecordEdge = memo(function RecordEdge({
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  source,
+  target,
+}: EdgeProps) {
+  const hovered = useContext(HoverContext);
+  const [path] = getStraightPath({ sourceX, sourceY, targetX, targetY });
+  const touches = !hovered || source === hovered || target === hovered;
+  return (
+    <BaseEdge
+      path={path}
+      style={{
+        stroke: hovered && touches ? "var(--primary)" : "var(--border)",
+        strokeWidth: hovered && touches ? 1.75 : 1.25,
+        opacity: hovered && !touches ? 0.12 : 0.7,
+        transition: "stroke 0.2s, opacity 0.2s",
+      }}
+    />
+  );
+});
 
 const nodeTypes = { record: RecordNode };
+const edgeTypes = { record: RecordEdge };
 
 // Build nodes + edges from the record. A visit links to a problem when its
 // type/summary mentions the problem label (case-insensitive) — that produces
@@ -172,27 +217,24 @@ export function RecordGraph({
   className?: string;
 }) {
   const { t } = useTranslation();
-  // The node the pointer is over; drives the focus highlight.
-  const [hover, setHover] = useState<string | null>(null);
+  const { resolvedTheme } = useTheme();
+  // The hovered node id — drives the focus highlight via context only.
+  const [hovered, setHovered] = useState<string | null>(null);
 
-  // Stable base layout (positions + adjacency), computed once per patient.
-  const base = useMemo(() => {
+  // Nodes + edges are computed once per patient and stay referentially stable
+  // across hover, so React Flow never re-measures (the source of the flicker).
+  const { nodes, edges } = useMemo(() => {
     const g = buildGraph(patient);
     layout(g.nodes, g.edges);
-    // Adjacency for the hover focus: a node is "active" when it is hovered or
-    // directly linked to the hovered node.
-    const neighbours = new Map<string, Set<string>>();
-    for (const n of g.nodes) neighbours.set(n.id, new Set([n.id]));
+    // For each node, the set of ids that should stay lit when it is hovered:
+    // itself plus its direct neighbours.
+    const family = new Map<string, Set<string>>();
+    for (const n of g.nodes) family.set(n.id, new Set([n.id]));
     for (const e of g.edges) {
-      neighbours.get(e.source)?.add(e.target);
-      neighbours.get(e.target)?.add(e.source);
+      family.get(e.source)?.add(e.target);
+      family.get(e.target)?.add(e.source);
     }
-    return { nodes: g.nodes, edges: g.edges, neighbours };
-  }, [patient]);
-
-  const nodes: Node[] = useMemo(() => {
-    const active = hover ? base.neighbours.get(hover) : null;
-    return base.nodes.map((n) => ({
+    const rfNodes: Node[] = g.nodes.map((n) => ({
       id: n.id,
       type: "record",
       position: { x: n.x ?? 0, y: n.y ?? 0 },
@@ -200,27 +242,17 @@ export function RecordGraph({
         label: n.label,
         sub: n.sub,
         kind: n.kind,
-        focus: active ? (active.has(n.id) ? "active" : "dim") : null,
+        family: Array.from(family.get(n.id) ?? [n.id]),
       } satisfies RecordNodeData,
     }));
-  }, [base, hover]);
-
-  const edges: Edge[] = useMemo(() => {
-    return base.edges.map((e) => {
-      const touches = !hover || e.source === hover || e.target === hover;
-      return {
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        style: {
-          stroke: touches && hover ? "var(--primary)" : "var(--border)",
-          strokeWidth: touches && hover ? 1.75 : 1.25,
-          opacity: hover && !touches ? 0.12 : 0.7,
-          transition: "stroke 0.2s, opacity 0.2s",
-        },
-      };
-    });
-  }, [base, hover]);
+    const rfEdges: Edge[] = g.edges.map((e) => ({
+      id: e.id,
+      source: e.source,
+      target: e.target,
+      type: "record",
+    }));
+    return { nodes: rfNodes, edges: rfEdges };
+  }, [patient]);
 
   if (patient.problems.length === 0 && patient.encounters.length === 0) {
     return (
@@ -237,23 +269,27 @@ export function RecordGraph({
         className,
       )}
     >
-      <ReactFlow
-        edges={edges}
-        fitView
-        fitViewOptions={{ padding: 0.3 }}
-        nodeTypes={nodeTypes}
-        nodes={nodes}
-        nodesConnectable={false}
-        nodesDraggable={false}
-        onNodeMouseEnter={(_, node) => setHover(node.id)}
-        onNodeMouseLeave={() => setHover(null)}
-        panOnScroll
-        proOptions={{ hideAttribution: true }}
-        zoomOnScroll={false}
-      >
-        <Background color="var(--border)" gap={22} size={1.5} />
-        <Controls showInteractive={false} />
-      </ReactFlow>
+      <HoverContext.Provider value={hovered}>
+        <ReactFlow
+          colorMode={resolvedTheme === "light" ? "light" : "dark"}
+          edgeTypes={edgeTypes}
+          edges={edges}
+          fitView
+          fitViewOptions={{ padding: 0.3 }}
+          nodeTypes={nodeTypes}
+          nodes={nodes}
+          nodesConnectable={false}
+          nodesDraggable={false}
+          onNodeMouseEnter={(_, node) => setHovered(node.id)}
+          onNodeMouseLeave={() => setHovered(null)}
+          panOnScroll
+          proOptions={{ hideAttribution: true }}
+          zoomOnScroll={false}
+        >
+          <Background color="var(--border)" gap={22} size={1.5} />
+          <Controls showInteractive={false} />
+        </ReactFlow>
+      </HoverContext.Provider>
     </div>
   );
 }
