@@ -10,7 +10,7 @@ import { appointmentInputSchema } from "../../lib/appointment-validation.js";
 import { initialsFromName } from "../../lib/initials.js";
 import { inventoryInputSchema } from "../../lib/inventory-validation.js";
 import { invoiceInputSchema } from "../../lib/invoice-validation.js";
-import { patientInputSchema } from "../../lib/patient-validation.js";
+import { validatePatientImport } from "./import.js";
 import { prescriptionInputSchema } from "../../lib/prescription-validation.js";
 import { taskInputSchema } from "../../lib/task-validation.js";
 import * as analytics from "../analytics.js";
@@ -620,30 +620,18 @@ export function createChatTools(ctx: ToolContext) {
       }),
       execute: async ({ records }) => {
         step(`Validating ${records.length} record(s)`);
-        const valid: unknown[] = [];
-        const invalid: { index: number; errors: string[] }[] = [];
-        records.forEach((rec, index) => {
-          const parsed = patientInputSchema.safeParse(rec);
-          if (parsed.success) {
-            valid.push(parsed.data);
-          } else {
-            invalid.push({
-              index,
-              errors: parsed.error.issues.map(
-                (i) => `${i.path.join(".") || "(root)"}: ${i.message}`,
-              ),
-            });
-          }
-        });
-        // Hand the validated, ready-to-commit set to the UI for an approval
-        // card. The client posts these back to /api/ai/import on approval.
+        const { valid, invalid, total } = validatePatientImport(records);
+        // Hand the validated set + the raw records to the UI for an approval
+        // card. The client can edit any record, re-validate, and posts the valid
+        // set back to /api/ai/import on approval. `records` carries the originals
+        // so invalid rows are editable.
         writer.write({
           type: "data-importPreview",
-          data: { valid, invalid, total: records.length },
+          data: { records, valid, invalid, total },
         });
         step(`${valid.length} ready, ${invalid.length} skipped`);
         return {
-          total: records.length,
+          total,
           validCount: valid.length,
           invalidCount: invalid.length,
           invalid,

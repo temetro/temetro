@@ -61,3 +61,16 @@ export async function commitImport(
     body: JSON.stringify({ records }),
   });
 }
+
+// Re-validate edited import records (dry run) so the review UI can refresh which
+// rows are ready vs. need fixing. Writes nothing.
+export async function validateImport(records: unknown[]): Promise<{
+  valid: unknown[];
+  invalid: { index: number; errors: string[]; record: unknown }[];
+  total: number;
+}> {
+  return apiFetch("/api/ai/import/validate", {
+    method: "POST",
+    body: JSON.stringify({ records }),
+  });
+}

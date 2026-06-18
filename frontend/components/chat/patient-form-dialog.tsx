@@ -46,6 +46,10 @@ type PatientFormDialogProps = {
   patient?: Patient;
   onCreated?: (fileNumber: string) => void;
   onSaved?: (patient: Patient) => void;
+  // Review mode: when provided, the form does NOT persist — it emits the edited
+  // record so a caller (e.g. the import review dialog) can stage it. The file
+  // number becomes editable so a clinician can fix an import row.
+  onDraft?: (record: Patient) => void;
 };
 
 type AllergyDraft = { substance: string; reaction: string; severity: AllergySeverity };
@@ -206,9 +210,12 @@ export function PatientFormDialog({
   patient,
   onCreated,
   onSaved,
+  onDraft,
 }: PatientFormDialogProps) {
   const { t } = useTranslation();
   const isEdit = mode === "edit";
+  // Review mode stages an edited record instead of writing it (import flow).
+  const isReview = Boolean(onDraft);
   // Reception registers demographics only — clinical sections are hidden (the
   // backend also redacts/ignores clinical data for this role). Show everything
   // while the role is still loading to avoid a flash for clinical users.
@@ -333,6 +340,13 @@ export function PatientFormDialog({
         })),
     };
 
+    // Review mode: hand the edited record back to the caller, don't persist.
+    if (onDraft) {
+      onDraft(built);
+      onOpenChange(false);
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
     try {
@@ -386,14 +400,20 @@ export function PatientFormDialog({
       <DialogPopup className="max-h-[85dvh] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? t("patientForm.editTitle") : t("patientForm.createTitle")}
+            {isReview
+              ? t("patientForm.reviewTitle")
+              : isEdit
+                ? t("patientForm.editTitle")
+                : t("patientForm.createTitle")}
           </DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? t("patientForm.editDescription", {
-                  name: patient?.name ?? "this",
-                })
-              : t("patientForm.createDescription")}
+            {isReview
+              ? t("patientForm.reviewDescription")
+              : isEdit
+                ? t("patientForm.editDescription", {
+                    name: patient?.name ?? "this",
+                  })
+                : t("patientForm.createDescription")}
           </DialogDescription>
         </DialogHeader>
 
@@ -404,8 +424,17 @@ export function PatientFormDialog({
           >
             <Field label={t("patientForm.fileNumber")}>
               <div className="flex items-center gap-2">
-                <Input readOnly value={fileNumber} />
-                {!isEdit && (
+                <Input
+                  onChange={
+                    isReview
+                      ? (event) =>
+                          setFileNumber(event.target.value.replace(/\D/g, ""))
+                      : undefined
+                  }
+                  readOnly={!isReview}
+                  value={fileNumber}
+                />
+                {!isEdit && !isReview && (
                   <Button
                     aria-label={t("patientForm.regenerate")}
                     onClick={() => setFileNumber(generateFileNumber())}
@@ -703,9 +732,11 @@ export function PatientFormDialog({
             <Button disabled={!name.trim() || submitting} type="submit">
               {submitting
                 ? t("patientForm.saving")
-                : isEdit
-                  ? t("patientForm.saveChanges")
-                  : t("patientForm.savePatient")}
+                : isReview
+                  ? t("patientForm.saveDraft")
+                  : isEdit
+                    ? t("patientForm.saveChanges")
+                    : t("patientForm.savePatient")}
             </Button>
           </DialogFooter>
         </form>

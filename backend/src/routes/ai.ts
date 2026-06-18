@@ -18,6 +18,7 @@ import {
   saveAiConfig,
   toAiConfig,
 } from "../services/ai/config.js";
+import { validatePatientImport } from "../services/ai/import.js";
 import { getPolicy, savePolicy } from "../services/ai/policy.js";
 import * as patients from "../services/patients.js";
 
@@ -184,6 +185,30 @@ aiRouter.post(
       }
 
       res.json({ created, failed });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// --- Migration import re-validation (dry run) -------------------------------
+// Powers the "review & edit before import" UI: the client edits parsed records
+// and calls this to refresh which are ready vs. need fixing. Writes nothing.
+aiRouter.post(
+  "/import/validate",
+  requireAuth,
+  requireOrg,
+  requirePermission({ patient: ["write"] }),
+  async (req, res, next) => {
+    try {
+      const records = (req.body as { records?: unknown[] }).records;
+      if (!Array.isArray(records)) {
+        throw new HttpError(400, "records must be an array.");
+      }
+      if (records.length > 500) {
+        throw new HttpError(400, "Too many records (max 500).");
+      }
+      res.json(validatePatientImport(records));
     } catch (err) {
       next(err);
     }

@@ -19,9 +19,12 @@ export type LabCardData = {
 };
 
 export type ImportPreviewData = {
+  // Every parsed record (originals), so the clinician can edit any row.
+  records: unknown[];
   // Validated, ready-to-commit records (server re-validates on commit).
   valid: unknown[];
-  invalid: { index: number; errors: string[] }[];
+  // Skipped rows, with their errors and the original record (for editing).
+  invalid: { index: number; errors: string[]; record: unknown }[];
   total: number;
 };
 
