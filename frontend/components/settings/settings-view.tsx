@@ -8,6 +8,7 @@ import { AIPanel } from "@/components/settings/settings-ai";
 import { SigningPanel } from "@/components/settings/settings-billing";
 import { CareTeamPanel } from "@/components/settings/settings-care-team";
 import { DevelopersPanel } from "@/components/settings/settings-developers";
+import { IntegrationsPanel } from "@/components/settings/settings-integrations";
 import { ProfilePanel } from "@/components/settings/settings-preferences";
 import { RecordsPanel } from "@/components/settings/settings-records";
 import { useActiveRole } from "@/lib/roles";
@@ -18,6 +19,7 @@ const TABS = [
   { id: "records", labelKey: "settings.tabs.records" },
   { id: "signing", labelKey: "settings.tabs.signing" },
   { id: "careTeam", labelKey: "settings.tabs.careTeam" },
+  { id: "integrations", labelKey: "settings.tabs.integrations" },
   { id: "developers", labelKey: "settings.tabs.developers" },
 ] as const;
 
@@ -70,6 +72,7 @@ export function SettingsView() {
         {activeTab === "records" && <RecordsPanel />}
         {activeTab === "signing" && <SigningPanel />}
         {activeTab === "careTeam" && <CareTeamPanel />}
+        {activeTab === "integrations" && <IntegrationsPanel />}
         {activeTab === "developers" && <DevelopersPanel />}
       </div>
     </div>

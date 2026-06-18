@@ -3,6 +3,7 @@
 import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
+import { SendToPharmacyButton } from "@/components/integrations/integration-actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -142,12 +143,20 @@ export function PrescriptionDetailSheet({
             </div>
           )}
         </SheetPanel>
-        {rx && onDelete && (
+        {rx && (
           <SheetFooter>
-            <Button onClick={onDelete} type="button" variant="destructive">
-              <Trash2 className="size-4" />
-              {t("prescriptions.detail.delete")}
-            </Button>
+            {onDelete && (
+              <Button
+                className="sm:mr-auto"
+                onClick={onDelete}
+                type="button"
+                variant="destructive"
+              >
+                <Trash2 className="size-4" />
+                {t("prescriptions.detail.delete")}
+              </Button>
+            )}
+            <SendToPharmacyButton rxId={rx.id} />
           </SheetFooter>
         )}
       </SheetPopup>

@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { LabIntegrationCard } from "@/components/lab/lab-integration-card";
 import { StagedFilesField } from "@/components/patients/patient-files";
 import { uploadAttachment } from "@/lib/attachments";
 import { LAB_ANALYSES, LAB_ANALYSIS_UNITS } from "@/lib/lab-analyses";
@@ -608,6 +609,18 @@ export function LabView() {
           {t("lab.addResult.button")}
         </Button>
       </div>
+
+      <LabIntegrationCard
+        onSynced={() =>
+          listPatients()
+            .then((data) => {
+              setPatients(data);
+              setRecent(buildRecent(data));
+            })
+            .catch(() => {})
+        }
+        patients={patients}
+      />
 
       <section className="flex flex-col gap-3">
         <div>

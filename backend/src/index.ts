@@ -16,6 +16,7 @@ import { appointmentsRouter } from "./routes/appointments.js";
 import { chatRouter } from "./routes/chat.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { dispensesRouter } from "./routes/dispenses.js";
+import { integrationsRouter } from "./routes/integrations.js";
 import { inventoryRouter } from "./routes/inventory.js";
 import { invoicesRouter } from "./routes/invoices.js";
 import { notesRouter } from "./routes/notes.js";
@@ -80,6 +81,7 @@ app.use("/api/notifications", notificationsRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/chat", chatRouter);
+app.use("/api/integrations", integrationsRouter);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -107,4 +109,5 @@ server.listen(env.PORT, () => {
   console.log(`  • settings: /api/settings`);
   console.log(`  • ai:       /api/ai  (config + import)`);
   console.log(`  • chat:     /api/chat  (LLM agent)`);
+  console.log(`  • integr.:  /api/integrations  (FHIR / e-Rx / claims)`);
 });

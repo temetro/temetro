@@ -1103,6 +1103,36 @@
     "uploadFailedTitle": "Some files didn't upload",
     "uploadFailedBody": "The record was saved, but one or more files failed to upload. Try adding them again from the record."
   },
+  "integrations": {
+    "fhir": {
+      "cardTitle": "Lab system (HL7/FHIR)",
+      "disabledHint": "Not enabled. An owner or admin can connect a lab system in Settings → Integrations.",
+      "searchPlaceholder": "Search a patient to pull results…",
+      "change": "Change",
+      "sync": "Sync results",
+      "syncing": "Syncing…",
+      "syncedTitle": "Results synced",
+      "syncedBody": "Imported {{count}} result(s) for {{name}}.",
+      "failedTitle": "Sync failed",
+      "failedBody": "Couldn't reach the lab system. Please try again."
+    },
+    "eRx": {
+      "send": "Send to pharmacy",
+      "sending": "Sending…",
+      "sentTitle": "Prescription sent",
+      "sentBody": "Transmitted to the pharmacy as an NCPDP SCRIPT NewRx.",
+      "failedTitle": "Couldn't send",
+      "failedBody": "The pharmacy gateway rejected the message or is unreachable."
+    },
+    "claims": {
+      "submit": "Submit claim",
+      "submitting": "Submitting…",
+      "submittedTitle": "Claim submitted",
+      "submittedBody": "Clearinghouse status: {{status}}.",
+      "failedTitle": "Couldn't submit claim",
+      "failedBody": "The clearinghouse rejected the claim or is unreachable."
+    }
+  },
   "patientCard": {
     "notFound": "No patient found for file #{{number}}.",
     "overview": "Overview",
@@ -1277,7 +1307,54 @@
       "records": "Records",
       "signing": "Signing",
       "careTeam": "Care team",
+      "integrations": "Integrations",
       "developers": "Developers"
+    },
+    "integrations": {
+      "loading": "Loading integrations…",
+      "intro": "Connect temetro to external healthcare systems. Point each integration at your vendor's sandbox or production endpoint and supply its credentials.",
+      "endpoint": "Endpoint URL",
+      "credentials": "Credentials",
+      "credentialsSet": "•••••••• (stored — type to replace)",
+      "enable": "Enable integration",
+      "enableHint": "When on, its actions appear on the relevant pages.",
+      "save": "Save",
+      "saving": "Saving…",
+      "test": "Test connection",
+      "testing": "Testing…",
+      "savedTitle": "Integration saved",
+      "saveFailedTitle": "Couldn't save",
+      "saveFailedBody": "Something went wrong, or you don't have permission. Please try again.",
+      "testOk": "Connection succeeded",
+      "testFailed": "Connection failed",
+      "testError": "Couldn't reach the endpoint.",
+      "lastSync": "Last activity {{when}}",
+      "status": {
+        "connected": "Connected",
+        "error": "Error",
+        "unconfigured": "Not configured"
+      },
+      "fhir": {
+        "title": "Lab system (HL7/FHIR)",
+        "description": "Read lab results from a FHIR R4 server or HL7 v2 feed (e.g. a HAPI FHIR / SMART Health IT sandbox, or your lab's gateway).",
+        "endpointPlaceholder": "https://hapi.fhir.org/baseR4",
+        "credentialsPlaceholder": "Bearer token (optional for open sandboxes)",
+        "credentialsHint": "Sent as a Bearer token, or JSON {\"token\":\"…\"}. Leave blank for public sandboxes."
+      },
+      "eprescribe": {
+        "title": "e-Prescribing (NCPDP SCRIPT)",
+        "description": "Transmit prescriptions to pharmacies as NCPDP SCRIPT NewRx messages. Production routing requires your Surescripts (or sandbox) account.",
+        "endpointPlaceholder": "https://your-pharmacy-gateway.example/script",
+        "credentialsPlaceholder": "JSON: {\"token\":\"…\",\"senderId\":\"…\"}",
+        "credentialsHint": "JSON with your gateway token and sender id."
+      },
+      "claims": {
+        "title": "Insurance claims (X12 837/835)",
+        "description": "Submit professional claims (837P) to a clearinghouse and read remittances (835). Production requires your clearinghouse account.",
+        "endpointPlaceholder": "https://your-clearinghouse.example/claims",
+        "credentialsPlaceholder": "JSON: {\"token\":\"…\",\"submitterId\":\"…\",\"receiverId\":\"…\"}",
+        "credentialsHint": "JSON with your clearinghouse token and submitter/receiver ids."
+      }
     },
     "empty": "Nothing here yet.",
     "copy": "Copy",
