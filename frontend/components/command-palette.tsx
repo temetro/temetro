@@ -76,7 +76,10 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
         // Filtered by role so reception can't jump to clinical pages, and by
         // the AI kill-switch so the disabled chat isn't listed.
         items: visibleNavItems(role)
-          .filter((item) => aiAllowed || item.id !== "new-chat")
+          .filter(
+            (item) =>
+              aiAllowed || (item.id !== "new-chat" && item.id !== "analysis"),
+          )
           .flatMap((item) =>
           item.subs?.length
             ? item.subs.map((sub) => ({

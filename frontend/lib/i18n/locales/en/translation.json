@@ -1479,11 +1479,11 @@
     "ai": {
       "availability": {
         "title": "Availability",
-        "description": "Control who in your clinic can use the AI assistant. When disabled, the AI page and sidebar entry are hidden and the assistant cannot be reached.",
+        "description": "Control who in your clinic can use the AI assistant. When disabled, every AI surface — New chat, Analysis, and the chat history — is hidden and cannot be reached.",
         "enabled": "Enable AI assistant",
-        "enabledHint": "Turn the AI assistant on for your clinic. Off hides it for everyone.",
+        "enabledHint": "Master switch. Turning this off disables and hides the AI for everyone in the clinic — including owners and admins.",
         "employeesOnly": "Disable for employees only",
-        "employeesOnlyHint": "Hide the AI from staff; owners and admins keep access.",
+        "employeesOnlyHint": "Keep the AI for owners and admins, but hide it from all other staff.",
         "savedTitle": "AI availability updated",
         "savedBody": "The change applies across your clinic.",
         "readonlyEnabled": "The AI assistant is enabled for your clinic.",
