@@ -591,6 +591,7 @@
       "advancedHint": "Record a custom analysis with a reference range.",
       "refRange": "Reference range",
       "refRangePlaceholder": "e.g. 13.0–17.0 g/dL",
+      "files": "Analysis files",
       "cancel": "Cancel",
       "submit": "Add result",
       "needPatientTitle": "Pick a patient",
@@ -970,6 +971,40 @@
         "inventory": "Inventory updated."
       },
       "inventoryItems": "{{count}} item(s)",
+      "itemCount": "{{count}} item(s)",
+      "total": "Total",
+      "editButton": "Edit",
+      "edit": {
+        "title": "Edit proposed record",
+        "save": "Save changes",
+        "cancel": "Cancel",
+        "addRow": "Add",
+        "removeRow": "Remove row"
+      },
+      "fields": {
+        "name": "Patient name",
+        "date": "Date",
+        "time": "Time",
+        "type": "Type",
+        "provider": "Provider",
+        "title": "Title",
+        "assignee": "Assignee",
+        "due": "Due",
+        "priority": "Priority",
+        "patient": "Patient",
+        "medication": "Medication",
+        "dose": "Dose",
+        "frequency": "Frequency",
+        "duration": "Duration",
+        "lineItems": "Line items",
+        "description": "Description",
+        "quantity": "Qty",
+        "unitPrice": "Unit price",
+        "items": "Items",
+        "itemName": "Name",
+        "strength": "Strength",
+        "stockQuantity": "Quantity"
+      },
       "approve": "Add",
       "adding": "Adding…",
       "discard": "Discard",
@@ -987,8 +1022,10 @@
         "adding": "Adding…",
         "discardAll": "Discard all",
         "newPatient": "New patient will be created",
+        "edited": "Edited",
         "remove": "Remove",
         "done": "Added {{added}} of {{total}}.",
+        "alreadyAdded": "Added.",
         "failedCount": "{{count}} failed",
         "discarded": "Discarded — nothing was saved."
       }
@@ -1039,10 +1076,19 @@
       "approve": "Import {{count}} record(s)",
       "approve_one": "Import 1 record",
       "reject": "Discard",
+      "reviewEdit": "Review & edit",
+      "reviewTitle": "Review records",
+      "reviewDescription": "Open any record to edit it before importing. Fix the skipped ones to include them.",
+      "reviewClose": "Close",
+      "fixHint": "Open Review & edit to fix the skipped rows, or import the ready ones.",
+      "rowReady": "Ready to import",
+      "needsFix": "Needs fixing",
+      "unnamed": "Unnamed record",
       "importing": "Importing…",
       "rejectedNote": "Import discarded. Nothing was written.",
       "importedTitle": "Records imported",
       "importedBody": "Imported {{count}} patient record(s).",
+      "alreadyImported": "Imported.",
       "failedCount": "{{count}} failed",
       "failedTitle": "Import failed",
       "failedBody": "The records could not be imported. Please try again."
@@ -1051,6 +1097,50 @@
       "title": "AI request failed",
       "body": "Something went wrong reaching the AI. Check your provider and API key in Settings → AI.",
       "dismiss": "Dismiss"
+    }
+  },
+  "patientFiles": {
+    "title": "Files",
+    "add": "Add files",
+    "empty": "No files uploaded.",
+    "remove": "Remove",
+    "open": "Open",
+    "close": "Close",
+    "noPreview": "No preview available for this file type.",
+    "deletedTitle": "File removed",
+    "deleteFailedTitle": "Couldn't remove file",
+    "deleteFailedBody": "Something went wrong, or you don't have permission. Please try again.",
+    "uploadFailedTitle": "Some files didn't upload",
+    "uploadFailedBody": "The record was saved, but one or more files failed to upload. Try adding them again from the record."
+  },
+  "integrations": {
+    "fhir": {
+      "cardTitle": "Lab system (HL7/FHIR)",
+      "disabledHint": "Not enabled. An owner or admin can connect a lab system in Settings → Integrations.",
+      "searchPlaceholder": "Search a patient to pull results…",
+      "change": "Change",
+      "sync": "Sync results",
+      "syncing": "Syncing…",
+      "syncedTitle": "Results synced",
+      "syncedBody": "Imported {{count}} result(s) for {{name}}.",
+      "failedTitle": "Sync failed",
+      "failedBody": "Couldn't reach the lab system. Please try again."
+    },
+    "eRx": {
+      "send": "Send to pharmacy",
+      "sending": "Sending…",
+      "sentTitle": "Prescription sent",
+      "sentBody": "Transmitted to the pharmacy as an NCPDP SCRIPT NewRx.",
+      "failedTitle": "Couldn't send",
+      "failedBody": "The pharmacy gateway rejected the message or is unreachable."
+    },
+    "claims": {
+      "submit": "Submit claim",
+      "submitting": "Submitting…",
+      "submittedTitle": "Claim submitted",
+      "submittedBody": "Clearinghouse status: {{status}}.",
+      "failedTitle": "Couldn't submit claim",
+      "failedBody": "The clearinghouse rejected the claim or is unreachable."
     }
   },
   "patientCard": {
@@ -1111,8 +1201,20 @@
     },
     "graph": {
       "title": "Record graph",
-      "hint": "How this patient's problems and visits connect. Drag nodes; scroll to pan.",
-      "empty": "Not enough record data to graph yet."
+      "hint": "Hover a node to focus its connections. Scroll to pan, pinch to zoom.",
+      "empty": "Not enough record data to graph yet.",
+      "open": "Open graph",
+      "close": "Close",
+      "kind": {
+        "problem": "Problem",
+        "visit": "Visit"
+      },
+      "fields": {
+        "since": "Since",
+        "date": "Date",
+        "provider": "Provider",
+        "summary": "Summary"
+      }
     },
     "appointments": {
       "title": "Appointments",
@@ -1201,6 +1303,9 @@
     "saving": "Saving…",
     "saveChanges": "Save changes",
     "savePatient": "Save patient",
+    "saveDraft": "Save changes",
+    "reviewTitle": "Review record before import",
+    "reviewDescription": "Edit any field, then save to update this record in the import. Nothing is written until you import.",
     "saveError": "Could not save the patient.",
     "updatedTitle": "Record updated",
     "updatedBody": "{{name}}'s chart was saved.",
@@ -1215,7 +1320,54 @@
       "records": "Records",
       "signing": "Signing",
       "careTeam": "Care team",
+      "integrations": "Integrations",
       "developers": "Developers"
+    },
+    "integrations": {
+      "loading": "Loading integrations…",
+      "intro": "Connect temetro to external healthcare systems. Point each integration at your vendor's sandbox or production endpoint and supply its credentials.",
+      "endpoint": "Endpoint URL",
+      "credentials": "Credentials",
+      "credentialsSet": "•••••••• (stored — type to replace)",
+      "enable": "Enable integration",
+      "enableHint": "When on, its actions appear on the relevant pages.",
+      "save": "Save",
+      "saving": "Saving…",
+      "test": "Test connection",
+      "testing": "Testing…",
+      "savedTitle": "Integration saved",
+      "saveFailedTitle": "Couldn't save",
+      "saveFailedBody": "Something went wrong, or you don't have permission. Please try again.",
+      "testOk": "Connection succeeded",
+      "testFailed": "Connection failed",
+      "testError": "Couldn't reach the endpoint.",
+      "lastSync": "Last activity {{when}}",
+      "status": {
+        "connected": "Connected",
+        "error": "Error",
+        "unconfigured": "Not configured"
+      },
+      "fhir": {
+        "title": "Lab system (HL7/FHIR)",
+        "description": "Read lab results from a FHIR R4 server or HL7 v2 feed (e.g. a HAPI FHIR / SMART Health IT sandbox, or your lab's gateway).",
+        "endpointPlaceholder": "https://hapi.fhir.org/baseR4",
+        "credentialsPlaceholder": "Bearer token (optional for open sandboxes)",
+        "credentialsHint": "Sent as a Bearer token, or JSON {\"token\":\"…\"}. Leave blank for public sandboxes."
+      },
+      "eprescribe": {
+        "title": "e-Prescribing (NCPDP SCRIPT)",
+        "description": "Transmit prescriptions to pharmacies as NCPDP SCRIPT NewRx messages. Production routing requires your Surescripts (or sandbox) account.",
+        "endpointPlaceholder": "https://your-pharmacy-gateway.example/script",
+        "credentialsPlaceholder": "JSON: {\"token\":\"…\",\"senderId\":\"…\"}",
+        "credentialsHint": "JSON with your gateway token and sender id."
+      },
+      "claims": {
+        "title": "Insurance claims (X12 837/835)",
+        "description": "Submit professional claims (837P) to a clearinghouse and read remittances (835). Production requires your clearinghouse account.",
+        "endpointPlaceholder": "https://your-clearinghouse.example/claims",
+        "credentialsPlaceholder": "JSON: {\"token\":\"…\",\"submitterId\":\"…\",\"receiverId\":\"…\"}",
+        "credentialsHint": "JSON with your clearinghouse token and submitter/receiver ids."
+      }
     },
     "empty": "Nothing here yet.",
     "copy": "Copy",
@@ -1352,7 +1504,8 @@
           "patient": "Patients",
           "appointment": "Appointments",
           "prescription": "Prescriptions",
-          "task": "Tasks"
+          "task": "Tasks",
+          "lab": "Lab results"
         },
         "actions": {
           "read": "View",
@@ -1431,11 +1584,11 @@
     "ai": {
       "availability": {
         "title": "Availability",
-        "description": "Control who in your clinic can use the AI assistant. When disabled, the AI page and sidebar entry are hidden and the assistant cannot be reached.",
+        "description": "Control who in your clinic can use the AI assistant. When disabled, every AI surface — New chat, Analysis, and the chat history — is hidden and cannot be reached.",
         "enabled": "Enable AI assistant",
-        "enabledHint": "Turn the AI assistant on for your clinic. Off hides it for everyone.",
+        "enabledHint": "Master switch. Turning this off disables and hides the AI for everyone in the clinic — including owners and admins.",
         "employeesOnly": "Disable for employees only",
-        "employeesOnlyHint": "Hide the AI from staff; owners and admins keep access.",
+        "employeesOnlyHint": "Keep the AI for owners and admins, but hide it from all other staff.",
         "savedTitle": "AI availability updated",
         "savedBody": "The change applies across your clinic.",
         "readonlyEnabled": "The AI assistant is enabled for your clinic.",

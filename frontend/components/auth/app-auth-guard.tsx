@@ -56,9 +56,14 @@ export function AppAuthGuard({ children }: { children: ReactNode }) {
       router.replace(defaultLandingFor(role));
       return;
     }
-    // AI kill-switch: the chat home ("/") is off for this user — send them to
-    // patients (clinical roles always have it; non-clinical never land on "/").
-    if (!aiLoading && !aiAllowed && pathname === "/") {
+    // AI kill-switch: the AI surfaces — chat home ("/") and Analysis — are off
+    // for this user (a full clinic disable also covers owners/admins). Send them
+    // to patients (clinical roles always have it; non-clinical never land here).
+    if (
+      !aiLoading &&
+      !aiAllowed &&
+      (pathname === "/" || pathname === "/analysis")
+    ) {
       router.replace("/patients");
     }
   }, [ready, role, pathname, router, aiAllowed, aiLoading]);

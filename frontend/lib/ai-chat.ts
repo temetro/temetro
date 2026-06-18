@@ -19,10 +19,16 @@ export type LabCardData = {
 };
 
 export type ImportPreviewData = {
+  // Every parsed record (originals), so the clinician can edit any row.
+  records: unknown[];
   // Validated, ready-to-commit records (server re-validates on commit).
   valid: unknown[];
-  invalid: { index: number; errors: string[] }[];
+  // Skipped rows, with their errors and the original record (for editing).
+  invalid: { index: number; errors: string[]; record: unknown }[];
   total: number;
+  // Set by the client once imported/discarded so the card stays locked across
+  // re-render and conversation reload.
+  resolved?: "added" | "discarded";
 };
 
 export type VeilNoticeData = {
@@ -63,6 +69,9 @@ export type ActionPreviewData = {
   kind: ActionPreviewKind;
   record: unknown;
   issues?: string[];
+  // Set by the client once committed/discarded so the card stays locked across
+  // re-render and conversation reload (prevents a duplicate add).
+  resolved?: "added" | "discarded";
 };
 
 // Maps each data part name → its payload. Part `type` strings are the key

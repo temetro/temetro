@@ -11,10 +11,12 @@ import { initRealtime } from "./realtime.js";
 import { activityRouter } from "./routes/activity.js";
 import { aiRouter } from "./routes/ai.js";
 import { analyticsRouter } from "./routes/analytics.js";
+import { attachmentsRouter } from "./routes/attachments.js";
 import { appointmentsRouter } from "./routes/appointments.js";
 import { chatRouter } from "./routes/chat.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { dispensesRouter } from "./routes/dispenses.js";
+import { integrationsRouter } from "./routes/integrations.js";
 import { inventoryRouter } from "./routes/inventory.js";
 import { invoicesRouter } from "./routes/invoices.js";
 import { notesRouter } from "./routes/notes.js";
@@ -63,6 +65,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api/patients", patientsRouter);
+app.use("/api/attachments", attachmentsRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/appointments", appointmentsRouter);
 app.use("/api/prescriptions", prescriptionsRouter);
@@ -78,6 +81,7 @@ app.use("/api/notifications", notificationsRouter);
 app.use("/api/settings", settingsRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/chat", chatRouter);
+app.use("/api/integrations", integrationsRouter);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -90,6 +94,7 @@ server.listen(env.PORT, () => {
   console.log(`temetro backend listening on ${env.BETTER_AUTH_URL}`);
   console.log(`  • auth:     /api/auth/*  (frontend origin: ${env.FRONTEND_URL})`);
   console.log(`  • patients: /api/patients`);
+  console.log(`  • files:    /api/attachments`);
   console.log(`  • notes:    /api/notes`);
   console.log(`  • appts:    /api/appointments`);
   console.log(`  • rx:       /api/prescriptions`);
@@ -104,4 +109,5 @@ server.listen(env.PORT, () => {
   console.log(`  • settings: /api/settings`);
   console.log(`  • ai:       /api/ai  (config + import)`);
   console.log(`  • chat:     /api/chat  (LLM agent)`);
+  console.log(`  • integr.:  /api/integrations  (FHIR / e-Rx / claims)`);
 });

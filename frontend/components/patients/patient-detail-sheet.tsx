@@ -5,9 +5,17 @@ import { useTranslation } from "react-i18next";
 
 import { AiBadge } from "@/components/ai-badge";
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
+import { RecordGraph } from "@/components/graph/record-graph";
 import { PatientDetail } from "@/components/patients/patient-detail";
 import { TransferPatientDialog } from "@/components/patients/transfer-patient-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import {
+  Dialog,
+  DialogDescription,
+  DialogHeader,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Sheet,
   SheetHeader,
@@ -73,6 +81,8 @@ export function PatientDetailSheet({
   const [editOpen, setEditOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  // Graph popped out of the sheet into its own dialog (the sheet closes first).
+  const [graphOpen, setGraphOpen] = useState(false);
   // Related records aggregated into the sheet for a 360° view.
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -161,6 +171,10 @@ export function PatientDetailSheet({
                   setEditKey((k) => k + 1);
                   setEditOpen(true);
                 }}
+                onOpenGraph={() => {
+                  onOpenChange(false);
+                  setGraphOpen(true);
+                }}
                 onTransfer={
                   canTransfer ? () => setTransferOpen(true) : undefined
                 }
@@ -202,6 +216,25 @@ export function PatientDetailSheet({
           open={confirmOpen}
           title={t("patients.delete.title")}
         />
+      )}
+
+      {patient && (
+        <Dialog onOpenChange={setGraphOpen} open={graphOpen}>
+          <DialogPopup className="flex h-[80dvh] flex-col sm:max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {t("patientCard.graph.title")} · {patient.name}
+              </DialogTitle>
+              <DialogDescription>
+                {t("patientCard.graph.hint")}
+              </DialogDescription>
+            </DialogHeader>
+            <RecordGraph
+              className="h-full min-h-0 flex-1 border-0 bg-transparent"
+              patient={patient}
+            />
+          </DialogPopup>
+        </Dialog>
       )}
     </>
   );

@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AiBadge } from "@/components/ai-badge";
+import { SubmitClaimButton } from "@/components/integrations/integration-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -357,6 +358,7 @@ export function InvoiceDetailSheet({
               <Download className="size-4" />
               {t("invoices.sheet.download")}
             </Button>
+            <SubmitClaimButton invoiceId={invoice.id} />
             {isSettled ? null : (
               <Button disabled={busy} onClick={payAll} type="button">
                 <CircleCheck className="size-4" />

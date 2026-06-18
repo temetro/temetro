@@ -33,9 +33,12 @@ export function DashboardSidebar() {
   const isCollapsed = state === "collapsed";
 
   // Hide clinical nav from non-clinical roles (e.g. reception). See lib/roles.ts.
-  // Also drop the AI "New chat" entry when the clinic's AI kill-switch applies.
+  // Also drop the AI surfaces ("New chat" + "Analysis") when the clinic's AI
+  // kill-switch applies — a full disable hides them for owners/admins too.
   const dashboardRoutes: Route[] = visibleNavItems(role)
-    .filter((item) => aiAllowed || item.id !== "new-chat")
+    .filter(
+      (item) => aiAllowed || (item.id !== "new-chat" && item.id !== "analysis"),
+    )
     .map((item) => ({
     id: item.id,
     title: t(item.labelKey),

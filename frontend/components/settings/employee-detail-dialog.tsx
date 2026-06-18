@@ -2,6 +2,7 @@
 
 import {
   CalendarDays,
+  FlaskConical,
   ListChecks,
   Pill,
   Trash2,
@@ -41,6 +42,7 @@ const RESOURCE_ICONS: Record<string, React.ReactNode> = {
   appointment: <CalendarDays className="size-4" />,
   prescription: <Pill className="size-4" />,
   task: <ListChecks className="size-4" />,
+  lab: <FlaskConical className="size-4" />,
 };
 
 // One row of /api/staff — shared with the Care Team panel.

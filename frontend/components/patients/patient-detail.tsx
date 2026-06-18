@@ -1,14 +1,24 @@
 "use client";
 
-import { ArrowLeftRight, Pencil, Trash2 } from "lucide-react";
-import type { ReactNode } from "react";
+import { ArrowLeftRight, Network, Pencil, Trash2 } from "lucide-react";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Sparkline } from "@/components/chat/sparkline";
-import { RecordGraph } from "@/components/graph/record-graph";
+import { AttachmentsSection } from "@/components/patients/patient-files";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { Appointment } from "@/lib/appointments";
 import {
   formatMoney,
@@ -17,6 +27,16 @@ import {
 } from "@/lib/invoices";
 import type { AllergySeverity, LabFlag, Patient, Trend } from "@/lib/patients";
 import type { Prescription } from "@/lib/prescriptions";
+import { cn } from "@/lib/utils";
+
+// A record "file" surfaced both in the graph and the sheet's clickable list.
+type RecordFile = {
+  id: string;
+  kind: "problem" | "visit";
+  title: string;
+  sub: string;
+  rows: { label: string; value: string }[];
+};
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
 
@@ -91,6 +111,7 @@ export function PatientDetail({
   onEdit,
   onTransfer,
   onDelete,
+  onOpenGraph,
   prescriptions,
   appointments,
   invoices,
@@ -99,6 +120,8 @@ export function PatientDetail({
   onEdit?: () => void;
   onTransfer?: () => void;
   onDelete?: () => void;
+  // Pops the record graph out into its own dialog (closing this sheet).
+  onOpenGraph?: () => void;
   prescriptions?: Prescription[];
   appointments?: Appointment[];
   invoices?: Invoice[];
@@ -106,6 +129,30 @@ export function PatientDetail({
   const { t } = useTranslation();
   const sex = t(`patientCard.sex.${patient.sex}`);
   const idLine = `${patient.age} · ${sex} · MRN ${patient.fileNumber}`;
+  // The record "file" opened in a detail dialog from the records list.
+  const [openFile, setOpenFile] = useState<RecordFile | null>(null);
+
+  // The same problems + visits the graph plots, as a clickable list.
+  const files: RecordFile[] = [
+    ...patient.problems.map((p, i) => ({
+      id: `prob-${i}`,
+      kind: "problem" as const,
+      title: p.label,
+      sub: p.since,
+      rows: [{ label: t("patientCard.graph.fields.since"), value: p.since }],
+    })),
+    ...patient.encounters.map((e, i) => ({
+      id: `enc-${i}`,
+      kind: "visit" as const,
+      title: e.type,
+      sub: e.date,
+      rows: [
+        { label: t("patientCard.graph.fields.date"), value: e.date },
+        { label: t("patientCard.graph.fields.provider"), value: e.provider },
+        { label: t("patientCard.graph.fields.summary"), value: e.summary },
+      ].filter((r) => r.value),
+    })),
+  ];
 
   return (
     <div className="flex flex-col gap-4">
@@ -187,11 +234,59 @@ export function PatientDetail({
       </Section>
 
       <Section title={t("patientCard.graph.title")}>
-        <p className="mb-3 text-muted-foreground text-xs">
-          {t("patientCard.graph.hint")}
-        </p>
-        <RecordGraph patient={patient} />
+        <div className="flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-muted-foreground text-xs">
+              {t("patientCard.graph.hint")}
+            </p>
+            {onOpenGraph && (
+              <Button
+                className="shrink-0"
+                onClick={onOpenGraph}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                <Network className="size-4" />
+                {t("patientCard.graph.open")}
+              </Button>
+            )}
+          </div>
+          {files.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              {t("patientCard.graph.empty")}
+            </p>
+          ) : (
+            <div className="divide-y divide-border overflow-hidden rounded-xl border bg-card/30">
+              {files.map((file) => (
+                <button
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-accent"
+                  key={file.id}
+                  onClick={() => setOpenFile(file)}
+                  type="button"
+                >
+                  <span
+                    className={cn(
+                      "size-2.5 shrink-0 rounded-full",
+                      file.kind === "problem"
+                        ? "bg-destructive"
+                        : "bg-foreground/55",
+                    )}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-foreground text-sm">
+                    {file.title}
+                  </span>
+                  <span className="shrink-0 text-muted-foreground text-xs">
+                    {file.sub}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </Section>
+
+      <AttachmentsSection fileNumber={patient.fileNumber} />
 
       <Section title={t("patientCard.vitals.title")}>
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
@@ -416,6 +511,49 @@ export function PatientDetail({
           )}
         </Section>
       )}
+
+      <Dialog
+        onOpenChange={(o) => {
+          if (!o) setOpenFile(null);
+        }}
+        open={openFile !== null}
+      >
+        <DialogPopup className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2.5">
+              <span
+                className={cn(
+                  "size-2.5 shrink-0 rounded-full",
+                  openFile?.kind === "problem"
+                    ? "bg-destructive"
+                    : "bg-foreground/55",
+                )}
+              />
+              {openFile?.title}
+            </DialogTitle>
+            <DialogDescription>
+              {openFile
+                ? t(`patientCard.graph.kind.${openFile.kind}`)
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogPanel className="flex flex-col gap-3">
+            {openFile?.rows.map((row) => (
+              <div className="flex flex-col gap-0.5" key={row.label}>
+                <span className="text-muted-foreground text-xs">
+                  {row.label}
+                </span>
+                <span className="text-foreground text-sm">{row.value}</span>
+              </div>
+            ))}
+          </DialogPanel>
+          <DialogFooter>
+            <DialogClose render={<Button type="button" variant="outline" />}>
+              {t("patientCard.graph.close")}
+            </DialogClose>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
     </div>
   );
 }

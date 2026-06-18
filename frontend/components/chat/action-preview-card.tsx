@@ -6,6 +6,7 @@ import {
   CalendarPlus,
   Check,
   ClipboardList,
+  Pencil,
   Pill,
   Receipt,
   X,
@@ -13,9 +14,10 @@ import {
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { RecordEditDialog } from "@/components/chat/record-edit-dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { ActionPreviewData } from "@/lib/ai-chat";
+import type { ActionPreviewData, ActionPreviewKind } from "@/lib/ai-chat";
 import { type AppointmentInput, createAppointment } from "@/lib/appointments";
 import {
   createInvoice,
@@ -110,21 +112,139 @@ export async function commitAction(data: ActionPreviewData): Promise<void> {
   }
 }
 
-// The human approval gate for an agent-proposed add. The agent drafts the record
-// (dry run, nothing written); the clinician reviews it here and must approve
-// before it is committed via the matching RBAC-gated create endpoint.
-export function ActionPreviewCard({ data }: { data: ActionPreviewData }) {
+// A structured, de-densified view of a proposed record. Inventory and invoice
+// records carry an item array — rendered as a compact scrollable list (one row
+// per item) rather than a single comma-joined wall of text; everything else
+// uses the per-kind summary lines.
+export function RecordSummary({
+  kind,
+  record,
+}: {
+  kind: ActionPreviewKind;
+  record: Record<string, unknown>;
+}) {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<Status>("pending");
+
+  if (kind === "inventory") {
+    const items = (record.items as InventoryInput[] | undefined) ?? [];
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="text-muted-foreground text-xs">
+          {t("chat.actionCard.itemCount", { count: items.length })}
+        </p>
+        <ul className="max-h-48 divide-y divide-border overflow-y-auto rounded-lg border bg-card/30">
+          {items.map((it, i) => (
+            <li
+              className="flex items-center gap-2 px-3 py-1.5 text-sm"
+              key={`${it.name}-${i}`}
+            >
+              <span className="min-w-0 flex-1 truncate text-foreground">
+                {it.name}
+                {it.strength ? (
+                  <span className="text-muted-foreground"> · {it.strength}</span>
+                ) : null}
+              </span>
+              {it.stockQuantity != null ? (
+                <span className="shrink-0 tabular-nums text-muted-foreground">
+                  ×{it.stockQuantity}
+                </span>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  if (kind === "invoice") {
+    const items = (record.lineItems as InvoiceLineItem[] | undefined) ?? [];
+    const total = items.reduce((s, li) => s + li.quantity * li.unitPrice, 0);
+    return (
+      <div className="flex flex-col gap-2">
+        {record.name ? (
+          <p className="font-medium text-foreground text-sm">
+            {String(record.name)}
+          </p>
+        ) : null}
+        <ul className="max-h-48 divide-y divide-border overflow-y-auto rounded-lg border bg-card/30">
+          {items.map((li, i) => (
+            <li
+              className="flex items-center gap-2 px-3 py-1.5 text-sm"
+              key={`${li.description}-${i}`}
+            >
+              <span className="min-w-0 flex-1 truncate text-foreground">
+                {li.description}
+                <span className="text-muted-foreground"> ×{li.quantity}</span>
+              </span>
+              <span className="shrink-0 tabular-nums text-muted-foreground">
+                {formatMoney(li.quantity * li.unitPrice)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            {t("chat.actionCard.total")}
+          </span>
+          <span className="font-medium tabular-nums text-foreground">
+            {formatMoney(total)}
+          </span>
+        </p>
+      </div>
+    );
+  }
+
+  const lines = summarize({ kind, record } as ActionPreviewData);
+  return (
+    <div className="space-y-0.5 text-sm">
+      {lines.map((line, i) => (
+        <p
+          className={
+            i === 0 ? "font-medium text-foreground" : "text-muted-foreground"
+          }
+          key={line + i}
+        >
+          {line}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+// The human approval gate for an agent-proposed add. The agent drafts the record
+// (dry run, nothing written); the clinician reviews it here, may edit it, and
+// must approve before it is committed via the matching RBAC-gated create endpoint.
+export function ActionPreviewCard({
+  data,
+  onResolved,
+}: {
+  data: ActionPreviewData;
+  // Called once committed/discarded so the parent can persist the resolution
+  // (prevents re-adding after re-render or conversation reload).
+  onResolved?: (resolution: "added" | "discarded") => void;
+}) {
+  const { t } = useTranslation();
+  const [status, setStatus] = useState<Status>(
+    data.resolved === "added"
+      ? "done"
+      : data.resolved === "discarded"
+        ? "rejected"
+        : "pending",
+  );
+  // Editable working copy of the proposed record (edits commit, not the draft).
+  const [record, setRecord] = useState<Record<string, unknown>>(
+    data.record as Record<string, unknown>,
+  );
+  const [editOpen, setEditOpen] = useState(false);
   const Icon = ICONS[data.kind];
   const hasIssues = (data.issues?.length ?? 0) > 0;
-  const lines = summarize(data);
 
   const approve = async () => {
     setStatus("committing");
     try {
-      await commitAction(data);
+      await commitAction({ ...data, record });
       setStatus("done");
+      onResolved?.("added");
       notify.success(
         t("chat.actionCard.addedTitle"),
         t(`chat.actionCard.kind.${data.kind}`),
@@ -138,6 +258,8 @@ export function ActionPreviewCard({ data }: { data: ActionPreviewData }) {
     }
   };
 
+  const editable = status === "pending";
+
   return (
     <Card className="w-full gap-3 p-4">
       <div className="flex items-center gap-2">
@@ -145,18 +267,20 @@ export function ActionPreviewCard({ data }: { data: ActionPreviewData }) {
         <span className="font-medium text-sm">
           {t(`chat.actionCard.title.${data.kind}`)}
         </span>
+        {editable ? (
+          <Button
+            className="ml-auto"
+            onClick={() => setEditOpen(true)}
+            size="sm"
+            variant="ghost"
+          >
+            <Pencil className="size-3.5" />
+            {t("chat.actionCard.editButton")}
+          </Button>
+        ) : null}
       </div>
 
-      <div className="space-y-0.5 text-sm">
-        {lines.map((line, i) => (
-          <p
-            className={i === 0 ? "font-medium text-foreground" : "text-muted-foreground"}
-            key={line + i}
-          >
-            {line}
-          </p>
-        ))}
-      </div>
+      <RecordSummary kind={data.kind} record={record} />
 
       {hasIssues ? (
         <ul className="space-y-1 rounded-lg bg-muted/50 p-3 text-muted-foreground text-xs">
@@ -191,7 +315,10 @@ export function ActionPreviewCard({ data }: { data: ActionPreviewData }) {
           </Button>
           <Button
             disabled={status === "committing"}
-            onClick={() => setStatus("rejected")}
+            onClick={() => {
+              setStatus("rejected");
+              onResolved?.("discarded");
+            }}
             size="sm"
             variant="outline"
           >
@@ -200,6 +327,14 @@ export function ActionPreviewCard({ data }: { data: ActionPreviewData }) {
           </Button>
         </div>
       )}
+
+      <RecordEditDialog
+        kind={data.kind}
+        onOpenChange={setEditOpen}
+        onSave={setRecord}
+        open={editOpen}
+        record={record}
+      />
     </Card>
   );
 }

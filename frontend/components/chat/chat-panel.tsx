@@ -154,6 +154,29 @@ export function ChatPanel() {
   const { messages, setMessages, sendMessage, status, stop, error } =
     useChat<TemetroUIMessage>({ transport });
 
+  // Mark a proposal/import card as committed or discarded by stamping the data
+  // part, so it persists through re-render and conversation reload (and can't be
+  // submitted twice). `partIndex < 0` marks every action-preview part in the
+  // message (used by the batched card).
+  const resolveProposal = useCallback(
+    (messageId: string, partIndex: number, resolution: "added" | "discarded") => {
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== messageId) return m;
+          const parts = m.parts.map((p, idx) => {
+            const isTarget =
+              partIndex < 0 ? p.type === "data-actionPreview" : idx === partIndex;
+            if (!isTarget) return p;
+            const data = (p as { data?: Record<string, unknown> }).data;
+            return data ? { ...p, data: { ...data, resolved: resolution } } : p;
+          }) as typeof m.parts;
+          return { ...m, parts };
+        }),
+      );
+    },
+    [setMessages],
+  );
+
   // Seed the model + effort from the user's saved AI config so the chat uses the
   // provider they actually configured (e.g. their Gemini default), not a stale
   // hardcoded default.
@@ -577,7 +600,13 @@ export function ChatPanel() {
               return <LabChartCard data={part.data} key={key} />;
             }
             if (part.type === "data-importPreview") {
-              return <ImportPreviewCard data={part.data} key={key} />;
+              return (
+                <ImportPreviewCard
+                  data={part.data}
+                  key={key}
+                  onResolved={(r) => resolveProposal(message.id, i, r)}
+                />
+              );
             }
             if (part.type === "data-actionPreview") {
               if (actionPreviews.length >= 2) {
@@ -589,10 +618,18 @@ export function ChatPanel() {
                       (p) => (p as { data: ActionPreviewData }).data,
                     )}
                     key={key}
+                    // -1 marks every action-preview part in this message.
+                    onResolved={(r) => resolveProposal(message.id, -1, r)}
                   />
                 );
               }
-              return <ActionPreviewCard data={part.data} key={key} />;
+              return (
+                <ActionPreviewCard
+                  data={part.data}
+                  key={key}
+                  onResolved={(r) => resolveProposal(message.id, i, r)}
+                />
+              );
             }
             if (part.type === "data-appointmentList") {
               return (

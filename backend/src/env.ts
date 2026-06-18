@@ -16,6 +16,9 @@ const schema = z.object({
     .string()
     .min(1)
     .default("dev-insecure-ai-key-change-me"),
+  // Directory where uploaded patient/lab files are stored on disk. Back this
+  // with a persistent volume in production (see docker-compose.yml).
+  UPLOAD_DIR: z.string().min(1).default("./uploads"),
   BETTER_AUTH_URL: z.string().min(1).default("http://localhost:4000"),
   FRONTEND_URL: z.string().min(1).default("http://localhost:3000"),
   PORT: z.coerce.number().int().positive().default(4000),

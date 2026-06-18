@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Check, Sparkles, X } from "lucide-react";
+import { AlertTriangle, Check, Pencil, Sparkles, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -9,6 +9,7 @@ import {
   commitAction,
   summarize,
 } from "@/components/chat/action-preview-card";
+import { RecordEditDialog } from "@/components/chat/record-edit-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -31,14 +32,38 @@ type Status = "pending" | "committing" | "done" | "rejected";
 // the full list in a dialog, removes any they don't want, and adds them all at
 // once. Each commit goes through the same RBAC-gated create endpoint as the
 // single-record card; appointments without a file number create a patient.
-export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }) {
+export function BatchActionPreviewCard({
+  items,
+  onResolved,
+}: {
+  items: ActionPreviewData[];
+  // Called once committed/discarded so the parent can persist the resolution
+  // across re-render and conversation reload (prevents re-adding).
+  onResolved?: (resolution: "added" | "discarded") => void;
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [removed, setRemoved] = useState<Set<string>>(new Set());
-  const [status, setStatus] = useState<Status>("pending");
+  const [status, setStatus] = useState<Status>(
+    items[0]?.resolved === "added"
+      ? "done"
+      : items[0]?.resolved === "discarded"
+        ? "rejected"
+        : "pending",
+  );
   const [result, setResult] = useState<{ added: number; failed: number } | null>(
     null,
   );
+  // Per-row edits, keyed by token. The committed record is the edit if present,
+  // otherwise the agent's original proposal.
+  const [edits, setEdits] = useState<Record<string, Record<string, unknown>>>(
+    {},
+  );
+  // The row currently open in the edit dialog.
+  const [editing, setEditing] = useState<ActionPreviewData | null>(null);
+
+  const recordFor = (it: ActionPreviewData) =>
+    edits[it.token] ?? (it.record as Record<string, unknown>);
 
   const kept = useMemo(
     () => items.filter((it) => !removed.has(it.token)),
@@ -54,7 +79,7 @@ export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }
     // Sequential so server-side patient de-dup (by name) sees prior creates.
     for (const it of kept) {
       try {
-        await commitAction(it);
+        await commitAction({ ...it, record: recordFor(it) });
         added += 1;
       } catch {
         failed += 1;
@@ -63,6 +88,7 @@ export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }
     setResult({ added, failed });
     setStatus("done");
     setOpen(false);
+    onResolved?.("added");
     if (added > 0) {
       notify.success(
         t("chat.actionCard.addedTitle"),
@@ -79,6 +105,7 @@ export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }
   const discardAll = () => {
     setStatus("rejected");
     setOpen(false);
+    onResolved?.("discarded");
   };
 
   return (
@@ -94,16 +121,19 @@ export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }
         </Badge>
       </div>
 
-      {status === "done" && result ? (
+      {status === "done" ? (
         <p className="flex items-center gap-1.5 text-foreground text-sm">
           <Check className="size-4" />
-          {t("chat.actionCard.batch.done", {
-            added: result.added,
-            total: items.length,
-          })}
-          {result.failed > 0
-            ? ` · ${t("chat.actionCard.batch.failedCount", { count: result.failed })}`
-            : ""}
+          {result
+            ? `${t("chat.actionCard.batch.done", {
+                added: result.added,
+                total: items.length,
+              })}${
+                result.failed > 0
+                  ? ` · ${t("chat.actionCard.batch.failedCount", { count: result.failed })}`
+                  : ""
+              }`
+            : t("chat.actionCard.batch.alreadyAdded")}
         </p>
       ) : status === "rejected" ? (
         <p className="text-muted-foreground text-sm">
@@ -137,10 +167,11 @@ export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }
               </p>
             ) : (
               kept.map((it) => {
-                const lines = summarize(it);
-                const record = it.record as Record<string, unknown>;
+                const record = recordFor(it);
+                const lines = summarize({ ...it, record });
                 const newPatient =
                   it.kind === "appointment" && !record.fileNumber;
+                const edited = it.token in edits;
                 return (
                   <div
                     className="flex items-start gap-2 rounded-xl border bg-card/30 p-3"
@@ -159,6 +190,12 @@ export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }
                           {line}
                         </span>
                       ))}
+                      {edited ? (
+                        <span className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <Pencil className="size-3" />
+                          {t("chat.actionCard.batch.edited")}
+                        </span>
+                      ) : null}
                       {newPatient ? (
                         <span className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                           <Sparkles className="size-3" />
@@ -172,6 +209,15 @@ export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }
                         </span>
                       ) : null}
                     </div>
+                    <Button
+                      aria-label={t("chat.actionCard.editButton")}
+                      className="shrink-0"
+                      onClick={() => setEditing({ ...it, record })}
+                      size="icon"
+                      variant="ghost"
+                    >
+                      <Pencil className="size-4" />
+                    </Button>
                     <Button
                       aria-label={t("chat.actionCard.batch.remove")}
                       className="shrink-0"
@@ -205,6 +251,20 @@ export function BatchActionPreviewCard({ items }: { items: ActionPreviewData[] }
           </DialogFooter>
         </DialogPopup>
       </Dialog>
+
+      {editing ? (
+        <RecordEditDialog
+          kind={editing.kind}
+          onOpenChange={(o) => {
+            if (!o) setEditing(null);
+          }}
+          onSave={(record) =>
+            setEdits((prev) => ({ ...prev, [editing.token]: record }))
+          }
+          open={editing !== null}
+          record={editing.record as Record<string, unknown>}
+        />
+      ) : null}
     </Card>
   );
 }
