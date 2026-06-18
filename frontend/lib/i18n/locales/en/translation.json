@@ -591,6 +591,7 @@
       "advancedHint": "Record a custom analysis with a reference range.",
       "refRange": "Reference range",
       "refRangePlaceholder": "e.g. 13.0–17.0 g/dL",
+      "files": "Analysis files",
       "cancel": "Cancel",
       "submit": "Add result",
       "needPatientTitle": "Pick a patient",
@@ -1087,6 +1088,20 @@
       "body": "Something went wrong reaching the AI. Check your provider and API key in Settings → AI.",
       "dismiss": "Dismiss"
     }
+  },
+  "patientFiles": {
+    "title": "Files",
+    "add": "Add files",
+    "empty": "No files uploaded.",
+    "remove": "Remove",
+    "open": "Open",
+    "close": "Close",
+    "noPreview": "No preview available for this file type.",
+    "deletedTitle": "File removed",
+    "deleteFailedTitle": "Couldn't remove file",
+    "deleteFailedBody": "Something went wrong, or you don't have permission. Please try again.",
+    "uploadFailedTitle": "Some files didn't upload",
+    "uploadFailedBody": "The record was saved, but one or more files failed to upload. Try adding them again from the record."
   },
   "patientCard": {
     "notFound": "No patient found for file #{{number}}.",

@@ -100,3 +100,39 @@ export function requirePermission(permission: PermissionRequest) {
     }
   };
 }
+
+// Gates a route on holding ANY of several permissions (logical OR) — e.g. an
+// attachment may be uploaded by a clinician (patient:write) OR by lab staff
+// (lab:write). Passes if the caller's role(s) satisfy at least one request.
+export function requireAnyPermission(...permissions: PermissionRequest[]) {
+  return async (
+    req: Request,
+    _res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    try {
+      const names = String(req.memberRole ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      let allowed = false;
+      outer: for (const permission of permissions) {
+        for (const name of names) {
+          const role = roles[name as keyof typeof roles];
+          if (role && (await role.authorize(permission)).success) {
+            allowed = true;
+            break outer;
+          }
+        }
+      }
+
+      if (!allowed) {
+        throw new HttpError(403, "You don't have permission to do that.");
+      }
+      next();
+    } catch (err) {
+      next(err);
+    }
+  };
+}

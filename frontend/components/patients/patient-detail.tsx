@@ -5,6 +5,7 @@ import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Sparkline } from "@/components/chat/sparkline";
+import { AttachmentsSection } from "@/components/patients/patient-files";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -284,6 +285,8 @@ export function PatientDetail({
           )}
         </div>
       </Section>
+
+      <AttachmentsSection fileNumber={patient.fileNumber} />
 
       <Section title={t("patientCard.vitals.title")}>
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">

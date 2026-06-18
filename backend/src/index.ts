@@ -11,6 +11,7 @@ import { initRealtime } from "./realtime.js";
 import { activityRouter } from "./routes/activity.js";
 import { aiRouter } from "./routes/ai.js";
 import { analyticsRouter } from "./routes/analytics.js";
+import { attachmentsRouter } from "./routes/attachments.js";
 import { appointmentsRouter } from "./routes/appointments.js";
 import { chatRouter } from "./routes/chat.js";
 import { conversationsRouter } from "./routes/conversations.js";
@@ -63,6 +64,7 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/api/patients", patientsRouter);
+app.use("/api/attachments", attachmentsRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/appointments", appointmentsRouter);
 app.use("/api/prescriptions", prescriptionsRouter);
@@ -90,6 +92,7 @@ server.listen(env.PORT, () => {
   console.log(`temetro backend listening on ${env.BETTER_AUTH_URL}`);
   console.log(`  • auth:     /api/auth/*  (frontend origin: ${env.FRONTEND_URL})`);
   console.log(`  • patients: /api/patients`);
+  console.log(`  • files:    /api/attachments`);
   console.log(`  • notes:    /api/notes`);
   console.log(`  • appts:    /api/appointments`);
   console.log(`  • rx:       /api/prescriptions`);

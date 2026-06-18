@@ -39,6 +39,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { StagedFilesField } from "@/components/patients/patient-files";
+import { uploadAttachment } from "@/lib/attachments";
 import { LAB_ANALYSES, LAB_ANALYSIS_UNITS } from "@/lib/lab-analyses";
 import {
   type Lab,
@@ -173,6 +175,8 @@ function AddResultDialog({
   const [advanced, setAdvanced] = useState(false);
   const [refRange, setRefRange] = useState("");
   const [saving, setSaving] = useState(false);
+  // Analysis files (PDF/image) attached to this result.
+  const [files, setFiles] = useState<File[]>([]);
 
   const reset = () => {
     setPatient(null);
@@ -184,6 +188,7 @@ function AddResultDialog({
     setTakenAt(today());
     setAdvanced(false);
     setRefRange("");
+    setFiles([]);
     setSaving(false);
   };
 
@@ -250,6 +255,25 @@ function AddResultDialog({
     setSaving(true);
     try {
       await appendLabs(patient.fileNumber, [lab]);
+      // Attach any analysis files to this result (best-effort).
+      if (files.length > 0) {
+        const labKey = `${lab.name} · ${lab.takenAt}`;
+        const results = await Promise.allSettled(
+          files.map((file) =>
+            uploadAttachment({
+              file,
+              fileNumber: patient.fileNumber,
+              labKey,
+            }),
+          ),
+        );
+        if (results.some((r) => r.status === "rejected")) {
+          notify.error(
+            t("patientFiles.uploadFailedTitle"),
+            t("patientFiles.uploadFailedBody"),
+          );
+        }
+      }
       notify.success(
         t("lab.addResult.addedTitle"),
         t("lab.addResult.addedBody", { test: lab.name, name: patient.name }),
@@ -439,6 +463,12 @@ function AddResultDialog({
                 />
               </Field>
             )}
+
+            <StagedFilesField
+              label={t("lab.addResult.files")}
+              onChange={setFiles}
+              value={files}
+            />
           </DialogPanel>
 
           <DialogFooter>

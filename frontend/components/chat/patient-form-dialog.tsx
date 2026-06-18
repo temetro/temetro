@@ -4,6 +4,7 @@ import { CalendarIcon, Plus, RefreshCw, X } from "lucide-react";
 import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { StagedFilesField } from "@/components/patients/patient-files";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -33,6 +34,7 @@ import {
   type Patient,
   updatePatient,
 } from "@/lib/patients";
+import { uploadAttachment } from "@/lib/attachments";
 import { hasClinicalAccess, useActiveRole } from "@/lib/roles";
 import { listProviders, type Provider } from "@/lib/staff";
 import { notify } from "@/lib/toast";
@@ -217,6 +219,9 @@ export function PatientFormDialog({
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Files staged in the form, uploaded once the patient record is saved (so the
+  // attachment can be linked to the file number).
+  const [files, setFiles] = useState<File[]>([]);
 
   const [fileNumber, setFileNumber] = useState(() =>
     isEdit && patient ? patient.fileNumber : generateFileNumber()
@@ -334,6 +339,21 @@ export function PatientFormDialog({
       const saved = isEdit
         ? await updatePatient(built)
         : await createPatient(built);
+      // Upload any staged files now that we have a saved file number.
+      if (files.length > 0) {
+        const results = await Promise.allSettled(
+          files.map((file) =>
+            uploadAttachment({ file, fileNumber: saved.fileNumber }),
+          ),
+        );
+        if (results.some((r) => r.status === "rejected")) {
+          notify.error(
+            t("patientFiles.uploadFailedTitle"),
+            t("patientFiles.uploadFailedBody"),
+          );
+        }
+        setFiles([]);
+      }
       if (isEdit) {
         onSaved?.(saved);
         notify.success(
@@ -669,6 +689,8 @@ export function PatientFormDialog({
             />
               </>
             )}
+
+            <StagedFilesField onChange={setFiles} value={files} />
           </DialogPanel>
 
           <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center">
