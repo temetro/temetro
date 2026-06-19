@@ -11,6 +11,7 @@ import {
   SendHorizonal,
   X,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import {
   type ChangeEvent,
   type FormEvent,
@@ -144,6 +145,11 @@ export function MessagesView() {
   const { t } = useTranslation();
   const { data: session } = authClient.useSession();
   const myId = session?.user?.id ?? "";
+
+  // Deep link from a notification: /messages?conversation=<id>.
+  const searchParams = useSearchParams();
+  const deepLinkConversation = searchParams.get("conversation");
+  const openedDeepLink = useRef<string | null>(null);
 
   // "Today" / "Yesterday" / "Jun 9, 2026" for the thread's day separators.
   const formatDay = (iso: string): string => {
@@ -280,6 +286,17 @@ export function MessagesView() {
       ),
     );
   };
+
+  // Once the inbox has loaded, auto-open a conversation deep-linked from a
+  // notification. Guarded so it only fires once per target id.
+  useEffect(() => {
+    if (!deepLinkConversation || conversations.length === 0) return;
+    if (openedDeepLink.current === deepLinkConversation) return;
+    openedDeepLink.current = deepLinkConversation;
+    open(deepLinkConversation);
+    // `open` is stable enough for this one-shot; deps intentionally minimal.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkConversation, conversations]);
 
   const send = (event: FormEvent) => {
     event.preventDefault();

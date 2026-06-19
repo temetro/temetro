@@ -51,7 +51,22 @@ export function CreateClinicForm({
       return;
     }
 
-    await authClient.organization.setActive({ organizationId: org.id });
+    const { error: activeErr } = await authClient.organization.setActive({
+      organizationId: org.id,
+    });
+    if (activeErr) {
+      const message = activeErr.message ?? t("clinic.createError");
+      setError(message);
+      notify.error(t("clinic.createFailedTitle"), message);
+      setSubmitting(false);
+      return;
+    }
+
+    // Refresh the cached session so `activeOrganizationId` is populated before we
+    // navigate — otherwise AppAuthGuard still sees no active clinic and bounces
+    // straight back to /onboarding.
+    await authClient.getSession({ query: { disableCookieCache: true } });
+
     notify.success(t("clinic.createdTitle"), t("clinic.createdBody", { name: org.name }));
     onCreated?.(org);
   };

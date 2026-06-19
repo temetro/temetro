@@ -121,9 +121,12 @@
     "lab": "Lab",
     "notes": "Notes",
     "messages": "Messages",
+    "inbox": "Inbox",
+    "meetings": "Meetings",
     "tasks": "Tasks",
     "activity": "Activity",
     "settings": "Settings",
+    "openSidebar": "Open menu",
     "notifications": "Notifications",
     "notificationsEmpty": "You're all caught up.",
     "quickNav": "Quick nav",
@@ -763,8 +766,25 @@
     }
   },
   "analysis": {
-    "title": "Analysis",
+    "title": "Overview",
     "subtitle": "Clinic performance at a glance, computed from your clinic's data.",
+    "customize": "Customize",
+    "customizeTitle": "Show sections",
+    "range": {
+      "all": "All Time",
+      "12m": "12m",
+      "3m": "3m",
+      "30d": "30d",
+      "today": "Today"
+    },
+    "section": {
+      "visits": "Patient visits",
+      "patients": "Patient volume",
+      "trends": "Trends",
+      "earnings": "Earnings",
+      "appointments": "Appointments",
+      "prescriptions": "Prescriptions"
+    },
     "area": {
       "title": "Patient visits",
       "subtitle": "Visit volume over the last six months.",

@@ -34,12 +34,23 @@ export function AppAuthGuard({ children }: { children: ReactNode }) {
 
     // Signed in but no active clinic selected yet.
     if (orgsPending) return;
+    // A setActive is already in flight (e.g. just after creating a clinic) — wait
+    // for it rather than treating the momentarily-empty list as "no clinics" and
+    // bouncing the user back to onboarding.
+    if (settingActive.current) return;
     const first = orgs?.[0];
     if (first) {
-      if (!settingActive.current) {
-        settingActive.current = true;
-        void authClient.organization.setActive({ organizationId: first.id });
-      }
+      settingActive.current = true;
+      void authClient.organization
+        .setActive({ organizationId: first.id })
+        // Refresh the cached session so activeOrganizationId is populated and the
+        // guard re-renders into the ready state.
+        .then(() =>
+          authClient.getSession({ query: { disableCookieCache: true } }),
+        )
+        .catch(() => {
+          settingActive.current = false;
+        });
     } else {
       router.replace("/onboarding");
     }

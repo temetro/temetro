@@ -30,3 +30,18 @@ export function markNotificationRead(id: string): Promise<void> {
 export function markAllNotificationsRead(): Promise<void> {
   return apiFetch<void>("/api/notifications/read-all", { method: "POST" });
 }
+
+// Maps a notification to the in-app route where the event occurred, so the
+// popover can navigate the user there on click. Returns null when there's no
+// meaningful destination (the item then renders as non-clickable).
+export function notificationHref(n: Notification): string | null {
+  if (!n.entityId) return null;
+  switch (n.entityType) {
+    case "conversation":
+      return `/messages?conversation=${encodeURIComponent(n.entityId)}`;
+    case "patient":
+      return `/patients?file=${encodeURIComponent(n.entityId)}`;
+    default:
+      return null;
+  }
+}

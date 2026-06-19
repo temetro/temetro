@@ -1,6 +1,7 @@
 "use client";
 
 import { BellIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -14,6 +15,7 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "@/components/ui/menu";
+import { markNotificationRead, notificationHref } from "@/lib/notifications";
 import { useNotifications } from "@/lib/use-notifications";
 
 // ISO timestamp -> "just now" / "10m ago" / "3h ago" / "2d ago".
@@ -29,6 +31,7 @@ function relativeTime(iso: string): string {
 
 export function NotificationsPopover() {
   const { t } = useTranslation();
+  const router = useRouter();
   const { items, unread, markAllRead } = useNotifications();
 
   return (
@@ -65,19 +68,31 @@ export function NotificationsPopover() {
             {t("nav.notificationsEmpty")}
           </div>
         ) : (
-          items.map((n) => (
-            <MenuItem className="flex items-start gap-3" key={n.id}>
-              <Avatar className="size-8">
-                <AvatarFallback>{n.actorInitials ?? "•"}</AvatarFallback>
-              </Avatar>
-              <div className="flex min-w-0 flex-col">
-                <span className="font-medium text-sm">{n.text}</span>
-                <span className="text-muted-foreground text-xs">
-                  {relativeTime(n.createdAt)}
-                </span>
-              </div>
-            </MenuItem>
-          ))
+          items.map((n) => {
+            const href = notificationHref(n);
+            return (
+              <MenuItem
+                className="flex items-start gap-3"
+                disabled={!href}
+                key={n.id}
+                onClick={() => {
+                  if (!href) return;
+                  if (!n.read) void markNotificationRead(n.id).catch(() => {});
+                  router.push(href);
+                }}
+              >
+                <Avatar className="size-8">
+                  <AvatarFallback>{n.actorInitials ?? "•"}</AvatarFallback>
+                </Avatar>
+                <div className="flex min-w-0 flex-col">
+                  <span className="font-medium text-sm">{n.text}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {relativeTime(n.createdAt)}
+                  </span>
+                </div>
+              </MenuItem>
+            );
+          })
         )}
       </MenuPopup>
     </Menu>

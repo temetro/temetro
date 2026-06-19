@@ -1,7 +1,8 @@
 "use client";
 
 import { Plus, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AiBadge } from "@/components/ai-badge";
@@ -67,6 +68,16 @@ export function PatientsView() {
     setSelected(fileNumber);
     setSheetOpen(true);
   };
+
+  // Deep link from a notification: /patients?file=<fileNumber> opens the record.
+  const searchParams = useSearchParams();
+  const deepLinkFile = searchParams.get("file");
+  const openedDeepLink = useRef<string | null>(null);
+  useEffect(() => {
+    if (!deepLinkFile || openedDeepLink.current === deepLinkFile) return;
+    openedDeepLink.current = deepLinkFile;
+    open(deepLinkFile);
+  }, [deepLinkFile]);
 
   const refresh = () => {
     void listPatients()
