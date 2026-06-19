@@ -626,11 +626,11 @@ export function MessagesView() {
             </div>
 
             <form
-              className="flex flex-col gap-2 rounded-2xl border bg-card/30 p-2"
+              className="flex flex-col rounded-3xl border border-input bg-background shadow-sm transition-colors focus-within:border-ring/60 focus-within:ring-2 focus-within:ring-ring/20"
               onSubmit={send}
             >
               {pending.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 px-1 pt-1">
+                <div className="flex flex-wrap items-center gap-1.5 px-3 pt-3">
                   {pending.map((att, i) => (
                     <span
                       className="flex items-center gap-1.5 rounded-lg bg-muted px-2 py-1 text-foreground text-xs"
@@ -658,52 +658,64 @@ export function MessagesView() {
                   ))}
                 </div>
               )}
-              <div className="flex items-center gap-2">
-                {/* The attach control is a native <label> wrapping the file
-                    input, so the browser opens the picker on a trusted click.
-                    A programmatic `inputRef.click()` (the old menu item) gets
-                    dropped by user-activation gating once the menu closes —
-                    which is why attaching silently failed and no chip appeared. */}
-                <label
-                  aria-label={t("messages.attach.file")}
-                  className={cn(
-                    "inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-                    uploading && "pointer-events-none opacity-50",
-                  )}
-                >
-                  <Paperclip className="size-4" />
-                  <input
-                    aria-label={t("messages.attach.file")}
-                    className="sr-only"
-                    multiple
-                    onChange={onPickFiles}
-                    ref={fileInputRef}
-                    type="file"
-                  />
-                </label>
-                <Button
-                  aria-label={t("messages.attach.appointment")}
-                  disabled={uploading}
-                  onClick={openApptPicker}
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                >
-                  <CalendarClock className="size-4" />
-                </Button>
-                <Input
-                  aria-label={t("messages.newMessage")}
-                  className="border-0 bg-transparent shadow-none before:hidden"
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder={
-                    uploading
-                      ? t("messages.attach.uploading")
-                      : t("messages.messagePlaceholder", { name: selected.name })
+              <textarea
+                aria-label={t("messages.newMessage")}
+                className="field-sizing-content block max-h-40 min-h-11 w-full resize-none bg-transparent px-4 pt-3 pb-1 text-sm outline-none placeholder:text-muted-foreground"
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter sends; Shift+Enter inserts a newline.
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    e.currentTarget.form?.requestSubmit();
                   }
-                  value={draft}
-                />
+                }}
+                placeholder={
+                  uploading
+                    ? t("messages.attach.uploading")
+                    : t("messages.messagePlaceholder", { name: selected.name })
+                }
+                rows={1}
+                value={draft}
+              />
+              <div className="flex items-center justify-between gap-2 px-2 pb-2">
+                <div className="flex items-center gap-0.5">
+                  {/* The attach control is a native <label> wrapping the file
+                      input, so the browser opens the picker on a trusted click.
+                      A programmatic `inputRef.click()` (the old menu item) gets
+                      dropped by user-activation gating once the menu closes —
+                      which is why attaching silently failed and no chip appeared. */}
+                  <label
+                    aria-label={t("messages.attach.file")}
+                    className={cn(
+                      "inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+                      uploading && "pointer-events-none opacity-50",
+                    )}
+                  >
+                    <Paperclip className="size-4" />
+                    <input
+                      aria-label={t("messages.attach.file")}
+                      className="sr-only"
+                      multiple
+                      onChange={onPickFiles}
+                      ref={fileInputRef}
+                      type="file"
+                    />
+                  </label>
+                  <Button
+                    aria-label={t("messages.attach.appointment")}
+                    className="rounded-full"
+                    disabled={uploading}
+                    onClick={openApptPicker}
+                    size="icon"
+                    type="button"
+                    variant="ghost"
+                  >
+                    <CalendarClock className="size-4" />
+                  </Button>
+                </div>
                 <Button
                   aria-label={t("messages.send")}
+                  className="size-9 shrink-0 rounded-full"
                   disabled={!draft.trim() && pending.length === 0}
                   size="icon"
                   type="submit"

@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeftRight, Network, Pencil, Trash2 } from "lucide-react";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Sparkline } from "@/components/chat/sparkline";
@@ -27,6 +27,7 @@ import {
 } from "@/lib/invoices";
 import type { AllergySeverity, LabFlag, Patient, Trend } from "@/lib/patients";
 import type { Prescription } from "@/lib/prescriptions";
+import { listProviders, type Provider, specialtyLabel } from "@/lib/staff";
 import { cn } from "@/lib/utils";
 
 // A record "file" surfaced both in the graph and the sheet's clickable list.
@@ -132,6 +133,24 @@ export function PatientDetail({
   // The record "file" opened in a detail dialog from the records list.
   const [openFile, setOpenFile] = useState<RecordFile | null>(null);
 
+  // Resolve the responsible clinician's specialty (set by an admin in Care
+  // Team) to show alongside the primary-care provider.
+  const [providers, setProviders] = useState<Provider[]>([]);
+  useEffect(() => {
+    if (!patient.primaryProviderId) return;
+    let active = true;
+    listProviders()
+      .then((p) => active && setProviders(p))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [patient.primaryProviderId]);
+  const providerSpecialty = specialtyLabel(
+    t,
+    providers.find((p) => p.userId === patient.primaryProviderId)?.specialty,
+  );
+
   // The same problems + visits the graph plots, as a clickable list.
   const files: RecordFile[] = [
     ...patient.problems.map((p, i) => ({
@@ -216,7 +235,9 @@ export function PatientDetail({
         <div className="grid grid-cols-2 gap-x-4 gap-y-3">
           <Stat
             label={t("patientCard.summary.primaryCare")}
-            value={patient.pcp}
+            value={
+              providerSpecialty ? `${patient.pcp} · ${providerSpecialty}` : patient.pcp
+            }
           />
           <Stat
             label={t("patientCard.summary.lastSeen")}

@@ -34,7 +34,11 @@ import {
 import { ROLE_LABELS } from "@/lib/access";
 import { authClient } from "@/lib/auth-client";
 import { PROVISIONABLE_ROLES, rolePermissionSummary } from "@/lib/roles";
+import { SPECIALTIES, specialtyLabel, updateStaffSpecialty } from "@/lib/staff";
 import { notify } from "@/lib/toast";
+
+// Roles that can carry a clinical specialty (i.e. treat patients).
+const PROVIDER_ROLES = new Set(["owner", "admin", "doctor", "member"]);
 
 // Icon shown next to each permission resource row.
 const RESOURCE_ICONS: Record<string, React.ReactNode> = {
@@ -53,6 +57,7 @@ export type StaffMember = {
   name: string | null;
   email: string | null;
   username: string | null;
+  specialty: string | null;
 };
 
 function roleLabel(role?: string | null): string {
@@ -98,10 +103,13 @@ export function EmployeeDetailDialog({
   const { t } = useTranslation();
   const [role, setRole] = useState<string>(member?.role ?? "");
   const [saving, setSaving] = useState(false);
+  const [specialty, setSpecialty] = useState<string>(member?.specialty ?? "");
+  const [savingSpecialty, setSavingSpecialty] = useState(false);
 
   useEffect(() => {
     setRole(member?.role ?? "");
-  }, [member?.id, member?.role]);
+    setSpecialty(member?.specialty ?? "");
+  }, [member?.id, member?.role, member?.specialty]);
 
   const summary = rolePermissionSummary(member?.role);
   const secondary = member?.username ? `@${member.username}` : member?.email;
@@ -137,6 +145,39 @@ export function EmployeeDetailDialog({
     onOpenChange(false);
   };
 
+  const saveSpecialty = async () => {
+    if (!member || savingSpecialty) return;
+    const next = specialty || null;
+    if (next === (member.specialty ?? null)) return;
+    setSavingSpecialty(true);
+    try {
+      await updateStaffSpecialty(member.userId, next);
+      notify.success(
+        t("settings.careTeam.employee.specialtyUpdatedTitle"),
+        t("settings.careTeam.employee.specialtyUpdatedBody", {
+          name: member.name ?? member.email ?? "",
+        }),
+      );
+      onChanged();
+    } catch {
+      notify.error(
+        t("settings.careTeam.employee.specialtyFailedTitle"),
+        t("settings.careTeam.employee.specialtyFailedBody"),
+      );
+    } finally {
+      setSavingSpecialty(false);
+    }
+  };
+
+  const showSpecialty = PROVIDER_ROLES.has(member?.role ?? "");
+  const specialtyOptions = [
+    { value: "", label: t("settings.careTeam.employee.noSpecialty") },
+    ...SPECIALTIES.map((s) => ({
+      value: s,
+      label: t(`settings.careTeam.specialties.${s}`),
+    })),
+  ];
+
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogPopup className="sm:max-w-md">
@@ -161,6 +202,11 @@ export function EmployeeDetailDialog({
               {secondary && (
                 <p className="truncate text-sm text-muted-foreground">
                   {secondary}
+                </p>
+              )}
+              {showSpecialty && specialtyLabel(t, member?.specialty) && (
+                <p className="truncate text-primary text-xs">
+                  {specialtyLabel(t, member?.specialty)}
                 </p>
               )}
             </div>
@@ -240,6 +286,47 @@ export function EmployeeDetailDialog({
                   type="button"
                 >
                   {saving
+                    ? t("settings.careTeam.employee.saving")
+                    : t("settings.careTeam.employee.save")}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {editable && showSpecialty && (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                {t("settings.careTeam.employee.specialty")}
+              </span>
+              <div className="flex items-center gap-2">
+                <Select
+                  items={specialtyOptions}
+                  onValueChange={(value) => setSpecialty(value as string)}
+                  value={specialty}
+                >
+                  <SelectTrigger
+                    aria-label={t("settings.careTeam.employee.specialty")}
+                    className="flex-1"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectPopup>
+                    {specialtyOptions.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectPopup>
+                </Select>
+                <Button
+                  disabled={
+                    savingSpecialty ||
+                    (specialty || null) === (member?.specialty ?? null)
+                  }
+                  onClick={saveSpecialty}
+                  type="button"
+                >
+                  {savingSpecialty
                     ? t("settings.careTeam.employee.saving")
                     : t("settings.careTeam.employee.save")}
                 </Button>

@@ -16,3 +16,4 @@ export * from "./ai-chat.js";
 export * from "./org-ai-policy.js";
 export * from "./attachments.js";
 export * from "./integrations.js";
+export * from "./staff-profile.js";

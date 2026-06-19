@@ -9,6 +9,7 @@ import {
   EmployeeDetailDialog,
   type StaffMember,
 } from "@/components/settings/employee-detail-dialog";
+import { specialtyLabel } from "@/lib/staff";
 import {
   SettingsCard,
   SettingsSection,
@@ -162,6 +163,11 @@ export function CareTeamPanel() {
                     </p>
                   )}
                 </div>
+                {specialtyLabel(t, m.specialty) && (
+                  <Badge variant="outline">
+                    {specialtyLabel(t, m.specialty)}
+                  </Badge>
+                )}
                 <Badge className="capitalize" variant="secondary">
                   {roleLabel(m.role)}
                 </Badge>

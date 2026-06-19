@@ -5,6 +5,7 @@ import { z } from "zod";
 import { auth } from "../auth.js";
 import { db } from "../db/index.js";
 import { member, organization, user } from "../db/schema/auth.js";
+import { staffProfile } from "../db/schema/staff-profile.js";
 import { HttpError } from "../lib/http-error.js";
 import { requireAuth, requireOrg, requirePermission } from "../middleware/auth.js";
 
@@ -65,9 +66,17 @@ staffRouter.get("/providers", async (req, res, next) => {
         userId: member.userId,
         name: user.name,
         role: member.role,
+        specialty: staffProfile.specialty,
       })
       .from(member)
       .innerJoin(user, eq(user.id, member.userId))
+      .leftJoin(
+        staffProfile,
+        and(
+          eq(staffProfile.userId, member.userId),
+          eq(staffProfile.organizationId, member.organizationId),
+        ),
+      )
       .where(
         and(
           eq(member.organizationId, req.organizationId!),
@@ -96,9 +105,17 @@ staffRouter.get(
           name: user.name,
           email: user.email,
           username: user.username,
+          specialty: staffProfile.specialty,
         })
         .from(member)
         .innerJoin(user, eq(user.id, member.userId))
+        .leftJoin(
+          staffProfile,
+          and(
+            eq(staffProfile.userId, member.userId),
+            eq(staffProfile.organizationId, member.organizationId),
+          ),
+        )
         .where(eq(member.organizationId, req.organizationId!))
         .orderBy(asc(user.name));
       res.json(rows);
@@ -163,6 +180,51 @@ staffRouter.post(
         username: input.username.toLowerCase(),
         role: input.role,
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// Update a member's clinical specialty. Empty string clears it. Owner/admin
+// only. Upserts the per-clinic staff_profile row.
+const specialtyInputSchema = z.object({
+  specialty: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+    z.string().trim().max(60).nullable(),
+  ),
+});
+
+staffRouter.patch(
+  "/:userId",
+  requirePermission({ member: ["update"] }),
+  async (req, res, next) => {
+    try {
+      const userId = String(req.params.userId ?? "");
+      const { specialty } = specialtyInputSchema.parse(req.body);
+      const organizationId = req.organizationId!;
+
+      // The target must be a member of this clinic.
+      const [target] = await db
+        .select({ id: member.id })
+        .from(member)
+        .where(
+          and(
+            eq(member.organizationId, organizationId),
+            eq(member.userId, userId),
+          ),
+        );
+      if (!target) throw new HttpError(404, "Member not found.");
+
+      await db
+        .insert(staffProfile)
+        .values({ organizationId, userId, specialty })
+        .onConflictDoUpdate({
+          target: [staffProfile.organizationId, staffProfile.userId],
+          set: { specialty },
+        });
+
+      res.json({ userId, specialty });
     } catch (err) {
       next(err);
     }
