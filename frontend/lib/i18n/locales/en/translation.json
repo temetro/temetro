@@ -713,6 +713,32 @@
       "updateFailedBody": "Please try again."
     }
   },
+  "meetings": {
+    "rooms": "Rooms",
+    "newRoom": "New room",
+    "newRoomDescription": "Create a voice/video room your team can join.",
+    "roomNameLabel": "Room name",
+    "roomNamePlaceholder": "e.g. Morning huddle",
+    "noRooms": "No rooms yet. Create one to start a call.",
+    "create": "Create",
+    "creating": "Creating…",
+    "cancel": "Cancel",
+    "createFailedTitle": "Couldn't create room",
+    "createFailedBody": "Please try again.",
+    "emptyTitle": "No room selected",
+    "emptyDescription": "Pick a room to join the call, or create a new one.",
+    "you": "You",
+    "inCall": "{{count}} in call",
+    "connecting": "Connecting…",
+    "roomFull": "Room is full (max {{max}}).",
+    "callError": "Couldn't start the call. Check camera/mic permissions.",
+    "muteMic": "Mute microphone",
+    "unmuteMic": "Unmute microphone",
+    "startVideo": "Start video",
+    "stopVideo": "Stop video",
+    "shareScreen": "Share screen",
+    "leave": "Leave call"
+  },
   "messages": {
     "inbox": "Inbox",
     "unread": "Unread · {{count}}",

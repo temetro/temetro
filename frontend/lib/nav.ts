@@ -14,6 +14,7 @@ import {
   Receipt,
   Settings,
   Users,
+  Video,
 } from "lucide-react";
 
 // Access areas gate routes/nav by role capability (probed against the Better
@@ -120,7 +121,21 @@ export const navItems: NavItem[] = [
     link: "/lab",
     access: "lab",
   },
-  { id: "messages", labelKey: "nav.messages", icon: Mail, link: "/messages" },
+  {
+    id: "messages",
+    labelKey: "nav.messages",
+    icon: Mail,
+    link: "/messages",
+    subs: [
+      { id: "messages-inbox", labelKey: "nav.inbox", link: "/messages" },
+      {
+        id: "meetings",
+        labelKey: "nav.meetings",
+        icon: Video,
+        link: "/messages/meetings",
+      },
+    ],
+  },
   {
     id: "notes",
     labelKey: "nav.notes",
