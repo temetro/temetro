@@ -947,6 +947,19 @@
     "thinking": "Thinking…",
     "steps": "Steps",
     "reasoning": "Reasoning",
+    "sources": {
+      "title": "Sources",
+      "kind": {
+        "patient": "Patient record",
+        "lab": "Lab results",
+        "appointments": "Schedule",
+        "tasks": "Tasks",
+        "prescriptions": "Prescriptions",
+        "clinic": "Clinic",
+        "analytics": "Analytics",
+        "inventory": "Inventory"
+      }
+    },
     "graphCard": {
       "label": "Record graph"
     },

@@ -29,11 +29,12 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+import { Message, MessageContent } from "@/components/ai-elements/message";
 import {
-  Message,
-  MessageContent,
-  MessageResponse,
-} from "@/components/ai-elements/message";
+  CitedResponse,
+  hasCitationMarkers,
+  SourcesFooter,
+} from "@/components/chat/message-citations";
 import {
   Queue,
   QueueItem,
@@ -483,6 +484,15 @@ export function ChatPanel() {
     // Attachments the clinician uploaded — rendered once as a chip group.
     const fileParts = message.parts.filter((p) => p.type === "file");
     const firstFileIdx = message.parts.findIndex((p) => p.type === "file");
+    // Citable sources the agent retrieved for this message; the model references
+    // them inline via [[src:id]] markers (rendered as chips). When it emits no
+    // markers, a sources footer still attributes the retrieved records.
+    const sources = message.parts
+      .filter((p) => p.type === "data-source")
+      .map((p) => p.data);
+    const hasInlineCitations = message.parts.some(
+      (p) => p.type === "text" && hasCitationMarkers(p.text),
+    );
     return (
       <Message from={message.role} key={message.id}>
         <MessageContent className="w-full">
@@ -543,7 +553,7 @@ export function ChatPanel() {
                   {part.text}
                 </span>
               ) : (
-                <MessageResponse key={key}>{part.text}</MessageResponse>
+                <CitedResponse key={key} sources={sources} text={part.text} />
               );
             }
             if (part.type === "file") {
@@ -669,6 +679,12 @@ export function ChatPanel() {
             }
             return null;
           })}
+
+          {/* Provenance footer: shown when the model cited records but placed no
+              inline markers, so retrieved sources are always attributed. */}
+          {sources.length > 0 && !hasInlineCitations && (
+            <SourcesFooter sources={sources} />
+          )}
         </MessageContent>
       </Message>
     );

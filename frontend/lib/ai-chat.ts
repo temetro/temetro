@@ -43,6 +43,16 @@ export type StepData = {
   status: "active" | "complete";
 };
 
+// A citable source the agent retrieved (one per display-tool call). The model
+// references it inline via a [[src:id]] marker; the client renders that marker
+// as an inline citation chip and a sources footer. `title` is the real,
+// clinician-facing label; `id` is PHI-free (s1, s2, …).
+export type SourceData = {
+  id: string;
+  title: string;
+  kind: string;
+};
+
 // Read-only list cards (display actions).
 export type AppointmentListData = { appointments: Appointment[] };
 export type TaskListData = { tasks: Task[] };
@@ -85,6 +95,7 @@ export type TemetroDataParts = {
   importPreview: ImportPreviewData;
   veilNotice: VeilNoticeData;
   step: StepData;
+  source: SourceData;
   appointmentList: AppointmentListData;
   taskList: TaskListData;
   prescriptionList: PrescriptionListData;

@@ -76,6 +76,18 @@ export function createChatTools(ctx: ToolContext) {
     });
   }
 
+  // Register a citable source the model can reference inline. The title is the
+  // REAL, clinician-facing label (streamed to the trusted UI, like the cards);
+  // the returned id is PHI-free (`s1`, `s2`, …) so it survives Veil rehydration
+  // when the model echoes it back as a [[src:id]] marker.
+  let sourceSeq = 0;
+  function addSource(title: string, kind: string): string {
+    sourceSeq += 1;
+    const id = `s${sourceSeq}`;
+    writer.write({ type: "data-source", data: { id, title, kind } });
+    return id;
+  }
+
   // Resolve a possibly-tokenized file number to the real patient record, so an
   // add proposal carries real name/initials into the approval card (the model
   // only ever saw Veil tokens). Returns null when the patient isn't found / is
@@ -112,7 +124,15 @@ export function createChatTools(ctx: ToolContext) {
             ? { type: "data-recordGraph", data: patient }
             : { type: "data-patientCard", data: patient },
         );
-        return { found: true as const, patient: forModel(veil.redactPatient(patient)) };
+        const sourceId = addSource(
+          `${patient.name} · MRN ${patient.fileNumber}`,
+          "patient",
+        );
+        return {
+          found: true as const,
+          sourceId,
+          patient: forModel(veil.redactPatient(patient)),
+        };
       },
     }),
 
@@ -146,8 +166,10 @@ export function createChatTools(ctx: ToolContext) {
           },
         });
         const redacted = veil.redactPatient(patient);
+        const sourceId = addSource(`Labs · ${patient.name}`, "lab");
         return {
           found: true as const,
+          sourceId,
           name: redacted.name,
           labs: patient.labs,
           labTrend: patient.labTrend,
@@ -205,7 +227,8 @@ export function createChatTools(ctx: ToolContext) {
           status: a.status,
           patient: veil.active ? "[PATIENT]" : a.name,
         }));
-        return { count: rows.length, appointments: rows };
+        const sourceId = addSource("Appointments schedule", "appointments");
+        return { count: rows.length, sourceId, appointments: rows };
       },
     }),
 
@@ -227,7 +250,8 @@ export function createChatTools(ctx: ToolContext) {
           priority: tk.priority,
           done: tk.done,
         }));
-        return { count: rows.length, tasks: rows };
+        const sourceId = addSource("Task list", "tasks");
+        return { count: rows.length, sourceId, tasks: rows };
       },
     }),
 
@@ -253,7 +277,8 @@ export function createChatTools(ctx: ToolContext) {
           prescribedAt: rx.prescribedAt,
           patient: veil.active ? "[PATIENT]" : rx.name,
         }));
-        return { count: rows.length, prescriptions: rows };
+        const sourceId = addSource("Prescriptions", "prescriptions");
+        return { count: rows.length, sourceId, prescriptions: rows };
       },
     }),
 
@@ -446,7 +471,8 @@ export function createChatTools(ctx: ToolContext) {
           createdAt: org?.createdAt ? org.createdAt.toISOString() : null,
         };
         writer.write({ type: "data-clinicCard", data: info });
-        return info;
+        const sourceId = addSource(`Clinic · ${info.name}`, "clinic");
+        return { ...info, sourceId };
       },
     }),
 
@@ -458,7 +484,8 @@ export function createChatTools(ctx: ToolContext) {
         step("Loading clinic analytics");
         const data = await analytics.getAnalytics(orgId);
         writer.write({ type: "data-analyticsCard", data });
-        return data; // aggregates only, no PHI
+        const sourceId = addSource("Clinic analytics", "analytics");
+        return { ...data, sourceId }; // aggregates only, no PHI
       },
     }),
 
@@ -470,8 +497,10 @@ export function createChatTools(ctx: ToolContext) {
         step("Loading inventory");
         const items = await inventory.listInventory(orgId);
         writer.write({ type: "data-inventoryList", data: { items } });
+        const sourceId = addSource("Inventory", "inventory");
         return {
           count: items.length,
+          sourceId,
           items: items.map((i) => ({
             name: i.name,
             form: i.form,
