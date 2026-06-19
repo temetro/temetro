@@ -24,6 +24,7 @@ import DashboardNavigation from "@/components/sidebar-02/nav-main";
 import { NavChatHistory } from "@/components/sidebar-02/nav-chat-history";
 import { NotificationsPopover } from "@/components/sidebar-02/nav-notifications";
 import { NavUser } from "@/components/sidebar-02/nav-user";
+import { useCallInvites } from "@/components/meetings/use-call-invites";
 
 export function DashboardSidebar() {
   const { state } = useSidebar();
@@ -31,6 +32,8 @@ export function DashboardSidebar() {
   const role = useActiveRole();
   const { allowed: aiAllowed } = useAiAccess();
   const isCollapsed = state === "collapsed";
+  // Ring staff into calls from anywhere in the app.
+  useCallInvites();
 
   // Hide clinical nav from non-clinical roles (e.g. reception). See lib/roles.ts.
   // Also drop the AI surfaces ("New chat" + "Analysis") when the clinic's AI

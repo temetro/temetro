@@ -737,7 +737,34 @@
     "startVideo": "Start video",
     "stopVideo": "Stop video",
     "shareScreen": "Share screen",
-    "leave": "Leave call"
+    "leave": "Leave call",
+    "calendar": "Calendar",
+    "calendarEmpty": "No meetings on this day.",
+    "invite": {
+      "add": "Add people",
+      "title": "Invite to call",
+      "description": "Ring a team member into {{room}}.",
+      "search": "Search team…",
+      "noMembers": "No other members.",
+      "ring": "Ring",
+      "invited": "Invited",
+      "join": "Join",
+      "toastTitle": "{{name}} invited you to a call"
+    },
+    "schedule": {
+      "cta": "Schedule meeting",
+      "title": "Schedule a meeting",
+      "description": "Plan a meeting and invite your team.",
+      "titleLabel": "Title",
+      "titlePlaceholder": "e.g. Weekly sync",
+      "date": "Date",
+      "time": "Time",
+      "participants": "Participants",
+      "save": "Schedule",
+      "saving": "Scheduling…",
+      "failedTitle": "Couldn't schedule meeting",
+      "failedBody": "Please try again."
+    }
   },
   "messages": {
     "inbox": "Inbox",

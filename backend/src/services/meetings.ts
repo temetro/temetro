@@ -1,7 +1,8 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 
 import { db } from "../db/index.js";
-import { meetingRooms } from "../db/schema/meetings.js";
+import { user } from "../db/schema/auth.js";
+import { meetingRooms, scheduledMeetings } from "../db/schema/meetings.js";
 
 export type MeetingRoom = {
   id: string;
@@ -66,4 +67,100 @@ export async function roomExists(orgId: string, roomId: string): Promise<boolean
       and(eq(meetingRooms.organizationId, orgId), eq(meetingRooms.id, roomId)),
     );
   return Boolean(row);
+}
+
+// --- Scheduled meetings (calendar) -----------------------------------------
+
+export type ScheduledMeeting = {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  participants: string[];
+  participantNames: string[];
+  createdBy: string | null;
+};
+
+// Meetings the user is part of (creator or invited participant), with the
+// participants' display names resolved for the calendar.
+export async function listMeetingEvents(
+  orgId: string,
+  userId: string,
+): Promise<ScheduledMeeting[]> {
+  const rows = await db
+    .select()
+    .from(scheduledMeetings)
+    .where(
+      and(
+        eq(scheduledMeetings.organizationId, orgId),
+        or(
+          eq(scheduledMeetings.createdBy, userId),
+          // `participants` is a JSONB array of user ids.
+          sql`${scheduledMeetings.participants} @> ${JSON.stringify([userId])}::jsonb`,
+        ),
+      ),
+    )
+    .orderBy(asc(scheduledMeetings.date), asc(scheduledMeetings.time));
+
+  // Resolve participant names in one query.
+  const ids = [...new Set(rows.flatMap((r) => r.participants))];
+  const nameById = new Map<string, string>();
+  if (ids.length > 0) {
+    const users = await db
+      .select({ id: user.id, name: user.name })
+      .from(user)
+      .where(inArray(user.id, ids));
+    for (const u of users) nameById.set(u.id, u.name);
+  }
+
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    date: r.date,
+    time: r.time,
+    participants: r.participants,
+    participantNames: r.participants.map((id) => nameById.get(id) ?? "—"),
+    createdBy: r.createdBy,
+  }));
+}
+
+export async function createMeetingEvent(
+  orgId: string,
+  createdBy: string,
+  input: { title: string; date: string; time: string; participants: string[] },
+): Promise<ScheduledMeeting> {
+  // The creator is always a participant.
+  const participants = [...new Set([createdBy, ...input.participants])];
+  const [row] = await db
+    .insert(scheduledMeetings)
+    .values({
+      organizationId: orgId,
+      title: input.title,
+      date: input.date,
+      time: input.time,
+      participants,
+      createdBy,
+    })
+    .returning({ id: scheduledMeetings.id });
+  const events = await listMeetingEvents(orgId, createdBy);
+  return events.find((e) => e.id === row!.id)!;
+}
+
+export async function deleteMeetingEvent(
+  orgId: string,
+  userId: string,
+  id: string,
+): Promise<boolean> {
+  // Only the creator can delete.
+  const deleted = await db
+    .delete(scheduledMeetings)
+    .where(
+      and(
+        eq(scheduledMeetings.organizationId, orgId),
+        eq(scheduledMeetings.id, id),
+        eq(scheduledMeetings.createdBy, userId),
+      ),
+    )
+    .returning({ id: scheduledMeetings.id });
+  return deleted.length > 0;
 }

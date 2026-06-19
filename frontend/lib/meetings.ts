@@ -35,3 +35,37 @@ export type CallPeer = {
   userId: string;
   userName: string;
 };
+
+// --- Scheduled meetings (calendar) -----------------------------------------
+
+export type ScheduledMeeting = {
+  id: string;
+  title: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:mm
+  participants: string[];
+  participantNames: string[];
+  createdBy: string | null;
+};
+
+export function listMeetingEvents(): Promise<ScheduledMeeting[]> {
+  return apiFetch<ScheduledMeeting[]>("/api/meetings/events");
+}
+
+export function createMeetingEvent(input: {
+  title: string;
+  date: string;
+  time: string;
+  participants: string[];
+}): Promise<ScheduledMeeting> {
+  return apiFetch<ScheduledMeeting>("/api/meetings/events", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteMeetingEvent(id: string): Promise<void> {
+  return apiFetch<void>(`/api/meetings/events/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}

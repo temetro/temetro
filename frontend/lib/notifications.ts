@@ -39,6 +39,8 @@ export function notificationHref(n: Notification): string | null {
   switch (n.entityType) {
     case "conversation":
       return `/messages?conversation=${encodeURIComponent(n.entityId)}`;
+    case "meeting":
+      return `/messages/meetings?room=${encodeURIComponent(n.entityId)}`;
     case "patient":
       return `/patients?file=${encodeURIComponent(n.entityId)}`;
     default:

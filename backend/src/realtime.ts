@@ -15,6 +15,7 @@ let io: Server | null = null;
 const userRoom = (userId: string) => `user:${userId}`;
 const convRoom = (conversationId: string) => `conv:${conversationId}`;
 const callRoom = (roomId: string) => `call:${roomId}`;
+const orgRoom = (orgId: string) => `org:${orgId}`;
 
 // Mesh WebRTC tops out around four peers (each sends its stream to every other);
 // past that the room is closed to new joiners.
@@ -69,8 +70,9 @@ export function initRealtime(httpServer: HttpServer): Server {
     const userName: string = socket.data.userName;
     const orgId: string | null = socket.data.orgId;
 
-    // Personal room for notifications.
+    // Personal room for notifications; clinic room for call presence broadcasts.
     socket.join(userRoom(userId));
+    if (orgId) socket.join(orgRoom(orgId));
 
     socket.on(
       "conversation:join",
@@ -151,6 +153,14 @@ export function initRealtime(httpServer: HttpServer): Server {
     // org-scoped: a join is authorized against the clinic's meeting_rooms.
     const joinedCallRooms = new Set<string>();
 
+    // Broadcast a room's live occupancy to the whole clinic so the meetings
+    // room list can show "N in call".
+    const emitPresence = (roomId: string) => {
+      if (!orgId) return;
+      const count = callParticipants.get(roomId)?.size ?? 0;
+      io?.to(orgRoom(orgId)).emit("call:presence", { roomId, count });
+    };
+
     const leaveCall = (roomId: string) => {
       if (!joinedCallRooms.has(roomId)) return;
       joinedCallRooms.delete(roomId);
@@ -160,6 +170,7 @@ export function initRealtime(httpServer: HttpServer): Server {
         callParticipants.delete(roomId);
       }
       socket.to(callRoom(roomId)).emit("call:peer-left", { socketId: socket.id });
+      emitPresence(roomId);
     };
 
     socket.on("call:join", async (roomId: unknown, ack?: Ack) => {
@@ -181,6 +192,7 @@ export function initRealtime(httpServer: HttpServer): Server {
         callParticipants.set(id, peers);
         // Tell existing peers a newcomer arrived; the newcomer initiates offers.
         socket.to(callRoom(id)).emit("call:peer-joined", me);
+        emitPresence(id);
         // Reply with the peers already present (excluding self).
         ack?.({
           ok: true,
@@ -190,6 +202,42 @@ export function initRealtime(httpServer: HttpServer): Server {
         ack?.({ ok: false, reason: "error" });
       }
     });
+
+    // Ring a clinic member into a room: push a live invite + a bell notification.
+    socket.on(
+      "call:invite",
+      async (payload: { roomId?: string; toUserId?: string }) => {
+        try {
+          const roomId = String(payload?.roomId ?? "");
+          const toUserId = String(payload?.toUserId ?? "");
+          if (!(roomId && toUserId && orgId)) return;
+          if (!(await meetings.roomExists(orgId, roomId))) return;
+          const room = (await meetings.listRooms(orgId)).find(
+            (r) => r.id === roomId,
+          );
+          const roomName = room?.name ?? "";
+          emitToUser(toUserId, "call:invite", {
+            roomId,
+            roomName,
+            fromName: userName,
+          });
+          const notification = await createNotification({
+            orgId,
+            userId: toUserId,
+            type: "meeting",
+            text: `${userName} invited you to a call`,
+            entityType: "meeting",
+            entityId: roomId,
+            actorName: userName,
+          });
+          if (notification) {
+            emitToUser(toUserId, "notification:new", notification);
+          }
+        } catch {
+          /* best-effort */
+        }
+      },
+    );
 
     // Relay an SDP offer/answer or ICE candidate to a specific peer socket.
     socket.on(
@@ -217,6 +265,7 @@ export function initRealtime(httpServer: HttpServer): Server {
         socket
           .to(callRoom(roomId))
           .emit("call:peer-left", { socketId: socket.id });
+        emitPresence(roomId);
       }
     });
   });

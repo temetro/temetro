@@ -1,4 +1,11 @@
-import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  index,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 import { organization, user } from "./auth.js";
 
@@ -20,4 +27,26 @@ export const meetingRooms = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [index("meeting_rooms_org_idx").on(table.organizationId)],
+);
+
+// A scheduled staff meeting (calendar event), scoped to a clinic. `participants`
+// holds the invited staff user ids; `date`/`time` are local strings (YYYY-MM-DD /
+// HH:mm) like appointments, to avoid timezone drift on the calendar.
+export const scheduledMeetings = pgTable(
+  "scheduled_meetings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    date: text("date").notNull(),
+    time: text("time").notNull(),
+    participants: jsonb("participants").$type<string[]>().notNull().default([]),
+    createdBy: text("created_by").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("scheduled_meetings_org_idx").on(table.organizationId)],
 );

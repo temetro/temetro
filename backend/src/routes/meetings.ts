@@ -39,6 +39,51 @@ meetingsRouter.post("/", async (req, res, next) => {
   }
 });
 
+// --- Scheduled meetings (calendar) -----------------------------------------
+
+meetingsRouter.get("/events", async (req, res, next) => {
+  try {
+    res.json(await meetings.listMeetingEvents(req.organizationId!, req.user!.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+const eventSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  time: z.string().regex(/^\d{2}:\d{2}$/),
+  participants: z.array(z.string()).max(50).default([]),
+});
+
+meetingsRouter.post("/events", async (req, res, next) => {
+  try {
+    const input = eventSchema.parse(req.body);
+    const event = await meetings.createMeetingEvent(
+      req.organizationId!,
+      req.user!.id,
+      input,
+    );
+    res.status(201).json(event);
+  } catch (err) {
+    next(err);
+  }
+});
+
+meetingsRouter.delete("/events/:id", async (req, res, next) => {
+  try {
+    const ok = await meetings.deleteMeetingEvent(
+      req.organizationId!,
+      req.user!.id,
+      String(req.params.id ?? ""),
+    );
+    if (!ok) throw new HttpError(404, "Meeting not found.");
+    res.status(204).end();
+  } catch (err) {
+    next(err);
+  }
+});
+
 meetingsRouter.delete("/:id", async (req, res, next) => {
   try {
     const ok = await meetings.deleteRoom(

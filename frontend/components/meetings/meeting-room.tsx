@@ -5,15 +5,35 @@ import {
   MicOff,
   MonitorUp,
   PhoneOff,
+  Search,
+  UserPlus,
   Video as VideoIcon,
   VideoOff,
 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { useSpeaking } from "@/components/meetings/use-audio-level";
 import { useWebRtcMesh } from "@/components/meetings/use-webrtc-mesh";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogDescription,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipPopup,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { authClient } from "@/lib/auth-client";
+import { listClinicMembers, type Participant } from "@/lib/messages";
+import { getSocket } from "@/lib/socket";
 import { cn } from "@/lib/utils";
 
 function initials(name: string): string {
@@ -23,7 +43,8 @@ function initials(name: string): string {
   return (parts[0]![0]! + parts.at(-1)![0]!).toUpperCase();
 }
 
-// One participant tile: shows their video, or an avatar when the camera is off.
+// One participant tile: video when the camera is on, an avatar otherwise, with a
+// green speaking ring driven by the stream's audio level.
 function VideoTile({
   stream,
   label,
@@ -36,13 +57,21 @@ function VideoTile({
   showVideo: boolean;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
+  // Analyse the stream's audio for the speaking ring (muting only affects
+  // playback, so the local tile still gets a ring when you talk).
+  const speaking = useSpeaking(stream);
   useEffect(() => {
     if (ref.current && ref.current.srcObject !== stream) {
       ref.current.srcObject = stream;
     }
   }, [stream]);
   return (
-    <div className="relative aspect-video overflow-hidden rounded-2xl border bg-muted">
+    <div
+      className={cn(
+        "relative aspect-video overflow-hidden rounded-2xl border-2 bg-muted transition-colors",
+        speaking ? "border-success" : "border-transparent",
+      )}
+    >
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
         autoPlay
@@ -65,6 +94,40 @@ function VideoTile({
   );
 }
 
+// A round control-bar button with a tooltip label.
+function ControlButton({
+  label,
+  onClick,
+  active,
+  variant = "secondary",
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  active?: boolean;
+  variant?: "secondary" | "outline" | "default" | "destructive";
+  children: React.ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            aria-label={label}
+            className="size-12 rounded-full"
+            onClick={onClick}
+            size="icon"
+            variant={active === false ? "outline" : variant}
+          />
+        }
+      >
+        {children}
+      </TooltipTrigger>
+      <TooltipPopup>{label}</TooltipPopup>
+    </Tooltip>
+  );
+}
+
 export function MeetingRoom({
   roomId,
   roomName,
@@ -77,6 +140,8 @@ export function MeetingRoom({
   onLeave: () => void;
 }) {
   const { t } = useTranslation();
+  const { data: session } = authClient.useSession();
+  const myId = session?.user?.id ?? "";
   const {
     localStream,
     peers,
@@ -90,9 +155,30 @@ export function MeetingRoom({
     maxPeers,
   } = useWebRtcMesh(roomId);
 
-  const leave = () => {
-    onLeave();
+  // Invite picker.
+  const [inviteOpen, setInviteOpen] = useState(false);
+  const [members, setMembers] = useState<Participant[]>([]);
+  const [memberQuery, setMemberQuery] = useState("");
+  const [invited, setInvited] = useState<Set<string>>(new Set());
+
+  const openInvite = () => {
+    setInviteOpen(true);
+    setMemberQuery("");
+    listClinicMembers()
+      .then(setMembers)
+      .catch(() => setMembers([]));
   };
+
+  const invite = (userId: string) => {
+    getSocket().emit("call:invite", { roomId, toUserId: userId });
+    setInvited((prev) => new Set(prev).add(userId));
+  };
+
+  const visibleMembers = members.filter(
+    (m) =>
+      m.id !== myId &&
+      m.name.toLowerCase().includes(memberQuery.trim().toLowerCase()),
+  );
 
   return (
     <div className="flex h-full flex-col gap-4">
@@ -116,13 +202,11 @@ export function MeetingRoom({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border bg-card/30 p-4">
-        {joinState === "full" ? (
+        {joinState === "full" || joinState === "error" ? (
           <div className="flex h-full items-center justify-center text-center text-muted-foreground text-sm">
-            {t("meetings.roomFull", { max: maxPeers })}
-          </div>
-        ) : joinState === "error" ? (
-          <div className="flex h-full items-center justify-center text-center text-muted-foreground text-sm">
-            {t("meetings.callError")}
+            {joinState === "full"
+              ? t("meetings.roomFull", { max: maxPeers })
+              : t("meetings.callError")}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -145,48 +229,102 @@ export function MeetingRoom({
       </div>
 
       {/* Discord-style control bar */}
-      <div className="flex items-center justify-center gap-2 rounded-full border bg-card/60 p-2 backdrop-blur">
-        <Button
-          aria-label={micOn ? t("meetings.muteMic") : t("meetings.unmuteMic")}
-          className="size-11 rounded-full"
-          onClick={toggleMic}
-          size="icon"
-          variant={micOn ? "secondary" : "outline"}
-        >
-          {micOn ? <Mic className="size-5" /> : <MicOff className="size-5" />}
-        </Button>
-        <Button
-          aria-label={camOn ? t("meetings.stopVideo") : t("meetings.startVideo")}
-          className="size-11 rounded-full"
-          onClick={toggleCam}
-          size="icon"
-          variant={camOn ? "secondary" : "outline"}
-        >
-          {camOn ? (
-            <VideoIcon className="size-5" />
-          ) : (
-            <VideoOff className="size-5" />
-          )}
-        </Button>
-        <Button
-          aria-label={t("meetings.shareScreen")}
-          className="size-11 rounded-full"
-          onClick={() => void toggleScreen()}
-          size="icon"
-          variant={screenOn ? "default" : "secondary"}
-        >
-          <MonitorUp className="size-5" />
-        </Button>
-        <Button
-          aria-label={t("meetings.leave")}
-          className="size-11 rounded-full"
-          onClick={leave}
-          size="icon"
+      <div className="flex items-center justify-center gap-3 rounded-full border bg-card/60 px-4 py-2 backdrop-blur">
+        <div className="flex items-center gap-2">
+          <ControlButton
+            active={micOn}
+            label={micOn ? t("meetings.muteMic") : t("meetings.unmuteMic")}
+            onClick={toggleMic}
+          >
+            {micOn ? <Mic className="size-5" /> : <MicOff className="size-5" />}
+          </ControlButton>
+          <ControlButton
+            active={camOn}
+            label={camOn ? t("meetings.stopVideo") : t("meetings.startVideo")}
+            onClick={toggleCam}
+          >
+            {camOn ? (
+              <VideoIcon className="size-5" />
+            ) : (
+              <VideoOff className="size-5" />
+            )}
+          </ControlButton>
+          <ControlButton
+            label={t("meetings.shareScreen")}
+            onClick={() => void toggleScreen()}
+            variant={screenOn ? "default" : "secondary"}
+          >
+            <MonitorUp className="size-5" />
+          </ControlButton>
+          <ControlButton label={t("meetings.invite.add")} onClick={openInvite}>
+            <UserPlus className="size-5" />
+          </ControlButton>
+        </div>
+        <div className="mx-1 h-8 w-px bg-border" />
+        <ControlButton
+          label={t("meetings.leave")}
+          onClick={onLeave}
           variant="destructive"
         >
           <PhoneOff className="size-5" />
-        </Button>
+        </ControlButton>
       </div>
+
+      <Dialog onOpenChange={setInviteOpen} open={inviteOpen}>
+        <DialogPopup className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("meetings.invite.title")}</DialogTitle>
+            <DialogDescription>
+              {t("meetings.invite.description", { room: roomName })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogPanel className="flex flex-col gap-2">
+            <div className="relative">
+              <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+              <Input
+                aria-label={t("meetings.invite.search")}
+                className="pl-9"
+                onChange={(e) => setMemberQuery(e.target.value)}
+                placeholder={t("meetings.invite.search")}
+                size="sm"
+                value={memberQuery}
+              />
+            </div>
+            <div className="flex max-h-72 flex-col gap-1 overflow-y-auto">
+              {visibleMembers.length === 0 ? (
+                <p className="px-1 py-4 text-center text-muted-foreground text-sm">
+                  {t("meetings.invite.noMembers")}
+                </p>
+              ) : (
+                visibleMembers.map((m) => (
+                  <div
+                    className="flex items-center gap-3 rounded-lg px-2 py-2"
+                    key={m.id}
+                  >
+                    <Avatar className="size-8">
+                      <AvatarFallback>{initials(m.name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="min-w-0 flex-1 truncate text-foreground text-sm">
+                      {m.name}
+                    </span>
+                    <Button
+                      disabled={invited.has(m.id)}
+                      onClick={() => invite(m.id)}
+                      size="sm"
+                      type="button"
+                      variant="outline"
+                    >
+                      {invited.has(m.id)
+                        ? t("meetings.invite.invited")
+                        : t("meetings.invite.ring")}
+                    </Button>
+                  </div>
+                ))
+              )}
+            </div>
+          </DialogPanel>
+        </DialogPopup>
+      </Dialog>
     </div>
   );
 }
