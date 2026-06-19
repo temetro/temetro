@@ -31,10 +31,14 @@ export type Route = {
 
 // True when `link` matches the current path. "/" only matches exactly; any other
 // link matches itself and its nested routes (so a parent stays lit on subpages).
+// Pass `exact` for sub-items so a parent link (e.g. /messages) doesn't also light
+// the Inbox sub when a sibling sub (/messages/meetings) is the active page.
 function useIsActive() {
   const pathname = usePathname();
-  return (link: string) =>
-    link === "/" ? pathname === "/" : pathname === link || pathname.startsWith(`${link}/`);
+  return (link: string, exact = false) => {
+    if (link === "/" || exact) return pathname === link;
+    return pathname === link || pathname.startsWith(`${link}/`);
+  };
 }
 
 export default function DashboardNavigation({ routes }: { routes: Route[] }) {
@@ -90,7 +94,7 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
                   <SidebarMenuSubItem key={`${route.id}-${subRoute.link}`}>
                     <SidebarMenuSubButton
                       className="text-muted-foreground hover:bg-transparent hover:text-foreground active:bg-transparent data-[active=true]:bg-transparent data-[active=true]:font-medium data-[active=true]:text-foreground"
-                      isActive={isActive(subRoute.link)}
+                      isActive={isActive(subRoute.link, true)}
                       render={<Link href={subRoute.link} prefetch={true} />}
                     >
                       <span className="truncate">{subRoute.title}</span>

@@ -165,11 +165,12 @@ function systemPrompt(
     "tool, so keep your prose a brief summary rather than re-listing every field.",
     "",
     "Citations: every retrieval tool result includes a `sourceId` (e.g. \"s1\").",
-    "When you state a fact drawn from a tool result, append an inline citation",
-    "marker immediately after that statement, in the exact form [[src:ID]] using",
-    "the matching sourceId — e.g. \"BP is well controlled [[src:s1]].\" Cite only",
-    "facts grounded in tool results, place the marker right after the relevant",
-    "sentence, and never invent or guess a sourceId.",
+    "Cite **sparingly** — add at most ONE marker per paragraph, on the single most",
+    "important record-derived claim, in the exact form [[src:ID]] using the matching",
+    "sourceId (e.g. \"BP is well controlled this quarter [[src:s1]].\"). Do NOT cite",
+    "every sentence, do NOT cite individual list items (e.g. each allergy or",
+    "medication), and never repeat the same source more than once. Cite only facts",
+    "grounded in tool results, and never invent or guess a sourceId.",
     veilActive
       ? `Privacy: this conversation runs on an external provider (${providerLabel}). Patient identifiers are de-identified as tokens like [PATIENT_1] / [MRN_1]; refer to patients generically ("this patient") rather than repeating tokens.`
       : "",

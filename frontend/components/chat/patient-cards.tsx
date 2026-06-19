@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { ArrowRight, Pencil } from "lucide-react";
 import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -61,9 +61,10 @@ const statusVariant: Record<Patient["status"], BadgeVariant> = {
 };
 
 // Fixed width so the cards sit in a horizontal scroll row instead of squashing,
-// plus a subtle clickable affordance (they open a detail dialog).
+// plus a subtle clickable affordance (they open a detail dialog). Compact cards
+// size to their own (short) content — see `items-start` in PatientResult.
 const rowCard =
-  "w-80 shrink-0 cursor-pointer text-left outline-none transition hover:ring-foreground/20 focus-visible:ring-2 focus-visible:ring-ring";
+  "w-72 shrink-0 cursor-pointer gap-0 text-left outline-none transition hover:bg-accent/30 hover:ring-foreground/20 focus-visible:ring-2 focus-visible:ring-ring";
 
 // COSS Card has no `size` variant; recreate the old compact ("sm") density by
 // tightening the inner section padding from p-6 → p-4 via data-slot selectors.
@@ -98,30 +99,6 @@ function Row({ label, value }: { label: ReactNode; value: ReactNode }) {
 
 function Empty({ children }: { children: ReactNode }) {
   return <p className="text-muted-foreground">{children}</p>;
-}
-
-function TrendBlock({ trend }: { trend: Trend }) {
-  const { t } = useTranslation();
-  if (trend.points.length === 0) {
-    return <Empty>{t("patientCard.trend.empty")}</Empty>;
-  }
-  return (
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-baseline justify-between gap-2">
-        <SectionLabel>
-          {t("patientCard.trend.last", {
-            label: trend.label,
-            count: trend.points.length,
-          })}
-        </SectionLabel>
-        <span className="text-foreground">
-          {trend.points.at(-1)}
-          <span className="text-muted-foreground"> {trend.unit}</span>
-        </span>
-      </div>
-      <Sparkline points={trend.points} unit={trend.unit} />
-    </div>
-  );
 }
 
 function TrendDetail({ trend }: { trend: Trend }) {
@@ -177,7 +154,8 @@ function AlertBadges({ alerts }: { alerts: string[] }) {
   );
 }
 
-// A card that previews `children` and opens a roomier dialog of `detail` on click.
+// A compact card that previews `children` and opens a roomier dialog of `detail`
+// on click. A muted "Click for more" footer signals the card is expandable.
 function ExpandableCard({
   title,
   description,
@@ -189,6 +167,7 @@ function ExpandableCard({
   detail: ReactNode;
   children: ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <Dialog>
       <DialogTrigger
@@ -196,6 +175,10 @@ function ExpandableCard({
         render={<Card className={cn(rowCard, compactCard)} />}
       >
         {children}
+        <div className="flex items-center gap-1 px-4 pt-2 pb-3 text-muted-foreground text-xs">
+          {t("patientCard.clickForMore")}
+          <ArrowRight className="size-3" />
+        </div>
       </DialogTrigger>
       <DialogPopup className="max-h-[80dvh] sm:max-w-lg">
         <DialogHeader>
@@ -243,6 +226,16 @@ function SummaryCard({
             />
           </div>
           <AlertBadges alerts={patient.alerts} />
+          {onEdit ? (
+            <button
+              className="flex items-center justify-center gap-1.5 rounded-2xl border border-border/60 py-2 font-medium text-muted-foreground text-sm transition-colors hover:bg-accent hover:text-foreground"
+              onClick={onEdit}
+              type="button"
+            >
+              <Pencil className="size-4" />
+              {t("patientCard.summary.editRecord")}
+            </button>
+          ) : null}
         </div>
       }
       title={patient.name}
@@ -259,34 +252,15 @@ function SummaryCard({
           <Badge variant={statusVariant[patient.status]}>{statusLabel}</Badge>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-x-3 gap-y-3">
-          <Stat label={t("patientCard.summary.primaryCare")} value={patient.pcp} />
-          <Stat
-            label={t("patientCard.summary.lastSeen")}
-            value={patient.encounters[0]?.date ?? "—"}
-          />
-          <Stat
-            label={t("patientCard.summary.activeMeds")}
-            value={patient.medications.length}
-          />
-          <Stat
-            label={t("patientCard.summary.openProblems")}
-            value={patient.problems.length}
-          />
-        </div>
-        <AlertBadges alerts={patient.alerts} />
-        <button
-          className="mt-auto flex items-center justify-center gap-1.5 rounded-2xl border border-border/60 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          onClick={(event) => {
-            event.stopPropagation();
-            onEdit?.();
-          }}
-          type="button"
-        >
-          <Pencil className="size-4" />
-          {t("patientCard.summary.editRecord")}
-        </button>
+      <CardContent className="grid grid-cols-2 gap-x-3 gap-y-2 pt-0">
+        <Stat
+          label={t("patientCard.summary.activeMeds")}
+          value={patient.medications.length}
+        />
+        <Stat
+          label={t("patientCard.summary.openProblems")}
+          value={patient.problems.length}
+        />
       </CardContent>
     </ExpandableCard>
   );
@@ -327,10 +301,9 @@ function VitalsCard({ patient }: { patient: Patient }) {
           {t("patientCard.vitals.taken", { at: vitals.takenAt })}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        {vitalsGrid("gap-y-3")}
-        <Separator />
-        <TrendBlock trend={patient.vitalsTrend} />
+      <CardContent className="grid grid-cols-2 gap-x-4 gap-y-2 pt-0">
+        <Stat label={t("patientCard.vitals.bp")} value={vitals.bp} />
+        <Stat label={t("patientCard.vitals.hr")} value={vitals.hr} />
       </CardContent>
     </ExpandableCard>
   );
@@ -387,25 +360,6 @@ function LabsCard({ patient }: { patient: Patient }) {
           {t("patientCard.labs.asOf", { at: patient.labs[0]?.takenAt ?? "—" })}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        {patient.labs.length === 0 ? (
-          <Empty>{t("patientCard.labs.empty")}</Empty>
-        ) : (
-          <>
-            <div className="flex flex-col gap-2">
-              {patient.labs.map((lab) => (
-                <Row
-                  key={lab.name}
-                  label={lab.name}
-                  value={<LabValue flag={lab.flag} value={lab.value} />}
-                />
-              ))}
-            </div>
-            <Separator />
-            <TrendBlock trend={patient.labTrend} />
-          </>
-        )}
-      </CardContent>
     </ExpandableCard>
   );
 }
@@ -442,7 +396,6 @@ function MedicationsCard({ patient }: { patient: Patient }) {
           })}
         </CardDescription>
       </CardHeader>
-      <CardContent>{list}</CardContent>
     </ExpandableCard>
   );
 }
@@ -477,7 +430,6 @@ function ProblemsCard({ patient }: { patient: Patient }) {
           {t("patientCard.problems.active", { count: patient.problems.length })}
         </CardDescription>
       </CardHeader>
-      <CardContent>{list}</CardContent>
     </ExpandableCard>
   );
 }
@@ -528,10 +480,19 @@ function AllergiesCard({ patient }: { patient: Patient }) {
     >
       <CardHeader>
         <CardTitle>{t("patientCard.allergies.title")}</CardTitle>
+        <CardDescription>
+          {patient.allergies.length === 0
+            ? t("patientCard.allergies.none")
+            : t("patientCard.allergies.count", {
+                count: patient.allergies.length,
+              })}
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <AllergiesList patient={patient} />
-      </CardContent>
+      {patient.alerts.length > 0 ? (
+        <CardContent className="pt-0">
+          <AlertBadges alerts={patient.alerts} />
+        </CardContent>
+      ) : null}
     </ExpandableCard>
   );
 }
@@ -576,10 +537,10 @@ function VisitsCard({ patient }: { patient: Patient }) {
     >
       <CardHeader>
         <CardTitle>{t("patientCard.visits.title")}</CardTitle>
+        <CardDescription>
+          {t("patientCard.visits.recent", { count: patient.encounters.length })}
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <VisitsList patient={patient} />
-      </CardContent>
     </ExpandableCard>
   );
 }

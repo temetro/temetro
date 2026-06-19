@@ -26,13 +26,18 @@ export function hasCitationMarkers(text: string): boolean {
 }
 
 // Rewrites [[src:id]] → [n](#cite-id) for known sources; strips unknown markers.
+// Each source is cited at most once (its first occurrence) so an over-eager model
+// that tags every word with the same source collapses to a single chip.
 function withCitationLinks(
   text: string,
   numberById: Map<string, number>,
 ): string {
+  const seen = new Set<string>();
   return text.replace(CITATION_RE, (_match, id: string) => {
     const num = numberById.get(id);
-    return num ? `[${num}](${CITE_HREF_PREFIX}${id})` : "";
+    if (!num || seen.has(id)) return "";
+    seen.add(id);
+    return `[${num}](${CITE_HREF_PREFIX}${id})`;
   });
 }
 

@@ -28,18 +28,21 @@ import { cn } from "@/lib/utils";
 // Time-range filter for the Overview header. Month-based series are sliced to
 // the trailing window; sub-month ranges (30d/today) fall back to the latest
 // point since the backend has no finer-grained series yet.
-const RANGES = ["all", "12m", "3m", "30d", "today"] as const;
+const RANGES = ["all", "3m", "30d", "today"] as const;
 type Range = (typeof RANGES)[number];
 const RANGE_MONTHS: Record<Range, number | null> = {
   all: null,
-  "12m": 12,
   "3m": 3,
   "30d": 1,
   today: 1,
 };
+// Charts use monthly aggregates, so a sub-month window would collapse to a
+// single point (which an area chart can't draw). Keep at least two trailing
+// points so every range renders a valid mini-trend.
 function sliceMonths<T>(arr: T[], range: Range): T[] {
   const months = RANGE_MONTHS[range];
-  return months == null ? arr : arr.slice(-months);
+  if (months == null) return arr;
+  return arr.slice(-Math.max(months, 2));
 }
 
 // The Overview sections the Customize popover can show/hide.
@@ -128,7 +131,7 @@ export function AnalysisView() {
   const { t } = useTranslation();
   const [data, setData] = useState<Analytics | null>(null);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [range, setRange] = useState<Range>("30d");
+  const [range, setRange] = useState<Range>("all");
   const [visible, setVisible] = useState<Record<SectionKey, boolean>>({
     visits: true,
     patients: true,
