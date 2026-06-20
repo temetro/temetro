@@ -23,11 +23,13 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   bookPortalAppointment,
+  createPortalPatient,
   getPortalClinic,
   lookupPortalResults,
   type PortalBookingResult,
   type PortalResults,
 } from "@/lib/portal";
+import { cn } from "@/lib/utils";
 
 type Step = "choose" | "book" | "results";
 
@@ -157,14 +159,20 @@ function BackButton({ onBack }: { onBack: () => void }) {
 
 function BookStep({ clinic, onBack }: { clinic: string; onBack: () => void }) {
   const { t } = useTranslation();
+  // "returning" = has a file number; "new" = register first, then book.
+  const [mode, setMode] = useState<"returning" | "new">("returning");
   const [name, setName] = useState("");
   const [fileNumber, setFileNumber] = useState("");
+  const [sex, setSex] = useState("M");
+  const [age, setAge] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("09:00");
   const [type, setType] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<PortalBookingResult | null>(null);
+  // The file number assigned to a freshly-registered patient (shown on success).
+  const [newFile, setNewFile] = useState<string | null>(null);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -172,9 +180,20 @@ function BookStep({ clinic, onBack }: { clinic: string; onBack: () => void }) {
     setBusy(true);
     setError(null);
     try {
+      // A new patient is registered first to obtain a file number.
+      let file = fileNumber.trim();
+      if (mode === "new") {
+        const created = await createPortalPatient(clinic, {
+          name: name.trim(),
+          sex,
+          age: age ? Number(age) : undefined,
+        });
+        file = created.fileNumber;
+        setNewFile(created.fileNumber);
+      }
       const result = await bookPortalAppointment(clinic, {
         name: name.trim(),
-        fileNumber: fileNumber.trim(),
+        fileNumber: file,
         date,
         time,
         type: type.trim() || undefined,
@@ -203,6 +222,9 @@ function BookStep({ clinic, onBack }: { clinic: string; onBack: () => void }) {
                 date: done.date,
                 time: done.time,
               })}
+              {newFile
+                ? ` ${t("portal.book.newFileNote", { file: newFile })}`
+                : ""}
             </EmptyDescription>
           </EmptyHeader>
         </Empty>
@@ -217,16 +239,62 @@ function BookStep({ clinic, onBack }: { clinic: string; onBack: () => void }) {
     <form className="flex w-full flex-col gap-4" onSubmit={submit}>
       <BackButton onBack={onBack} />
       <h2 className="font-semibold text-xl">{t("portal.book.title")}</h2>
+
+      {/* Returning vs new patient. */}
+      <div className="grid grid-cols-2 gap-2 rounded-2xl bg-muted/40 p-1">
+        {(["returning", "new"] as const).map((m) => (
+          <button
+            className={cn(
+              "rounded-xl px-3 py-2 text-sm font-medium transition-colors",
+              mode === m
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+            key={m}
+            onClick={() => setMode(m)}
+            type="button"
+          >
+            {t(`portal.book.mode.${m}`)}
+          </button>
+        ))}
+      </div>
+
       <Field label={t("portal.field.name")}>
         <Input onChange={(e) => setName(e.target.value)} required value={name} />
       </Field>
-      <Field label={t("portal.field.fileNumber")}>
-        <Input
-          onChange={(e) => setFileNumber(e.target.value)}
-          required
-          value={fileNumber}
-        />
-      </Field>
+
+      {mode === "returning" ? (
+        <Field label={t("portal.field.fileNumber")}>
+          <Input
+            onChange={(e) => setFileNumber(e.target.value)}
+            required
+            value={fileNumber}
+          />
+        </Field>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={t("portal.field.sex")}>
+            <select
+              className="h-9 w-full rounded-3xl border border-transparent bg-input/50 px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30"
+              onChange={(e) => setSex(e.target.value)}
+              value={sex}
+            >
+              <option value="M">{t("portal.field.sexMale")}</option>
+              <option value="F">{t("portal.field.sexFemale")}</option>
+            </select>
+          </Field>
+          <Field label={t("portal.field.age")}>
+            <Input
+              max={150}
+              min={0}
+              onChange={(e) => setAge(e.target.value)}
+              type="number"
+              value={age}
+            />
+          </Field>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <Field label={t("portal.field.date")}>
           <Input

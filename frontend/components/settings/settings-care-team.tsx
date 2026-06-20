@@ -1,7 +1,7 @@
 "use client";
 
 import { Info, UserPlus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AddStaffDialog } from "@/components/settings/add-staff-dialog";
@@ -49,7 +49,11 @@ function initials(name?: string | null, email?: string | null): string {
   );
 }
 
-export function CareTeamPanel() {
+export function CareTeamPanel({
+  initialMemberId,
+}: {
+  initialMemberId?: string;
+}) {
   const { t } = useTranslation();
   const { data: session } = authClient.useSession();
   const [members, setMembers] = useState<StaffMember[]>([]);
@@ -78,6 +82,18 @@ export function CareTeamPanel() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  // Deep-link: open a specific member (e.g. from a password-reset system card).
+  const appliedDeepLink = useRef(false);
+  useEffect(() => {
+    if (appliedDeepLink.current || !initialMemberId || members.length === 0)
+      return;
+    const target = members.find((m) => m.userId === initialMemberId);
+    if (target) {
+      setSelected(target);
+      appliedDeepLink.current = true;
+    }
+  }, [initialMemberId, members]);
 
   const myRole = members.find((m) => m.userId === session?.user?.id)?.role;
   const canManage = myRole === "owner" || myRole === "admin";

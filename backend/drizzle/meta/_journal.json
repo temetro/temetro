@@ -190,6 +190,13 @@
       "when": 1781969782874,
       "tag": "0026_many_wolfsbane",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1781973588708,
+      "tag": "0027_romantic_kylun",
+      "breakpoints": true
     }
   ]
 }

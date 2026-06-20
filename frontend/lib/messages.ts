@@ -26,7 +26,13 @@ export type MessageAttachment =
       mimeType: string;
       size: number;
     }
-  | { kind: "appointment"; appointment: AppointmentSnapshot };
+  | { kind: "appointment"; appointment: AppointmentSnapshot }
+  | {
+      kind: "passwordReset";
+      userId: string;
+      userName: string;
+      userEmail: string;
+    };
 
 export type ConversationMessage = {
   id: string;

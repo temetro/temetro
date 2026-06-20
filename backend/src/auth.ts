@@ -35,10 +35,25 @@ export const auth = betterAuth({
     maxPasswordLength: 256,
     revokeSessionsOnPasswordReset: true,
     sendResetPassword: async ({ user, url }) => {
-      await sendEmail({
-        to: user.email,
-        subject: "Reset your temetro password",
-        text: `Reset your password by opening this link:\n\n${url}\n\nIf you didn't request this, you can ignore this email.`,
+      // With a provider configured, email the reset link. Otherwise fall back to
+      // alerting the clinic admin(s) so they can set a new password (dynamic
+      // imports keep the Better Auth CLI's static graph minimal at generate time).
+      const { isEmailConfigured } = await import("./services/email-config.js");
+      if (await isEmailConfigured()) {
+        await sendEmail({
+          to: user.email,
+          subject: "Reset your temetro password",
+          text: `Reset your password by opening this link:\n\n${url}\n\nIf you didn't request this, you can ignore this email.`,
+        });
+        return;
+      }
+      const { notifyAdminsPasswordReset } = await import(
+        "./services/auth-fallback.js"
+      );
+      await notifyAdminsPasswordReset({
+        id: user.id,
+        name: user.name,
+        email: user.email,
       });
     },
   },

@@ -4,6 +4,7 @@ import {
   CalendarClock,
   Download,
   FileText,
+  KeyRound,
   Mail,
   Paperclip,
   Plus,
@@ -93,7 +94,32 @@ const GROUP_WINDOW_MS = 5 * 60 * 1000;
 // shared-appointment card. Alignment (left/right) comes from the parent column.
 function SentAttachment({ att }: { att: MessageAttachment }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const [apptOpen, setApptOpen] = useState(false);
+  if (att.kind === "passwordReset") {
+    return (
+      <button
+        className="max-w-[75%] rounded-2xl border border-warning/40 bg-warning/5 p-3 text-left text-sm transition-colors hover:bg-warning/10"
+        onClick={() =>
+          router.push(
+            `/settings?tab=careTeam&member=${encodeURIComponent(att.userId)}`,
+          )
+        }
+        type="button"
+      >
+        <div className="flex items-center gap-1.5 text-warning text-xs">
+          <KeyRound className="size-3.5" />
+          {t("messages.system.label")}
+        </div>
+        <p className="mt-1 font-medium text-foreground">
+          {t("messages.system.passwordResetTitle")}
+        </p>
+        <p className="text-muted-foreground text-xs">
+          {t("messages.system.passwordResetBody", { name: att.userName })}
+        </p>
+      </button>
+    );
+  }
   if (att.kind === "file") {
     return (
       <button
@@ -668,7 +694,9 @@ export function MessagesView() {
                       <span className="max-w-40 truncate">
                         {att.kind === "file"
                           ? att.fileName
-                          : att.appointment.name}
+                          : att.kind === "appointment"
+                            ? att.appointment.name
+                            : ""}
                       </span>
                       <button
                         aria-label={t("messages.attach.remove")}

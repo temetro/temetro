@@ -7,9 +7,10 @@ import { organization } from "../db/schema/auth.js";
 import { appointmentInputSchema } from "../lib/appointment-validation.js";
 import { HttpError } from "../lib/http-error.js";
 import { initialsFromName } from "../lib/initials.js";
+import { patientInputSchema } from "../lib/patient-validation.js";
 import { recordActivity } from "../services/activity.js";
 import { createAppointment, listAppointments } from "../services/appointments.js";
-import { getPatient } from "../services/patients.js";
+import { createPatient, getPatient } from "../services/patients.js";
 
 // Public, unauthenticated kiosk API for a clinic's Patient Portal (an iPad in the
 // waiting room). Scoped by the clinic slug in the URL — there is no session.
@@ -52,6 +53,39 @@ const bookingSchema = z.object({
   type: z.string().trim().max(120).optional(),
 });
 
+const newPatientSchema = z.object({
+  name: z.string().trim().min(1, "Your name is required.").max(200),
+  sex: z.string().trim().optional(),
+  age: z.coerce.number().int().min(0).max(150).optional(),
+});
+
+// POST /api/portal/:clinic/patients — register a new (demographics-only) patient
+// from the kiosk so a first-time visitor can get a file number and then book.
+// Writes only demographics (no clinical PHI) from this unauthenticated surface.
+portalRouter.post("/:clinic/patients", async (req, res, next) => {
+  try {
+    const clinic = await resolveClinic(req);
+    const body = newPatientSchema.parse(req.body);
+    const input = patientInputSchema.parse({
+      name: body.name,
+      sex: body.sex ?? "M",
+      age: body.age ?? 0,
+      source: "manual",
+    });
+    const created = await createPatient(clinic.id, "", input, true);
+    await recordActivity({
+      orgId: clinic.id,
+      actor: { id: "", name: created.name },
+      action: `Patient portal registration — ${created.name}`,
+      entityType: "patient",
+      entityId: created.fileNumber,
+    });
+    res.status(201).json({ fileNumber: created.fileNumber, name: created.name });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/portal/:clinic/appointments — self-service booking for a registered
 // patient. Verifies the file number + name, then creates a confirmed appointment
 // that shows up on the clinic's Appointments page.
@@ -84,6 +118,24 @@ portalRouter.post("/:clinic/appointments", async (req, res, next) => {
       status: "confirmed",
       source: "manual",
     });
+
+    // Prevent double-booking the same slot: a provider can't have two
+    // appointments at the same date+time (clinic-wide when the provider is
+    // unknown). Cancelled appointments don't count.
+    const taken = (await listAppointments(clinic.id)).some(
+      (a) =>
+        a.status !== "cancelled" &&
+        a.date === input.date &&
+        a.time === input.time &&
+        (!input.provider || !a.provider || a.provider === input.provider),
+    );
+    if (taken) {
+      throw new HttpError(
+        409,
+        "That time slot is already taken. Please choose another time.",
+      );
+    }
+
     const created = await createAppointment(clinic.id, "", input);
     await recordActivity({
       orgId: clinic.id,

@@ -230,3 +230,42 @@ staffRouter.patch(
     }
   },
 );
+
+// Set a member's password directly (admin-driven reset — e.g. the employee
+// forgot it and no email provider is configured). Owner/admin only, and the
+// target must be a member of this clinic. Uses Better Auth's internal context to
+// hash + store the password (the same calls its admin plugin makes), so no admin
+// plugin is required.
+const passwordInputSchema = z.object({
+  newPassword: z.string().min(12).max(256),
+});
+
+staffRouter.patch(
+  "/:userId/password",
+  requirePermission({ member: ["update"] }),
+  async (req, res, next) => {
+    try {
+      const userId = String(req.params.userId ?? "");
+      const { newPassword } = passwordInputSchema.parse(req.body);
+
+      const [target] = await db
+        .select({ id: member.id })
+        .from(member)
+        .where(
+          and(
+            eq(member.organizationId, req.organizationId!),
+            eq(member.userId, userId),
+          ),
+        );
+      if (!target) throw new HttpError(404, "Member not found.");
+
+      const ctx = await auth.$context;
+      const hashed = await ctx.password.hash(newPassword);
+      await ctx.internalAdapter.updatePassword(userId, hashed);
+
+      res.json({ ok: true });
+    } catch (err) {
+      next(err);
+    }
+  },
+);

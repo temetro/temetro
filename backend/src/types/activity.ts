@@ -9,7 +9,8 @@ export type ActivityEntityType =
   | "invoice"
   | "inventory"
   | "dispense"
-  | "task";
+  | "task"
+  | "settings";
 
 export type ActivityEntry = {
   id: string;

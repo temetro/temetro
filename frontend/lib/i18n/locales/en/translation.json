@@ -831,7 +831,12 @@
       "apptPatient": "Patient",
       "apptStatus": "Status"
     },
-    "startCall": "Start a call with {{name}}"
+    "startCall": "Start a call with {{name}}",
+    "system": {
+      "label": "System message",
+      "passwordResetTitle": "Password reset requested",
+      "passwordResetBody": "{{name}} forgot their password. Tap to open their settings and set a new one."
+    }
   },
   "analysis": {
     "title": "Overview",
@@ -1531,7 +1536,33 @@
       "generateToken": "Generate token",
       "resourcesTitle": "Resources",
       "resourcesDescription": "Where to learn more",
-      "resourcesBody": "The API reference — covering patients, appointments, prescriptions, tasks, messaging, activity and analytics — lives in the project documentation under docs/api. temetro is open source, so the route handlers in backend/src/routes are the authoritative spec."
+      "resourcesBody": "The API reference — covering patients, appointments, prescriptions, tasks, messaging, activity and analytics — lives in the project documentation under docs/api. temetro is open source, so the route handlers in backend/src/routes are the authoritative spec.",
+      "email": {
+        "title": "Email provider",
+        "description": "How temetro sends verification, password-reset and invitation emails. This is a deployment-wide setting.",
+        "provider": "Provider",
+        "providers": {
+          "none": "Not configured",
+          "smtp": "SMTP",
+          "resend": "Resend",
+          "postmark": "Postmark",
+          "sendgrid": "SendGrid"
+        },
+        "from": "From address",
+        "apiKey": "API key",
+        "apiKeySet": "•••••••• (saved — leave blank to keep)",
+        "apiKeyPlaceholder": "Paste your provider API key",
+        "smtpHint": "SMTP uses the SMTP_HOST/PORT/USER/PASS environment variables on the server.",
+        "save": "Save",
+        "saving": "Saving…",
+        "savedTitle": "Email settings saved",
+        "savedFailed": "Couldn't save email settings.",
+        "test": "Send test",
+        "testing": "Sending…",
+        "testSentTitle": "Test email sent",
+        "testSentBody": "Sent a test email to {{to}}.",
+        "testFailed": "Couldn't send the test email."
+      }
     },
     "profile": {
       "sectionTitle": "Clinician profile",
@@ -1657,7 +1688,20 @@
           "read": "View",
           "write": "Edit",
           "delete": "Delete"
-        }
+        },
+        "resetPassword": "Reset password",
+        "resetPasswordHint": "Set a new password for this employee (e.g. they forgot theirs and no email provider is configured).",
+        "newPassword": "New password (min 12 chars)",
+        "confirmPassword": "Confirm password",
+        "setPassword": "Set password",
+        "pwTooShortTitle": "Password too short",
+        "pwTooShortBody": "Use at least 12 characters.",
+        "pwMismatchTitle": "Passwords don't match",
+        "pwMismatchBody": "Re-enter the same password in both fields.",
+        "pwUpdatedTitle": "Password updated",
+        "pwUpdatedBody": "{{name}} can now sign in with the new password.",
+        "pwFailedTitle": "Couldn't set password",
+        "pwFailedBody": "Please try again."
       },
       "remove": {
         "title": "Remove team member?",
@@ -1810,14 +1854,24 @@
       "date": "Date",
       "time": "Time",
       "reason": "Reason for visit (optional)",
-      "reasonPlaceholder": "e.g. Follow-up, check-up"
+      "reasonPlaceholder": "e.g. Follow-up, check-up",
+      "sex": "Sex",
+      "sexMale": "Male",
+      "sexFemale": "Female",
+      "age": "Age"
     },
     "book": {
       "title": "Book an appointment",
       "submit": "Request appointment",
       "successTitle": "You're booked",
       "successBody": "Your appointment is set for {{date}} at {{time}}. Please check in at the front desk.",
-      "errorGeneric": "Couldn't book the appointment. Please try again or ask the front desk."
+      "errorGeneric": "Couldn't book the appointment. Please try again or ask the front desk.",
+      "mode": {
+        "returning": "Returning patient",
+        "new": "New patient"
+      },
+      "newFileNote": "Your new file number is {{file}} — keep it for next time.",
+      "slotTaken": "That time is already taken. Please choose another."
     },
     "results": {
       "title": "View my results",

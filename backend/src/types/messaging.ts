@@ -25,7 +25,16 @@ export type MessageAttachment =
       mimeType: string;
       size: number;
     }
-  | { kind: "appointment"; appointment: AppointmentSnapshot };
+  | { kind: "appointment"; appointment: AppointmentSnapshot }
+  // A system-generated alert (e.g. an employee asked for a password reset but no
+  // email provider is configured). Rendered as a distinct "System" card that
+  // deep-links an admin to the member's settings.
+  | {
+      kind: "passwordReset";
+      userId: string;
+      userName: string;
+      userEmail: string;
+    };
 
 export type ConversationMessage = {
   id: string;

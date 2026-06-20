@@ -482,6 +482,111 @@ export async function markRead(
     );
 }
 
+// --- System messages -------------------------------------------------------
+
+// A reserved user that "sends" system messages. It has no account row, so it can
+// never log in; the messages.senderId FK just needs a user to exist.
+export const SYSTEM_USER_ID = "system";
+export const SYSTEM_USER_NAME = "temetro System";
+
+async function ensureSystemUser(): Promise<void> {
+  await db
+    .insert(user)
+    .values({
+      id: SYSTEM_USER_ID,
+      name: SYSTEM_USER_NAME,
+      email: "system@temetro.local",
+      emailVerified: true,
+    })
+    .onConflictDoNothing();
+}
+
+// Ensure the per-clinic "System" conversation exists and includes the system
+// user plus the given recipients, returning its id.
+async function ensureSystemConversation(
+  orgId: string,
+  recipientIds: string[],
+): Promise<string> {
+  await ensureSystemUser();
+  const [existing] = await db
+    .select({ id: conversations.id })
+    .from(conversations)
+    .where(
+      and(
+        eq(conversations.organizationId, orgId),
+        eq(conversations.name, "System"),
+        eq(conversations.createdBy, SYSTEM_USER_ID),
+      ),
+    )
+    .limit(1);
+  let convId = existing?.id;
+  if (!convId) {
+    const [created] = await db
+      .insert(conversations)
+      .values({
+        organizationId: orgId,
+        name: "System",
+        isGroup: true,
+        createdBy: SYSTEM_USER_ID,
+      })
+      .returning();
+    convId = created!.id;
+  }
+  const current = new Set(await participantIds(convId));
+  const toAdd = [SYSTEM_USER_ID, ...recipientIds].filter(
+    (id) => !current.has(id),
+  );
+  if (toAdd.length > 0) {
+    await db
+      .insert(conversationParticipants)
+      .values(
+        toAdd.map((uid) => ({
+          conversationId: convId!,
+          userId: uid,
+          lastReadAt: uid === SYSTEM_USER_ID ? new Date() : null,
+        })),
+      )
+      .onConflictDoNothing();
+  }
+  return convId;
+}
+
+// Post a message from the system user into the clinic's System conversation.
+export async function createSystemMessage(
+  orgId: string,
+  recipientIds: string[],
+  body: string,
+  attachment: MessageAttachment,
+): Promise<{ message: ConversationMessage; recipientIds: string[] }> {
+  const convId = await ensureSystemConversation(orgId, recipientIds);
+  const now = new Date();
+  const [row] = await db
+    .insert(messages)
+    .values({
+      conversationId: convId,
+      senderId: SYSTEM_USER_ID,
+      body,
+      attachments: [attachment],
+    })
+    .returning();
+  await db
+    .update(conversations)
+    .set({ updatedAt: now })
+    .where(eq(conversations.id, convId));
+  return {
+    message: {
+      id: row!.id,
+      conversationId: convId,
+      senderId: SYSTEM_USER_ID,
+      senderName: SYSTEM_USER_NAME,
+      body: row!.body,
+      attachments: row!.attachments,
+      createdAt: row!.createdAt.toISOString(),
+    },
+    recipientIds,
+  };
+}
+
 export async function listClinicMembers(
   orgId: string,
   excludeUserId: string,

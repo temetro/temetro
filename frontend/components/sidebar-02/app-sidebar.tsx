@@ -21,7 +21,6 @@ import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import type { Route } from "./nav-main";
 import DashboardNavigation from "@/components/sidebar-02/nav-main";
-import { NavChatHistory } from "@/components/sidebar-02/nav-chat-history";
 import { NotificationsPopover } from "@/components/sidebar-02/nav-notifications";
 import { NavUser } from "@/components/sidebar-02/nav-user";
 import { useCallInvites } from "@/components/meetings/use-call-invites";
@@ -103,7 +102,6 @@ export function DashboardSidebar() {
       </SidebarHeader>
       <SidebarContent className="gap-4 px-2 py-4">
         <DashboardNavigation routes={dashboardRoutes} />
-        {aiAllowed && <NavChatHistory />}
       </SidebarContent>
       <SidebarFooter className="p-2">
         <NavUser />

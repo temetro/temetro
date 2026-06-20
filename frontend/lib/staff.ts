@@ -15,6 +15,18 @@ export function listProviders(): Promise<Provider[]> {
   return apiFetch<Provider[]>("/api/staff/providers");
 }
 
+// Set a member's password directly (owner/admin only) — used when an employee
+// forgot it and no email provider is configured.
+export function setStaffPassword(
+  userId: string,
+  newPassword: string,
+): Promise<{ ok: boolean }> {
+  return apiFetch(`/api/staff/${encodeURIComponent(userId)}/password`, {
+    method: "PATCH",
+    body: JSON.stringify({ newPassword }),
+  });
+}
+
 // Update a member's clinical specialty (owner/admin only). Pass null to clear.
 export function updateStaffSpecialty(
   userId: string,

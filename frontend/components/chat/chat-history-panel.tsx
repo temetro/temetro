@@ -1,6 +1,6 @@
 "use client";
 
-import { PanelLeft, Plus, Search, Trash2 } from "lucide-react";
+import { History, Plus, Search, SquarePen, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { type MouseEvent, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -78,15 +78,15 @@ export function ChatHistoryPanel() {
           onClick={() => setOpen(true)}
           type="button"
         >
-          <PanelLeft className="size-4" />
+          <History className="size-4" />
         </button>
         <button
-          aria-label={t("chat.history.search")}
+          aria-label={t("chat.history.startNew")}
           className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          onClick={() => setOpen(true)}
+          onClick={() => router.push("/")}
           type="button"
         >
-          <Search className="size-4" />
+          <SquarePen className="size-4" />
         </button>
       </div>
 

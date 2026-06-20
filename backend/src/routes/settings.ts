@@ -11,7 +11,13 @@ import {
   requireOrg,
   requirePermission,
 } from "../middleware/auth.js";
+import { sendEmail } from "../lib/email.js";
 import { recordActivity } from "../services/activity.js";
+import {
+  type EmailProvider,
+  getPublicConfig,
+  saveConfig,
+} from "../services/email-config.js";
 import { createPatient, listPatients } from "../services/patients.js";
 
 export const settingsRouter = Router();
@@ -19,6 +25,75 @@ export const settingsRouter = Router();
 // Settings are per-user (not per-clinic), so only authentication is required —
 // no active organization or RBAC permission.
 settingsRouter.use(requireAuth);
+
+// --- Email provider (deployment-wide, admin-only) ------------------------
+// One config for the whole deployment (email is sent while logged out, so it
+// can't be per-clinic). Gated by `member: ["create"]` — any clinic admin sets
+// the deployment's provider. The API key is never returned.
+
+const emailConfigSchema = z.object({
+  provider: z.enum(["none", "smtp", "resend", "postmark", "sendgrid"]),
+  fromAddress: z.string().trim().max(200).default(""),
+  // undefined = leave key as-is; "" = clear; string = set/replace.
+  credentials: z.string().trim().max(500).optional(),
+});
+
+settingsRouter.get(
+  "/email",
+  requireOrg,
+  requirePermission({ member: ["create"] }),
+  async (_req, res, next) => {
+    try {
+      res.json(await getPublicConfig());
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+settingsRouter.put(
+  "/email",
+  requireOrg,
+  requirePermission({ member: ["create"] }),
+  async (req, res, next) => {
+    try {
+      const input = emailConfigSchema.parse(req.body);
+      const saved = await saveConfig({
+        provider: input.provider as EmailProvider,
+        fromAddress: input.fromAddress,
+        credentials: input.credentials,
+      });
+      await recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: `Updated email provider — ${saved.provider}`,
+        entityType: "settings",
+        entityId: "email",
+      });
+      res.json(saved);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+settingsRouter.post(
+  "/email/test",
+  requireOrg,
+  requirePermission({ member: ["create"] }),
+  async (req, res, next) => {
+    try {
+      await sendEmail({
+        to: req.user!.email,
+        subject: "temetro email test",
+        text: `This is a test email from temetro. If you received it, your email provider is configured correctly.`,
+      });
+      res.json({ ok: true, to: req.user!.email });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 // --- Records import / export (clinic-wide, admin-only) -------------------
 // Gated by `member: ["create"]` — the same admin/owner marker the staff route

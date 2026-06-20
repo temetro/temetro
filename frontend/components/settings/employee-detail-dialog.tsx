@@ -24,6 +24,7 @@ import {
   DialogPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectItem,
@@ -34,7 +35,12 @@ import {
 import { ROLE_LABELS } from "@/lib/access";
 import { authClient } from "@/lib/auth-client";
 import { PROVISIONABLE_ROLES, rolePermissionSummary } from "@/lib/roles";
-import { SPECIALTIES, specialtyLabel, updateStaffSpecialty } from "@/lib/staff";
+import {
+  SPECIALTIES,
+  setStaffPassword,
+  specialtyLabel,
+  updateStaffSpecialty,
+} from "@/lib/staff";
 import { notify } from "@/lib/toast";
 
 // Roles that can carry a clinical specialty (i.e. treat patients).
@@ -105,10 +111,15 @@ export function EmployeeDetailDialog({
   const [saving, setSaving] = useState(false);
   const [specialty, setSpecialty] = useState<string>(member?.specialty ?? "");
   const [savingSpecialty, setSavingSpecialty] = useState(false);
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [savingPw, setSavingPw] = useState(false);
 
   useEffect(() => {
     setRole(member?.role ?? "");
     setSpecialty(member?.specialty ?? "");
+    setNewPw("");
+    setConfirmPw("");
   }, [member?.id, member?.role, member?.specialty]);
 
   const summary = rolePermissionSummary(member?.role);
@@ -166,6 +177,43 @@ export function EmployeeDetailDialog({
       );
     } finally {
       setSavingSpecialty(false);
+    }
+  };
+
+  const resetPassword = async () => {
+    if (!member || savingPw) return;
+    if (newPw.length < 12) {
+      notify.error(
+        t("settings.careTeam.employee.pwTooShortTitle"),
+        t("settings.careTeam.employee.pwTooShortBody"),
+      );
+      return;
+    }
+    if (newPw !== confirmPw) {
+      notify.error(
+        t("settings.careTeam.employee.pwMismatchTitle"),
+        t("settings.careTeam.employee.pwMismatchBody"),
+      );
+      return;
+    }
+    setSavingPw(true);
+    try {
+      await setStaffPassword(member.userId, newPw);
+      notify.success(
+        t("settings.careTeam.employee.pwUpdatedTitle"),
+        t("settings.careTeam.employee.pwUpdatedBody", {
+          name: member.name ?? member.email ?? "",
+        }),
+      );
+      setNewPw("");
+      setConfirmPw("");
+    } catch {
+      notify.error(
+        t("settings.careTeam.employee.pwFailedTitle"),
+        t("settings.careTeam.employee.pwFailedBody"),
+      );
+    } finally {
+      setSavingPw(false);
     }
   };
 
@@ -329,6 +377,42 @@ export function EmployeeDetailDialog({
                   {savingSpecialty
                     ? t("settings.careTeam.employee.saving")
                     : t("settings.careTeam.employee.save")}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {editable && (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                {t("settings.careTeam.employee.resetPassword")}
+              </span>
+              <p className="text-muted-foreground text-xs">
+                {t("settings.careTeam.employee.resetPasswordHint")}
+              </p>
+              <Input
+                autoComplete="new-password"
+                onChange={(e) => setNewPw(e.target.value)}
+                placeholder={t("settings.careTeam.employee.newPassword")}
+                type="password"
+                value={newPw}
+              />
+              <div className="flex items-center gap-2">
+                <Input
+                  autoComplete="new-password"
+                  onChange={(e) => setConfirmPw(e.target.value)}
+                  placeholder={t("settings.careTeam.employee.confirmPassword")}
+                  type="password"
+                  value={confirmPw}
+                />
+                <Button
+                  disabled={savingPw || !newPw || !confirmPw}
+                  onClick={resetPassword}
+                  type="button"
+                >
+                  {savingPw
+                    ? t("settings.careTeam.employee.saving")
+                    : t("settings.careTeam.employee.setPassword")}
                 </Button>
               </div>
             </div>

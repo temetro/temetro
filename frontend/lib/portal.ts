@@ -65,6 +65,22 @@ export function getPortalClinic(clinic: string): Promise<PortalClinic> {
   return portalFetch<PortalClinic>(`/${encodeURIComponent(clinic)}`);
 }
 
+export type PortalNewPatient = {
+  name: string;
+  sex?: string;
+  age?: number;
+};
+
+export function createPortalPatient(
+  clinic: string,
+  patient: PortalNewPatient,
+): Promise<{ fileNumber: string; name: string }> {
+  return portalFetch(`/${encodeURIComponent(clinic)}/patients`, {
+    method: "POST",
+    body: JSON.stringify(patient),
+  });
+}
+
 export function bookPortalAppointment(
   clinic: string,
   booking: PortalBooking,

@@ -1,5 +1,6 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -31,7 +32,11 @@ type Tab = (typeof TABS)[number]["id"];
 export function SettingsView() {
   const { t } = useTranslation();
   const role = useActiveRole();
-  const [tab, setTab] = useState<Tab>("profile");
+  const searchParams = useSearchParams();
+  // Deep-link support: /settings?tab=careTeam&member=<userId>.
+  const urlTab = searchParams.get("tab") as Tab | null;
+  const urlMember = searchParams.get("member");
+  const [tab, setTab] = useState<Tab>(urlTab ?? "profile");
 
   // Only clinic owners/admins manage clinic-wide settings (care team, records,
   // signing, developers). Everyone else gets their personal tabs (profile, AI).
@@ -71,7 +76,9 @@ export function SettingsView() {
         {activeTab === "ai" && <AIPanel />}
         {activeTab === "records" && <RecordsPanel />}
         {activeTab === "signing" && <SigningPanel />}
-        {activeTab === "careTeam" && <CareTeamPanel />}
+        {activeTab === "careTeam" && (
+          <CareTeamPanel initialMemberId={urlMember ?? undefined} />
+        )}
         {activeTab === "integrations" && <IntegrationsPanel />}
         {activeTab === "developers" && <DevelopersPanel />}
       </div>
