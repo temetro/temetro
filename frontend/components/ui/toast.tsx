@@ -7,6 +7,7 @@ import {
   InfoIcon,
   LoaderCircleIcon,
   TriangleAlertIcon,
+  XIcon,
 } from "lucide-react";
 import type React from "react";
 import { cn } from "@/lib/utils";
@@ -163,14 +164,23 @@ function Toasts({
                     />
                   </div>
                 </div>
-                {toast.actionProps && (
-                  <Toast.Action
-                    className={buttonVariants({ size: "xs" })}
-                    data-slot="toast-action"
+                <div className="flex shrink-0 items-center gap-1">
+                  {toast.actionProps && (
+                    <Toast.Action
+                      className={buttonVariants({ size: "xs" })}
+                      data-slot="toast-action"
+                    >
+                      {toast.actionProps.children}
+                    </Toast.Action>
+                  )}
+                  <Toast.Close
+                    aria-label="Dismiss"
+                    className="flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    data-slot="toast-close"
                   >
-                    {toast.actionProps.children}
-                  </Toast.Action>
-                )}
+                    <XIcon className="size-4" />
+                  </Toast.Close>
+                </div>
               </Toast.Content>
             </Toast.Root>
           );

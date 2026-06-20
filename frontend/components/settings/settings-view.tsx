@@ -43,15 +43,15 @@ export function SettingsView() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-10">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4">
         <h1 className="text-2xl font-semibold tracking-tight">
           {t(`settings.tabs.${activeTab}`)}
         </h1>
-        <nav className="flex flex-wrap items-center gap-1">
+        <nav className="-mx-1 flex flex-nowrap items-center gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {visibleTabs.map((item) => (
             <button
               className={cn(
-                "rounded-lg px-3 py-1.5 text-sm transition-colors",
+                "shrink-0 rounded-lg px-3 py-1.5 text-sm transition-colors",
                 activeTab === item.id
                   ? "bg-muted text-foreground"
                   : "text-muted-foreground hover:text-foreground"

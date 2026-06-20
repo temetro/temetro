@@ -9,9 +9,10 @@ import {
   Plus,
   Search,
   SendHorizonal,
+  Video,
   X,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   type ChangeEvent,
   type FormEvent,
@@ -145,6 +146,8 @@ export function MessagesView() {
   const { t } = useTranslation();
   const { data: session } = authClient.useSession();
   const myId = session?.user?.id ?? "";
+
+  const router = useRouter();
 
   // Deep link from a notification: /messages?conversation=<id>.
   const searchParams = useSearchParams();
@@ -455,16 +458,36 @@ export function MessagesView() {
           ) : (
             visible.map((c) => {
               const last = c.lastMessage;
+              const otherId = c.isGroup
+                ? ""
+                : (c.participants.find((p) => p.id !== myId)?.id ?? "");
               return (
-                <button
+                <div
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/50",
+                    "flex w-full items-center gap-1 rounded-lg pr-2 transition-colors hover:bg-accent/50",
                     selected?.id === c.id && "bg-accent hover:bg-accent",
                   )}
                   key={c.id}
-                  onClick={() => open(c.id)}
-                  type="button"
                 >
+                  <button
+                    aria-label={t("messages.startCall", { name: c.name })}
+                    className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                    onClick={() =>
+                      router.push(
+                        otherId
+                          ? `/messages/meetings?with=${encodeURIComponent(otherId)}`
+                          : "/messages/meetings",
+                      )
+                    }
+                    type="button"
+                  >
+                    <Video className="size-4" />
+                  </button>
+                  <button
+                    className="flex min-w-0 flex-1 items-center gap-3 rounded-lg py-2 pr-1 text-left"
+                    onClick={() => open(c.id)}
+                    type="button"
+                  >
                   <Avatar className="size-9 shrink-0">
                     <AvatarFallback>{initials(c.name)}</AvatarFallback>
                   </Avatar>
@@ -510,7 +533,8 @@ export function MessagesView() {
                       )}
                     </div>
                   </div>
-                </button>
+                  </button>
+                </div>
               );
             })
           )}

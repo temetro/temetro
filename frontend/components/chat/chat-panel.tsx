@@ -56,6 +56,7 @@ import {
 import { ActionPreviewCard } from "@/components/chat/action-preview-card";
 import { AnalyticsCard } from "@/components/chat/analytics-card";
 import { BatchActionPreviewCard } from "@/components/chat/batch-action-preview-card";
+import { ChatHistoryPanel } from "@/components/chat/chat-history-panel";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ClinicCard } from "@/components/chat/clinic-card";
 import { InventoryListCard } from "@/components/chat/inventory-list-card";
@@ -468,6 +469,12 @@ export function ChatPanel() {
       </Queue>
     ) : null;
 
+  // Veil runs once per conversation, so the "Veil active" chip should only show
+  // on the first assistant message that carries a veilNotice — not every turn.
+  const firstVeilMessageId = messages.find((m) =>
+    m.parts.some((p) => p.type === "data-veilNotice"),
+  )?.id;
+
   // Render one assistant/user message: a Chain-of-Thought trace built from any
   // `data-step` parts, then the rest of the parts (text + record cards) in order.
   const renderMessage = (message: TemetroUIMessage, isLast: boolean) => {
@@ -670,6 +677,8 @@ export function ChatPanel() {
               return <AnalyticsCard data={part.data} key={key} />;
             }
             if (part.type === "data-veilNotice") {
+              // Only the first veilNotice in the whole conversation renders.
+              if (message.id !== firstVeilMessageId) return null;
               return (
                 <Badge className="gap-1 self-start" key={key} variant="secondary">
                   <ShieldCheck className="size-3" />
@@ -701,7 +710,11 @@ export function ChatPanel() {
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-4 py-8">
+      <div className="relative flex flex-1 flex-col overflow-y-auto">
+        <div className="flex items-center px-4 pt-3">
+          <ChatHistoryPanel />
+        </div>
+        <div className="flex flex-1 flex-col items-center justify-center px-4 py-8">
         <div className="flex w-full max-w-3xl shrink-0 flex-col items-center gap-10">
           <h1 className="text-center font-semibold text-3xl text-balance tracking-tight sm:text-4xl">
             {t("chat.heading")}
@@ -717,12 +730,16 @@ export function ChatPanel() {
             </Suggestions>
           </div>
         </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex items-center px-4 pt-3">
+        <ChatHistoryPanel />
+      </div>
       <Conversation>
         <ConversationContent className="mx-auto w-full max-w-3xl">
           {messages.map((message, i) =>

@@ -10,9 +10,9 @@ import {
   Mail,
   NotebookPen,
   Pill,
-  Plus,
   Receipt,
   Settings,
+  Sparkles,
   Users,
   Video,
 } from "lucide-react";
@@ -54,7 +54,7 @@ export const navItems: NavItem[] = [
   {
     id: "new-chat",
     labelKey: "nav.newChat",
-    icon: Plus,
+    icon: Sparkles,
     link: "/",
     access: "clinical",
   },

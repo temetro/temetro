@@ -66,6 +66,10 @@ const statusVariant: Record<Patient["status"], BadgeVariant> = {
 const rowCard =
   "w-72 shrink-0 cursor-pointer gap-0 text-left outline-none transition hover:bg-accent/30 hover:ring-foreground/20 focus-visible:ring-2 focus-visible:ring-ring";
 
+// Same footprint as `rowCard` but with no clickable affordance — used when a
+// card has nothing extra to reveal, so it shouldn't promise "Click for more".
+const rowCardStatic = "w-72 shrink-0 gap-0 text-left";
+
 // COSS Card has no `size` variant; recreate the old compact ("sm") density by
 // tightening the inner section padding from p-6 → p-4 via data-slot selectors.
 const compactCard =
@@ -156,18 +160,26 @@ function AlertBadges({ alerts }: { alerts: string[] }) {
 
 // A compact card that previews `children` and opens a roomier dialog of `detail`
 // on click. A muted "Click for more" footer signals the card is expandable.
+// When `expandable` is false (the card holds nothing beyond its preview), it
+// renders as a plain, non-clickable card with no footer — so empty sections
+// don't misleadingly promise more.
 function ExpandableCard({
   title,
   description,
   detail,
   children,
+  expandable = true,
 }: {
   title: ReactNode;
   description?: ReactNode;
   detail: ReactNode;
   children: ReactNode;
+  expandable?: boolean;
 }) {
   const { t } = useTranslation();
+  if (!expandable) {
+    return <Card className={cn(rowCardStatic, compactCard)}>{children}</Card>;
+  }
   return (
     <Dialog>
       <DialogTrigger
@@ -283,9 +295,18 @@ function VitalsCard({ patient }: { patient: Patient }) {
     </div>
   );
 
+  const hasVitals = Boolean(
+    vitals.bp ||
+      vitals.hr ||
+      vitals.temp ||
+      vitals.spo2 ||
+      patient.vitalsTrend.points.length,
+  );
+
   return (
     <ExpandableCard
       description={t("patientCard.vitals.taken", { at: vitals.takenAt })}
+      expandable={hasVitals}
       detail={
         <div className="flex flex-col gap-4">
           {vitalsGrid("gap-y-3")}
@@ -326,6 +347,7 @@ function LabsCard({ patient }: { patient: Patient }) {
       description={t("patientCard.labs.asOf", {
         at: patient.labs[0]?.takenAt ?? "—",
       })}
+      expandable={patient.labs.length > 0}
       detail={
         patient.labs.length === 0 ? (
           <Empty>{t("patientCard.labs.empty")}</Empty>
@@ -385,6 +407,7 @@ function MedicationsCard({ patient }: { patient: Patient }) {
       description={t("patientCard.medications.active", {
         count: patient.medications.length,
       })}
+      expandable={patient.medications.length > 0}
       detail={list}
       title={t("patientCard.medications.title")}
     >
@@ -421,6 +444,7 @@ function ProblemsCard({ patient }: { patient: Patient }) {
       description={t("patientCard.problems.active", {
         count: patient.problems.length,
       })}
+      expandable={patient.problems.length > 0}
       detail={list}
       title={t("patientCard.problems.title")}
     >
@@ -476,6 +500,7 @@ function AllergiesCard({ patient }: { patient: Patient }) {
   return (
     <ExpandableCard
       detail={<AllergiesList patient={patient} />}
+      expandable={patient.allergies.length > 0 || patient.alerts.length > 0}
       title={t("patientCard.allergies.title")}
     >
       <CardHeader>
@@ -532,6 +557,7 @@ function VisitsCard({ patient }: { patient: Patient }) {
       description={t("patientCard.visits.recent", {
         count: patient.encounters.length,
       })}
+      expandable={patient.encounters.length > 0}
       detail={<VisitsList patient={patient} />}
       title={t("patientCard.visits.title")}
     >

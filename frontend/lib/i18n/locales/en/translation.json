@@ -110,7 +110,7 @@
     }
   },
   "nav": {
-    "newChat": "New chat",
+    "newChat": "Ask temetro",
     "patients": "Patients",
     "appointments": "Appointments",
     "invoices": "Invoices",
@@ -749,7 +749,9 @@
       "ring": "Ring",
       "invited": "Invited",
       "join": "Join",
-      "toastTitle": "{{name}} invited you to a call"
+      "toastTitle": "{{name}} invited you to a call",
+      "accept": "Accept",
+      "decline": "Decline"
     },
     "schedule": {
       "cta": "Schedule meeting",
@@ -764,6 +766,11 @@
       "saving": "Scheduling…",
       "failedTitle": "Couldn't schedule meeting",
       "failedBody": "Please try again."
+    },
+    "calendarEmptyHint": "Schedule a meeting to see it on this day.",
+    "upcoming": {
+      "title": "Upcoming",
+      "empty": "No upcoming meetings."
     }
   },
   "messages": {
@@ -816,7 +823,8 @@
       "apptProvider": "Provider",
       "apptPatient": "Patient",
       "apptStatus": "Status"
-    }
+    },
+    "startCall": "Start a call with {{name}}"
   },
   "analysis": {
     "title": "Overview",
@@ -1020,7 +1028,10 @@
       "title": "Chats",
       "untitled": "New chat",
       "empty": "No saved chats yet.",
-      "delete": "Delete chat"
+      "delete": "Delete chat",
+      "open": "Chat history",
+      "search": "Search chats",
+      "startNew": "Start new chat"
     },
     "suggestions": {
       "schedule": "Show today's schedule",

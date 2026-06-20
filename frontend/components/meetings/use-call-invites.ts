@@ -21,10 +21,13 @@ export function useCallInvites() {
     const onInvite = ({ roomId, roomName, fromName }: CallInvite) => {
       toastManager.add({
         type: "info",
+        // Ring long enough for the callee to react; the toast's "x" declines it.
+        timeout: 30_000,
         title: t("meetings.invite.toastTitle", { name: fromName }),
         description: roomName,
         actionProps: {
-          children: t("meetings.invite.join"),
+          // "Accept" drops the user straight into the caller's room.
+          children: t("meetings.invite.accept"),
           onClick: () =>
             router.push(
               `/messages/meetings?room=${encodeURIComponent(roomId)}`,

@@ -55,7 +55,11 @@ export function MeetingsView() {
 
   const searchParams = useSearchParams();
   const deepLinkRoom = searchParams.get("room");
+  // ?with=<userId> from the Messages inbox "call" button — open the scheduler
+  // pre-targeted at that person so the user can connect with them.
+  const deepLinkWith = searchParams.get("with");
   const openedDeepLink = useRef<string | null>(null);
+  const openedWith = useRef<string | null>(null);
 
   const [tab, setTab] = useState<Tab>("rooms");
 
@@ -108,6 +112,14 @@ export function MeetingsView() {
     setActiveRoom(room);
   }, [deepLinkRoom, rooms]);
 
+  // Open the scheduler pre-targeted at a person (?with=) from the inbox.
+  useEffect(() => {
+    if (!deepLinkWith || openedWith.current === deepLinkWith) return;
+    openedWith.current = deepLinkWith;
+    setTab("calendar");
+    setScheduleOpen(true);
+  }, [deepLinkWith]);
+
   const createRoom = async (event: FormEvent) => {
     event.preventDefault();
     const name = newName.trim();
@@ -137,6 +149,23 @@ export function MeetingsView() {
         .sort((a, b) => a.time.localeCompare(b.time)),
     [events, selectedDay],
   );
+
+  // Midnight today — used to disable past calendar dates and filter "upcoming".
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  // Next few meetings from today onward, soonest first.
+  const upcoming = useMemo(() => {
+    const now = new Date();
+    return events
+      .filter((e) => new Date(`${e.date}T${e.time}`) >= now)
+      .sort((a, b) =>
+        `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`),
+      )
+      .slice(0, 4);
+  }, [events]);
 
   return (
     <div className="flex h-full w-full flex-col gap-3 p-4">
@@ -263,8 +292,9 @@ export function MeetingsView() {
       ) : (
         // Calendar tab
         <div className="flex min-h-0 flex-1 gap-4">
-          <div className="flex shrink-0 flex-col gap-3 rounded-2xl border bg-card/30 p-3">
+          <div className="flex shrink-0 flex-col gap-3 overflow-y-auto rounded-2xl border bg-card/30 p-3">
             <Calendar
+              disabled={{ before: today }}
               mode="single"
               modifiers={{ hasMeeting: meetingDays }}
               modifiersClassNames={{
@@ -279,6 +309,39 @@ export function MeetingsView() {
               <Plus className="size-4" />
               {t("meetings.schedule.cta")}
             </Button>
+
+            <div className="flex min-h-0 flex-col gap-1.5">
+              <span className="px-1 font-medium text-muted-foreground text-xs uppercase tracking-wide">
+                {t("meetings.upcoming.title")}
+              </span>
+              {upcoming.length === 0 ? (
+                <p className="px-1 py-2 text-muted-foreground text-xs">
+                  {t("meetings.upcoming.empty")}
+                </p>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {upcoming.map((e) => (
+                    <button
+                      className="flex flex-col gap-0.5 rounded-xl border bg-card px-2.5 py-2 text-left transition-colors hover:bg-accent/50"
+                      key={e.id}
+                      onClick={() => setSelectedDay(new Date(`${e.date}T00:00:00`))}
+                      type="button"
+                    >
+                      <span className="truncate font-medium text-foreground text-sm">
+                        {e.title}
+                      </span>
+                      <span className="text-muted-foreground text-xs tabular-nums">
+                        {new Date(`${e.date}T00:00:00`).toLocaleDateString(
+                          "en-US",
+                          { month: "short", day: "numeric" },
+                        )}{" "}
+                        · {e.time}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-card/30">
@@ -293,9 +356,27 @@ export function MeetingsView() {
             </div>
             <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3">
               {dayEvents.length === 0 ? (
-                <p className="px-2 py-6 text-center text-muted-foreground text-sm">
-                  {t("meetings.calendarEmpty")}
-                </p>
+                <Empty className="border-0">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <CalendarDays />
+                    </EmptyMedia>
+                    <EmptyTitle>{t("meetings.calendarEmpty")}</EmptyTitle>
+                    <EmptyDescription>
+                      {t("meetings.calendarEmptyHint")}
+                    </EmptyDescription>
+                  </EmptyHeader>
+                  <EmptyContent>
+                    <Button
+                      onClick={() => setScheduleOpen(true)}
+                      type="button"
+                      variant="outline"
+                    >
+                      <Plus className="size-4" />
+                      {t("meetings.schedule.cta")}
+                    </Button>
+                  </EmptyContent>
+                </Empty>
               ) : (
                 dayEvents.map((e) => (
                   <div
@@ -356,6 +437,7 @@ export function MeetingsView() {
 
       <ScheduleMeetingDialog
         defaultDate={keyOf(selectedDay)}
+        defaultParticipants={deepLinkWith ? [deepLinkWith] : undefined}
         onCreated={loadEvents}
         onOpenChange={setScheduleOpen}
         open={scheduleOpen}

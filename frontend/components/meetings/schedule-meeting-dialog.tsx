@@ -34,11 +34,13 @@ export function ScheduleMeetingDialog({
   open,
   onOpenChange,
   defaultDate,
+  defaultParticipants,
   onCreated,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultDate?: string; // YYYY-MM-DD
+  defaultParticipants?: string[]; // member ids to preselect
   onCreated: () => void;
 }) {
   const { t } = useTranslation();
@@ -57,11 +59,11 @@ export function ScheduleMeetingDialog({
     setTitle("");
     setDate(defaultDate ?? "");
     setTime("09:00");
-    setPicked(new Set());
+    setPicked(new Set(defaultParticipants ?? []));
     listClinicMembers()
       .then(setMembers)
       .catch(() => setMembers([]));
-  }, [open, defaultDate]);
+  }, [open, defaultDate, defaultParticipants]);
 
   const toggle = (id: string) =>
     setPicked((prev) => {
