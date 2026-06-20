@@ -12,6 +12,8 @@ export type Task = {
   assignee: string;
   // Department (member role) the task is assigned to; null = personal task.
   assigneeRole: string | null;
+  // A specific person the task is assigned to (user id); null otherwise.
+  assigneeUserId: string | null;
   due: string;
   priority: Priority;
   status: TaskStatus;
@@ -29,6 +31,7 @@ export type TaskInput = {
   title: string;
   assignee?: string;
   assigneeRole?: string | null;
+  assigneeUserId?: string | null;
   due?: string;
   priority?: Priority;
   status?: TaskStatus;

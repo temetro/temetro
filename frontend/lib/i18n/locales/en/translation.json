@@ -669,12 +669,17 @@
       "priorityLabel": "Priority",
       "statusLabel": "Status",
       "cancel": "Cancel",
-      "add": "Add task"
+      "add": "Add task",
+      "assigneeDepartment": "Department",
+      "assigneePerson": "Person",
+      "person": "Team member",
+      "personEmpty": "No clinicians available to assign."
     },
     "list": {
       "forDept": "For {{dept}}",
       "personal": "Personal",
-      "byCreator": "by {{name}}"
+      "byCreator": "by {{name}}",
+      "forPerson": "For {{name}}"
     },
     "detail": {
       "fallbackTitle": "Task",
@@ -710,7 +715,9 @@
       "addFailedTitle": "Couldn't add task",
       "addFailedBody": "Please try again.",
       "updateFailedTitle": "Couldn't update task",
-      "updateFailedBody": "Please try again."
+      "updateFailedBody": "Please try again.",
+      "needPersonTitle": "Pick a team member",
+      "needPersonBody": "Choose who this task is for."
     }
   },
   "meetings": {

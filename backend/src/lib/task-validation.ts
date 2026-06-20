@@ -15,6 +15,7 @@ export const taskInputSchema = z.object({
   title: z.string().trim().min(1, "A task subject is required.").max(200),
   assignee: z.string().trim().max(200).default("Unassigned"),
   assigneeRole: z.enum(TASK_DEPARTMENTS).nullish(),
+  assigneeUserId: z.string().trim().max(120).nullish(),
   due: z.string().trim().max(120).default("No due date"),
   priority: z.enum(["high", "medium", "low"]).default("medium"),
   status: z.enum(["todo", "in_progress", "done"]).default("todo"),

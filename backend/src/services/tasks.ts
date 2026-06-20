@@ -24,6 +24,7 @@ function toTask(row: TaskRow): Task {
     title: row.title,
     assignee: row.assignee,
     assigneeRole: row.assigneeRole,
+    assigneeUserId: row.assigneeUserId,
     due: row.due,
     priority: row.priority,
     status: row.status,
@@ -48,7 +49,11 @@ export async function listTasks(
 
   let where = eq(tasks.organizationId, orgId);
   if (!isAdmin) {
-    const visible = [eq(tasks.createdBy, viewer.userId)];
+    const visible = [
+      eq(tasks.createdBy, viewer.userId),
+      // Tasks assigned to this person specifically.
+      eq(tasks.assigneeUserId, viewer.userId),
+    ];
     if (roles.length) visible.push(inArray(tasks.assigneeRole, roles));
     where = and(where, or(...visible))!;
   }
@@ -73,6 +78,7 @@ export async function createTask(
       title: input.title,
       assignee: input.assignee,
       assigneeRole: input.assigneeRole ?? null,
+      assigneeUserId: input.assigneeUserId ?? null,
       due: input.due,
       priority: input.priority,
       status: input.status,
@@ -100,6 +106,8 @@ export async function updateTask(
   if (patch.assignee !== undefined) set.assignee = patch.assignee;
   if (patch.assigneeRole !== undefined)
     set.assigneeRole = patch.assigneeRole ?? null;
+  if (patch.assigneeUserId !== undefined)
+    set.assigneeUserId = patch.assigneeUserId ?? null;
   if (patch.due !== undefined) set.due = patch.due;
   if (patch.priority !== undefined) set.priority = patch.priority;
   if (patch.patient !== undefined) set.patient = patch.patient ?? null;

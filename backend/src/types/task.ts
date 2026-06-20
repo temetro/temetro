@@ -11,6 +11,10 @@ export type Task = {
   assignee: string;
   // Department (member role) the task is assigned to; null = personal task.
   assigneeRole: string | null;
+  // A specific person the task is assigned to (user id); null when assigned to
+  // a department or kept personal. Takes precedence over assigneeRole for who
+  // sees the task.
+  assigneeUserId: string | null;
   due: string;
   priority: TaskPriority;
   status: TaskStatus;

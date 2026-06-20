@@ -183,6 +183,13 @@
       "when": 1781910033543,
       "tag": "0025_nice_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1781969782874,
+      "tag": "0026_many_wolfsbane",
+      "breakpoints": true
     }
   ]
 }

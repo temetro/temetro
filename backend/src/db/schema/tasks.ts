@@ -25,6 +25,11 @@ export const tasks = pgTable(
     // The department (member role) a task is assigned to, e.g. "reception".
     // Null means a personal task belonging to its creator. Drives who sees it.
     assigneeRole: text("assignee_role"),
+    // A specific person the task is assigned to. Null when assigned to a
+    // department or kept personal. The assignee display name lives in `assignee`.
+    assigneeUserId: text("assignee_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
     due: text("due").notNull().default("No due date"),
     priority: text("priority").$type<TaskPriority>().notNull(),
     // Board column: todo | in_progress | done. Kept in sync with `done`

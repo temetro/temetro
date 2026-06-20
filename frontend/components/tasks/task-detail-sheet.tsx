@@ -80,11 +80,13 @@ export function TaskDetailSheet({
                   {t("tasks.detail.assignedTo")}
                 </dt>
                 <dd className="text-foreground">
-                  {task.assigneeRole
-                    ? t("tasks.detail.deptTeam", {
-                        dept: deptLabel(task.assigneeRole),
-                      })
-                    : t("tasks.detail.personal")}
+                  {task.assigneeUserId
+                    ? task.assignee
+                    : task.assigneeRole
+                      ? t("tasks.detail.deptTeam", {
+                          dept: deptLabel(task.assigneeRole),
+                        })
+                      : t("tasks.detail.personal")}
                 </dd>
                 <dt className="text-muted-foreground">
                   {t("tasks.detail.createdBy")}

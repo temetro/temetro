@@ -30,6 +30,7 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ROLE_LABELS } from "@/lib/access";
 import { DEPARTMENTS } from "@/lib/roles";
+import { listProviders, type Provider, specialtyLabel } from "@/lib/staff";
 import {
   type Priority,
   type Task,
@@ -43,7 +44,7 @@ import {
 import { notify } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
-type AssigneeMode = "self" | "other";
+type AssigneeMode = "self" | "department" | "person";
 
 function deptLabel(role: string): string {
   return (ROLE_LABELS as Record<string, string>)[role] ?? role;
@@ -96,13 +97,23 @@ function AddTaskDialog({
   const [notes, setNotes] = useState("");
   const [assigneeMode, setAssigneeMode] = useState<AssigneeMode>("self");
   const [department, setDepartment] = useState<string>("reception");
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [providerId, setProviderId] = useState<string>("");
   const [due, setDue] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
   const [status, setStatus] = useState<TaskStatus>(initialStatus);
 
-  // Re-seed the column when the dialog is opened from a specific column.
+  // Re-seed the column when the dialog is opened from a specific column, and
+  // load the clinic's providers so a task can be assigned to a specific person.
   useEffect(() => {
-    if (open) setStatus(initialStatus);
+    if (!open) return;
+    setStatus(initialStatus);
+    listProviders()
+      .then((list) => {
+        setProviders(list);
+        setProviderId((id) => id || (list[0]?.userId ?? ""));
+      })
+      .catch(() => setProviders([]));
   }, [open, initialStatus]);
 
   const reset = () => {
@@ -110,6 +121,7 @@ function AddTaskDialog({
     setNotes("");
     setAssigneeMode("self");
     setDepartment("reception");
+    setProviderId("");
     setDue("");
     setPriority("medium");
     setStatus(initialStatus);
@@ -124,11 +136,25 @@ function AddTaskDialog({
       );
       return;
     }
+    if (assigneeMode === "person" && !providerId) {
+      notify.error(
+        t("tasks.toast.needPersonTitle"),
+        t("tasks.toast.needPersonBody"),
+      );
+      return;
+    }
+    const person =
+      assigneeMode === "person"
+        ? providers.find((p) => p.userId === providerId)
+        : undefined;
     onAdd({
       title: title.trim(),
       notes: notes.trim() || undefined,
-      // "Myself" → personal task (no department); "Other" → a department.
-      assigneeRole: assigneeMode === "self" ? null : department,
+      // Myself → personal task; Department → a member role; Person → a specific
+      // clinician (their name shows as the assignee, the task surfaces for them).
+      assigneeRole: assigneeMode === "department" ? department : null,
+      assigneeUserId: assigneeMode === "person" ? providerId || null : null,
+      assignee: person?.name,
       due: due.trim() || "No due date",
       priority,
       status,
@@ -182,11 +208,14 @@ function AddTaskDialog({
               >
                 <TabsList className="w-full">
                   <TabsTab value="self">{t("tasks.dialog.assigneeSelf")}</TabsTab>
-                  <TabsTab value="other">
-                    {t("tasks.dialog.assigneeOther")}
+                  <TabsTab value="department">
+                    {t("tasks.dialog.assigneeDepartment")}
+                  </TabsTab>
+                  <TabsTab value="person">
+                    {t("tasks.dialog.assigneePerson")}
                   </TabsTab>
                 </TabsList>
-                <TabsPanel value="other">
+                <TabsPanel className="pt-2" value="department">
                   <Field label={t("tasks.dialog.department")}>
                     <select
                       className={controlClass}
@@ -199,6 +228,30 @@ function AddTaskDialog({
                         </option>
                       ))}
                     </select>
+                  </Field>
+                </TabsPanel>
+                <TabsPanel className="pt-2" value="person">
+                  <Field label={t("tasks.dialog.person")}>
+                    {providers.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">
+                        {t("tasks.dialog.personEmpty")}
+                      </p>
+                    ) : (
+                      <select
+                        className={controlClass}
+                        onChange={(e) => setProviderId(e.target.value)}
+                        value={providerId}
+                      >
+                        {providers.map((p) => {
+                          const spec = specialtyLabel(t, p.specialty);
+                          return (
+                            <option key={p.userId} value={p.userId}>
+                              {spec ? `${p.name} · ${spec}` : p.name}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
                   </Field>
                 </TabsPanel>
               </Tabs>
@@ -283,9 +336,11 @@ function TaskCard({
         {task.title}
       </span>
       <span className="truncate text-muted-foreground text-xs">
-        {task.assigneeRole
-          ? t("tasks.list.forDept", { dept: deptLabel(task.assigneeRole) })
-          : t("tasks.list.personal")}
+        {task.assigneeUserId
+          ? t("tasks.list.forPerson", { name: task.assignee })
+          : task.assigneeRole
+            ? t("tasks.list.forDept", { dept: deptLabel(task.assigneeRole) })
+            : t("tasks.list.personal")}
         {task.createdByName
           ? ` · ${t("tasks.list.byCreator", { name: task.createdByName })}`
           : ""}
