@@ -1791,5 +1791,47 @@
       "saveFailedTitle": "Could not save",
       "saveFailedBody": "Saving your AI settings failed. Please try again."
     }
+  },
+  "portal": {
+    "kicker": "Patient Portal",
+    "back": "Back",
+    "done": "Done",
+    "notFoundTitle": "Clinic not found",
+    "notFoundBody": "This portal link isn't valid. Please ask the front desk for help.",
+    "choose": {
+      "bookTitle": "Book an appointment",
+      "bookDesc": "Schedule a visit with your care team.",
+      "resultsTitle": "View my results",
+      "resultsDesc": "Check upcoming visits and whether results are ready."
+    },
+    "field": {
+      "name": "Full name",
+      "fileNumber": "File number",
+      "date": "Date",
+      "time": "Time",
+      "reason": "Reason for visit (optional)",
+      "reasonPlaceholder": "e.g. Follow-up, check-up"
+    },
+    "book": {
+      "title": "Book an appointment",
+      "submit": "Request appointment",
+      "successTitle": "You're booked",
+      "successBody": "Your appointment is set for {{date}} at {{time}}. Please check in at the front desk.",
+      "errorGeneric": "Couldn't book the appointment. Please try again or ask the front desk."
+    },
+    "results": {
+      "title": "View my results",
+      "subtitle": "Enter your name and file number to continue.",
+      "submit": "Look up",
+      "greeting": "Hi {{name}}",
+      "upcoming": "Upcoming appointments",
+      "noUpcoming": "No upcoming appointments.",
+      "resultsLabel": "Results",
+      "ready": "{{count}} result(s) are on file.",
+      "none": "No results are on file yet.",
+      "askStaff": "Please ask a staff member to review your results with you.",
+      "lookupAnother": "Look up another",
+      "errorGeneric": "Couldn't find your record. Please check your details or ask the front desk."
+    }
   }
 }

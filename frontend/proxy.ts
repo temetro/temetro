@@ -28,6 +28,6 @@ export function proxy(request: NextRequest) {
 export const config = {
   // Run on all routes except the auth pages, Next internals and static assets.
   matcher: [
-    "/((?!login|signup|verify-email|forgot-password|reset-password|onboarding|accept-invite|_next/static|_next/image|favicon.ico|temetro-logo.png|avatars).*)",
+    "/((?!login|signup|verify-email|forgot-password|reset-password|onboarding|accept-invite|portal|_next/static|_next/image|favicon.ico|temetro-logo.png|avatars).*)",
   ],
 };

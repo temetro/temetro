@@ -1,0 +1,152 @@
+import { eq } from "drizzle-orm";
+import { Router, type Request } from "express";
+import { z } from "zod";
+
+import { db } from "../db/index.js";
+import { organization } from "../db/schema/auth.js";
+import { appointmentInputSchema } from "../lib/appointment-validation.js";
+import { HttpError } from "../lib/http-error.js";
+import { initialsFromName } from "../lib/initials.js";
+import { recordActivity } from "../services/activity.js";
+import { createAppointment, listAppointments } from "../services/appointments.js";
+import { getPatient } from "../services/patients.js";
+
+// Public, unauthenticated kiosk API for a clinic's Patient Portal (an iPad in the
+// waiting room). Scoped by the clinic slug in the URL — there is no session.
+//
+// PHI exposure is deliberately minimal: lookups require BOTH a file number and a
+// matching name, and "results" return only appointment status + whether results
+// exist, never lab values. A kiosk token / one-time code would be the safer
+// long-term design (see docs).
+export const portalRouter = Router();
+
+async function resolveClinic(req: Request): Promise<{ id: string; name: string }> {
+  const slug = String(req.params.clinic ?? "").trim();
+  if (!slug) throw new HttpError(404, "Clinic not found.");
+  const [org] = await db
+    .select({ id: organization.id, name: organization.name })
+    .from(organization)
+    .where(eq(organization.slug, slug))
+    .limit(1);
+  if (!org) throw new HttpError(404, "Clinic not found.");
+  return org;
+}
+
+const norm = (s: string) => s.trim().toLowerCase();
+
+// GET /api/portal/:clinic — clinic name for the kiosk header.
+portalRouter.get("/:clinic", async (req, res, next) => {
+  try {
+    const clinic = await resolveClinic(req);
+    res.json({ name: clinic.name });
+  } catch (err) {
+    next(err);
+  }
+});
+
+const bookingSchema = z.object({
+  fileNumber: z.string().trim().min(1, "A file number is required.").max(64),
+  name: z.string().trim().min(1, "Your name is required.").max(200),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD."),
+  time: z.string().regex(/^\d{2}:\d{2}$/, "Time must be HH:mm."),
+  type: z.string().trim().max(120).optional(),
+});
+
+// POST /api/portal/:clinic/appointments — self-service booking for a registered
+// patient. Verifies the file number + name, then creates a confirmed appointment
+// that shows up on the clinic's Appointments page.
+portalRouter.post("/:clinic/appointments", async (req, res, next) => {
+  try {
+    const clinic = await resolveClinic(req);
+    const body = bookingSchema.parse(req.body);
+
+    const patient = await getPatient(clinic.id, body.fileNumber);
+    if (!patient || norm(patient.name) !== norm(body.name)) {
+      throw new HttpError(
+        404,
+        "We couldn't find a record matching that name and file number.",
+      );
+    }
+    // Don't allow booking in the past.
+    const today = new Date().toISOString().slice(0, 10);
+    if (body.date < today) {
+      throw new HttpError(400, "Please pick a future date.");
+    }
+
+    const input = appointmentInputSchema.parse({
+      fileNumber: patient.fileNumber,
+      name: patient.name,
+      initials: patient.initials || initialsFromName(patient.name),
+      date: body.date,
+      time: body.time,
+      type: body.type || "Self-service booking",
+      provider: patient.pcp || "",
+      status: "confirmed",
+      source: "manual",
+    });
+    const created = await createAppointment(clinic.id, "", input);
+    await recordActivity({
+      orgId: clinic.id,
+      actor: { id: "", name: patient.name },
+      action: `Patient portal booking — ${patient.name} on ${created.date} ${created.time}`,
+      entityType: "appointment",
+      entityId: created.id,
+    });
+    res.status(201).json({
+      date: created.date,
+      time: created.time,
+      type: created.type,
+      provider: created.provider,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+const lookupSchema = z.object({
+  fileNumber: z.string().trim().min(1).max(64),
+  name: z.string().trim().min(1).max(200),
+});
+
+// GET /api/portal/:clinic/results?fileNumber=&name= — minimal status view.
+// Returns upcoming appointments and whether results are on file, never the
+// underlying clinical values.
+portalRouter.get("/:clinic/results", async (req, res, next) => {
+  try {
+    const clinic = await resolveClinic(req);
+    const q = lookupSchema.parse({
+      fileNumber: req.query.fileNumber,
+      name: req.query.name,
+    });
+    const patient = await getPatient(clinic.id, q.fileNumber);
+    if (!patient || norm(patient.name) !== norm(q.name)) {
+      throw new HttpError(
+        404,
+        "We couldn't find a record matching that name and file number.",
+      );
+    }
+    const now = new Date();
+    const upcoming = (await listAppointments(clinic.id))
+      .filter(
+        (a) =>
+          a.fileNumber === patient.fileNumber &&
+          a.status !== "cancelled" &&
+          new Date(`${a.date}T${a.time}`) >= now,
+      )
+      .map((a) => ({
+        date: a.date,
+        time: a.time,
+        type: a.type,
+        provider: a.provider,
+        status: a.status,
+      }));
+    res.json({
+      name: patient.name,
+      upcoming,
+      hasResults: patient.labs.length > 0,
+      resultCount: patient.labs.length,
+    });
+  } catch (err) {
+    next(err);
+  }
+});

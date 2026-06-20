@@ -23,6 +23,7 @@ import { meetingsRouter } from "./routes/meetings.js";
 import { notesRouter } from "./routes/notes.js";
 import { notificationsRouter } from "./routes/notifications.js";
 import { patientsRouter } from "./routes/patients.js";
+import { portalRouter } from "./routes/portal.js";
 import { prescriptionsRouter } from "./routes/prescriptions.js";
 import { settingsRouter } from "./routes/settings.js";
 import { staffRouter } from "./routes/staff.js";
@@ -84,6 +85,7 @@ app.use("/api/settings", settingsRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/integrations", integrationsRouter);
+app.use("/api/portal", portalRouter);
 
 app.use(notFound);
 app.use(errorHandler);
@@ -112,4 +114,5 @@ server.listen(env.PORT, () => {
   console.log(`  • ai:       /api/ai  (config + import)`);
   console.log(`  • chat:     /api/chat  (LLM agent)`);
   console.log(`  • integr.:  /api/integrations  (FHIR / e-Rx / claims)`);
+  console.log(`  • portal:   /api/portal  (public clinic kiosk)`);
 });
