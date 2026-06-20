@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, Plus, Users, Video } from "lucide-react";
+import { CalendarDays, Plus, Trash2, Users, Video } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -32,6 +32,7 @@ import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import {
   createMeetingRoom,
+  deleteMeetingRoom,
   listMeetingEvents,
   listMeetingRooms,
   type MeetingRoom as Room,
@@ -70,6 +71,8 @@ export function MeetingsView() {
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState<Room | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Scheduled meetings (calendar).
   const [events, setEvents] = useState<ScheduledMeeting[]>([]);
@@ -135,6 +138,21 @@ export function MeetingsView() {
       notify.error(t("meetings.createFailedTitle"), t("meetings.createFailedBody"));
     } finally {
       setCreating(false);
+    }
+  };
+
+  const confirmDeleteRoom = async () => {
+    if (!roomToDelete || deleting) return;
+    setDeleting(true);
+    try {
+      await deleteMeetingRoom(roomToDelete.id);
+      setRooms((prev) => prev.filter((r) => r.id !== roomToDelete.id));
+      if (activeRoom?.id === roomToDelete.id) setActiveRoom(null);
+      setRoomToDelete(null);
+    } catch {
+      notify.error(t("meetings.deleteFailedTitle"), t("meetings.deleteFailedBody"));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -226,26 +244,38 @@ export function MeetingsView() {
                 rooms.map((room) => {
                   const count = presence[room.id] ?? 0;
                   return (
-                    <button
+                    <div
                       className={cn(
-                        "flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/50",
+                        "group flex w-full items-center gap-1 rounded-lg pr-1 transition-colors hover:bg-accent/50",
                         activeRoom?.id === room.id && "bg-accent hover:bg-accent",
                       )}
                       key={room.id}
-                      onClick={() => setActiveRoom(room)}
-                      type="button"
                     >
-                      <Video className="size-4 shrink-0 text-muted-foreground" />
-                      <span className="min-w-0 flex-1 truncate text-foreground text-sm">
-                        {room.name}
-                      </span>
-                      {count > 0 && (
-                        <span className="flex items-center gap-1 rounded-full bg-success/15 px-1.5 text-success text-xs">
-                          <Users className="size-3" />
-                          {count}
+                      <button
+                        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-2 text-left"
+                        onClick={() => setActiveRoom(room)}
+                        type="button"
+                      >
+                        <Video className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="min-w-0 flex-1 truncate text-foreground text-sm">
+                          {room.name}
                         </span>
-                      )}
-                    </button>
+                        {count > 0 && (
+                          <span className="flex items-center gap-1 rounded-full bg-success/15 px-1.5 text-success text-xs">
+                            <Users className="size-3" />
+                            {count}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        aria-label={t("meetings.deleteRoom")}
+                        className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-all hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+                        onClick={() => setRoomToDelete(room)}
+                        type="button"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    </div>
                   );
                 })
               )}
@@ -432,6 +462,35 @@ export function MeetingsView() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogPopup>
+      </Dialog>
+
+      <Dialog
+        onOpenChange={(open) => !open && setRoomToDelete(null)}
+        open={roomToDelete !== null}
+      >
+        <DialogPopup className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("meetings.deleteRoomConfirmTitle")}</DialogTitle>
+            <DialogDescription>
+              {t("meetings.deleteRoomConfirmBody", {
+                name: roomToDelete?.name ?? "",
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button type="button" variant="outline" />}>
+              {t("meetings.cancel")}
+            </DialogClose>
+            <Button
+              disabled={deleting}
+              onClick={confirmDeleteRoom}
+              type="button"
+              variant="destructive"
+            >
+              {deleting ? t("meetings.deleting") : t("meetings.deleteRoom")}
+            </Button>
+          </DialogFooter>
         </DialogPopup>
       </Dialog>
 

@@ -145,10 +145,14 @@ async function buildSummaries(
         : (others[0]?.name ?? "Conversation"));
     const lastMessage = lastByConv.get(b.convId) ?? null;
     const unreadCount = unreadByConv.get(b.convId) ?? 0;
+    // A one-way System notice (e.g. forgot-password alerts): the reserved system
+    // user is a participant. The UI hides the composer/call and styles it apart.
+    const isSystem = participants.some((p) => p.id === SYSTEM_USER_ID);
     return {
       id: b.convId,
       name: displayName,
       isGroup: b.isGroup,
+      isSystem,
       participants,
       lastMessage,
       unread: unreadCount > 0,

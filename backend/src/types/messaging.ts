@@ -50,6 +50,7 @@ export type ConversationSummary = {
   id: string;
   name: string; // display name: group name, or the other participant for a DM
   isGroup: boolean;
+  isSystem: boolean; // a one-way System notice (no replies / calls)
   participants: Participant[];
   lastMessage: ConversationMessage | null;
   unread: boolean;

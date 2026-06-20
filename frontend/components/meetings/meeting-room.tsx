@@ -48,11 +48,15 @@ function initials(name: string): string {
 function VideoTile({
   stream,
   label,
+  caption,
   muted,
   showVideo,
 }: {
   stream: MediaStream | null;
   label: string;
+  // The corner caption (e.g. "You"); falls back to `label` when omitted. Initials
+  // are always derived from `label` (the real name), never the caption.
+  caption?: string;
   muted?: boolean;
   showVideo: boolean;
 }) {
@@ -81,14 +85,16 @@ function VideoTile({
         ref={ref}
       />
       {!showVideo && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center bg-secondary">
           <Avatar className="size-16">
-            <AvatarFallback className="text-lg">{initials(label)}</AvatarFallback>
+            <AvatarFallback className="bg-primary/15 text-foreground text-lg">
+              {initials(label)}
+            </AvatarFallback>
           </Avatar>
         </div>
       )}
       <span className="absolute bottom-2 left-2 rounded-full bg-background/70 px-2 py-0.5 text-foreground text-xs backdrop-blur">
-        {label}
+        {caption ?? label}
       </span>
     </div>
   );
@@ -114,7 +120,7 @@ function ControlButton({
         render={
           <Button
             aria-label={label}
-            className="size-12 rounded-full"
+            className="size-14 rounded-full"
             onClick={onClick}
             size="icon"
             variant={active === false ? "outline" : variant}
@@ -211,7 +217,8 @@ export function MeetingRoom({
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <VideoTile
-              label={t("meetings.you")}
+              caption={t("meetings.you")}
+              label={selfName || t("meetings.you")}
               muted
               showVideo={camOn && Boolean(localStream)}
               stream={localStream}
@@ -219,7 +226,7 @@ export function MeetingRoom({
             {peers.map((p) => (
               <VideoTile
                 key={p.socketId}
-                label={p.userName || selfName}
+                label={p.userName || t("meetings.guest")}
                 showVideo={Boolean(p.stream)}
                 stream={p.stream}
               />
@@ -228,45 +235,43 @@ export function MeetingRoom({
         )}
       </div>
 
-      {/* Discord-style control bar */}
-      <div className="flex items-center justify-center gap-3 rounded-full border bg-card/60 px-4 py-2 backdrop-blur">
-        <div className="flex items-center gap-2">
-          <ControlButton
-            active={micOn}
-            label={micOn ? t("meetings.muteMic") : t("meetings.unmuteMic")}
-            onClick={toggleMic}
-          >
-            {micOn ? <Mic className="size-5" /> : <MicOff className="size-5" />}
-          </ControlButton>
-          <ControlButton
-            active={camOn}
-            label={camOn ? t("meetings.stopVideo") : t("meetings.startVideo")}
-            onClick={toggleCam}
-          >
-            {camOn ? (
-              <VideoIcon className="size-5" />
-            ) : (
-              <VideoOff className="size-5" />
-            )}
-          </ControlButton>
-          <ControlButton
-            label={t("meetings.shareScreen")}
-            onClick={() => void toggleScreen()}
-            variant={screenOn ? "default" : "secondary"}
-          >
-            <MonitorUp className="size-5" />
-          </ControlButton>
-          <ControlButton label={t("meetings.invite.add")} onClick={openInvite}>
-            <UserPlus className="size-5" />
-          </ControlButton>
-        </div>
+      {/* Discord-style control bar — a compact pill that hugs its buttons */}
+      <div className="mx-auto flex w-fit items-center gap-2 rounded-full border bg-card/60 px-3 py-2 backdrop-blur">
+        <ControlButton
+          active={micOn}
+          label={micOn ? t("meetings.muteMic") : t("meetings.unmuteMic")}
+          onClick={toggleMic}
+        >
+          {micOn ? <Mic className="size-6" /> : <MicOff className="size-6" />}
+        </ControlButton>
+        <ControlButton
+          active={camOn}
+          label={camOn ? t("meetings.stopVideo") : t("meetings.startVideo")}
+          onClick={toggleCam}
+        >
+          {camOn ? (
+            <VideoIcon className="size-6" />
+          ) : (
+            <VideoOff className="size-6" />
+          )}
+        </ControlButton>
+        <ControlButton
+          label={t("meetings.shareScreen")}
+          onClick={() => void toggleScreen()}
+          variant={screenOn ? "default" : "secondary"}
+        >
+          <MonitorUp className="size-6" />
+        </ControlButton>
+        <ControlButton label={t("meetings.invite.add")} onClick={openInvite}>
+          <UserPlus className="size-6" />
+        </ControlButton>
         <div className="mx-1 h-8 w-px bg-border" />
         <ControlButton
           label={t("meetings.leave")}
           onClick={onLeave}
           variant="destructive"
         >
-          <PhoneOff className="size-5" />
+          <PhoneOff className="size-6" />
         </ControlButton>
       </div>
 

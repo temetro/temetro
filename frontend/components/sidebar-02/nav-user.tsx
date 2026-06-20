@@ -101,6 +101,12 @@ export function NavUser() {
 
   const name = data?.user?.name ?? t("userMenu.defaultName");
   const email = data?.user?.email ?? "";
+  // Admin-provisioned staff sign in by username and may only have a synthetic
+  // `username@slug.temetro.local` address — show their @username instead of an
+  // email that looks broken.
+  const username = data?.user?.displayUsername ?? data?.user?.username ?? null;
+  const isSyntheticEmail = /@.+\.temetro\.local$/i.test(email);
+  const secondary = !email || isSyntheticEmail ? (username ? `@${username}` : email) : email;
   const initials = initialsFromName(name);
   const activeName = activeOrg?.name ?? t("userMenu.selectClinic");
 
@@ -143,7 +149,7 @@ export function NavUser() {
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{name}</span>
                   <span className="truncate text-muted-foreground text-xs">
-                    {email}
+                    {secondary}
                   </span>
                 </div>
                 <ChevronsUpDown className="ml-auto size-4" />
@@ -164,7 +170,7 @@ export function NavUser() {
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{name}</span>
                   <span className="truncate text-muted-foreground text-xs">
-                    {email}
+                    {secondary}
                   </span>
                 </div>
               </MenuGroupLabel>

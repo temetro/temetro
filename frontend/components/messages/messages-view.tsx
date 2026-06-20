@@ -10,6 +10,7 @@ import {
   Plus,
   Search,
   SendHorizonal,
+  ShieldAlert,
   Video,
   X,
 } from "lucide-react";
@@ -495,27 +496,41 @@ export function MessagesView() {
                   )}
                   key={c.id}
                 >
-                  <button
-                    aria-label={t("messages.startCall", { name: c.name })}
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                    onClick={() =>
-                      router.push(
-                        otherId
-                          ? `/messages/meetings?with=${encodeURIComponent(otherId)}`
-                          : "/messages/meetings",
-                      )
-                    }
-                    type="button"
-                  >
-                    <Video className="size-4" />
-                  </button>
+                  {c.isSystem ? (
+                    <span className="size-9 shrink-0" />
+                  ) : (
+                    <button
+                      aria-label={t("messages.startCall", { name: c.name })}
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                      onClick={() =>
+                        router.push(
+                          otherId
+                            ? `/messages/meetings?with=${encodeURIComponent(otherId)}`
+                            : "/messages/meetings",
+                        )
+                      }
+                      type="button"
+                    >
+                      <Video className="size-4" />
+                    </button>
+                  )}
                   <button
                     className="flex min-w-0 flex-1 items-center gap-3 rounded-lg py-2 pr-1 text-left"
                     onClick={() => open(c.id)}
                     type="button"
                   >
                   <Avatar className="size-9 shrink-0">
-                    <AvatarFallback>{initials(c.name)}</AvatarFallback>
+                    <AvatarFallback
+                      className={cn(
+                        c.isSystem && "bg-warning/15 text-warning",
+                      )}
+                    >
+                      {c.isSystem ? (
+                        <ShieldAlert className="size-4" />
+                      ) : (
+                        initials(c.name)
+                      )}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <div className="flex w-full items-center gap-2">
@@ -529,6 +544,11 @@ export function MessagesView() {
                       >
                         {c.name}
                       </span>
+                      {c.isSystem && (
+                        <span className="shrink-0 rounded-full bg-warning/15 px-1.5 py-0.5 font-medium text-[10px] text-warning uppercase tracking-wide">
+                          {t("messages.system.tag")}
+                        </span>
+                      )}
                       <span
                         className={cn(
                           "shrink-0 text-xs",
@@ -573,18 +593,30 @@ export function MessagesView() {
           <div className="flex h-full flex-col gap-4">
             <div className="flex items-center gap-3 rounded-2xl border bg-card/30 p-4">
               <Avatar className="size-9">
-                <AvatarFallback>{initials(selected.name)}</AvatarFallback>
+                <AvatarFallback
+                  className={cn(
+                    selected.isSystem && "bg-warning/15 text-warning",
+                  )}
+                >
+                  {selected.isSystem ? (
+                    <ShieldAlert className="size-4" />
+                  ) : (
+                    initials(selected.name)
+                  )}
+                </AvatarFallback>
               </Avatar>
               <div className="flex min-w-0 flex-col">
                 <span className="truncate font-medium text-foreground text-sm">
                   {selected.name}
                 </span>
                 <span className="text-muted-foreground text-xs">
-                  {selected.isGroup
-                    ? t("messages.peopleCount", {
-                        count: selected.participants.length,
-                      })
-                    : t("messages.directMessage")}
+                  {selected.isSystem
+                    ? t("messages.system.label")
+                    : selected.isGroup
+                      ? t("messages.peopleCount", {
+                          count: selected.participants.length,
+                        })
+                      : t("messages.directMessage")}
                 </span>
               </div>
             </div>
@@ -675,6 +707,12 @@ export function MessagesView() {
               </div>
             </div>
 
+            {selected.isSystem ? (
+              <div className="flex items-center justify-center gap-2 rounded-3xl border border-input bg-muted/40 px-4 py-3 text-center text-muted-foreground text-sm">
+                <ShieldAlert className="size-4 shrink-0" />
+                {t("messages.system.readOnly")}
+              </div>
+            ) : (
             <form
               className="flex flex-col rounded-3xl border border-input bg-background shadow-sm transition-colors focus-within:border-ring/60 focus-within:ring-2 focus-within:ring-ring/20"
               onSubmit={send}
@@ -776,6 +814,7 @@ export function MessagesView() {
                 </Button>
               </div>
             </form>
+            )}
           </div>
         ) : (
           <div className="flex flex-1 items-center justify-center rounded-2xl border bg-card/30">

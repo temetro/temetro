@@ -9,6 +9,7 @@ import { env } from "./env.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 import { initRealtime } from "./realtime.js";
 import { activityRouter } from "./routes/activity.js";
+import { authHelpersRouter } from "./routes/auth-helpers.js";
 import { aiRouter } from "./routes/ai.js";
 import { analyticsRouter } from "./routes/analytics.js";
 import { attachmentsRouter } from "./routes/attachments.js";
@@ -86,6 +87,7 @@ app.use("/api/ai", aiRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/integrations", integrationsRouter);
 app.use("/api/portal", portalRouter);
+app.use("/api/auth-helpers", authHelpersRouter);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -48,6 +48,7 @@ export type ConversationSummary = {
   id: string;
   name: string;
   isGroup: boolean;
+  isSystem: boolean;
   participants: Participant[];
   lastMessage: ConversationMessage | null;
   unread: boolean;
