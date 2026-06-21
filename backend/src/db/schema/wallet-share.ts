@@ -27,7 +27,10 @@ export const walletShareRequests = pgTable(
     requestedBy: text("requested_by")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    walletNumber: text("wallet_number").notNull(),
+    // Null for QR "scan to connect" pairing requests — the wallet number is
+    // bound when the authenticated device responds. Set up-front for the
+    // type-the-number push flow.
+    walletNumber: text("wallet_number"),
     ephemeralPubKey: text("ephemeral_pub_key").notNull(),
     // Encrypted (lib/crypto.ts) hex of the ephemeral X25519 private key.
     ephemeralPrivEnc: text("ephemeral_priv_enc").notNull(),

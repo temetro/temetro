@@ -204,6 +204,13 @@
       "when": 1782052852524,
       "tag": "0028_military_cyclops",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1782057030557,
+      "tag": "0029_tiny_starhawk",
+      "breakpoints": true
     }
   ]
 }

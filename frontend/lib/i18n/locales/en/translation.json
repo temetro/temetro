@@ -186,6 +186,11 @@
     "importApp": {
       "title": "Import from a patient app",
       "description": "Enter the patient's wallet number. They'll get a request on their phone to approve sharing their record with this clinic.",
+      "tabNumber": "By number",
+      "tabQr": "Show QR",
+      "qrHint": "Generate a QR code, then have the patient scan it in their wallet app to share their record.",
+      "qrCaption": "Scan this in the patient app",
+      "generateQr": "Show QR code",
       "walletLabel": "Patient wallet number",
       "walletPlaceholder": "tmw_…",
       "tempLabel": "Share temporarily",

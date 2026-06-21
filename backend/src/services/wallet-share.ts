@@ -33,12 +33,41 @@ export type ShareRequestView = {
 function toView(row: ShareRow): ShareRequestView {
   return {
     id: row.id,
-    walletNumber: row.walletNumber,
+    walletNumber: row.walletNumber ?? "",
     status: row.status,
     shareMode: row.shareMode,
     shareExpiresAt: row.shareExpiresAt ? row.shareExpiresAt.toISOString() : null,
     draft: row.draft ?? null,
   };
+}
+
+// Create a QR "scan to connect" pairing request — no wallet number yet (it is
+// bound when the scanning device responds). Mints the ephemeral keypair the
+// device seals to; the pairing URI (relay + id + ephemeral key) goes in the QR.
+export async function createPairingRequest(
+  orgId: string,
+  userId: string,
+  mode: WalletShareMode,
+  durationHours?: number,
+): Promise<{ view: ShareRequestView; ephemeralPubKey: string }> {
+  const { privateKeyHex, publicKeyHex } = newEncryptionKeypair();
+  const shareExpiresAt =
+    mode === "temporary" && durationHours
+      ? new Date(Date.now() + durationHours * 3_600_000)
+      : null;
+  const [row] = await db
+    .insert(walletShareRequests)
+    .values({
+      organizationId: orgId,
+      requestedBy: userId,
+      walletNumber: null,
+      ephemeralPubKey: publicKeyHex,
+      ephemeralPrivEnc: encryptSecret(privateKeyHex),
+      shareMode: mode,
+      shareExpiresAt,
+    })
+    .returning();
+  return { view: toView(row!), ephemeralPubKey: publicKeyHex };
 }
 
 // Create an import request: validate the wallet number, mint a per-request
@@ -125,12 +154,19 @@ export async function applyShareResponse(
     .from(walletShareRequests)
     .where(eq(walletShareRequests.id, requestId));
   if (!row || row.status !== "pending") return null;
-  if (row.walletNumber !== walletNumber.trim()) return null;
+  // Typed flow: the responder must match the wallet the clinic addressed.
+  // QR pairing flow (stored wallet number is null): bind it to the
+  // authenticated responder now.
+  if (row.walletNumber && row.walletNumber !== walletNumber.trim()) return null;
 
   if (decision === "denied") {
     const [updated] = await db
       .update(walletShareRequests)
-      .set({ status: "denied", resolvedAt: new Date() })
+      .set({
+        status: "denied",
+        resolvedAt: new Date(),
+        walletNumber: walletNumber.trim(),
+      })
       .where(eq(walletShareRequests.id, requestId))
       .returning();
     return updated ? toView(updated) : null;
@@ -150,7 +186,12 @@ export async function applyShareResponse(
 
   const [updated] = await db
     .update(walletShareRequests)
-    .set({ status: "approved", resolvedAt: new Date(), draft: bundle.patient })
+    .set({
+      status: "approved",
+      resolvedAt: new Date(),
+      draft: bundle.patient,
+      walletNumber: walletNumber.trim(),
+    })
     .where(eq(walletShareRequests.id, requestId))
     .returning();
   return updated ? toView(updated) : null;

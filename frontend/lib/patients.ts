@@ -213,6 +213,21 @@ export async function requestWalletShare(input: {
   });
 }
 
+// Create a QR pairing request (no wallet number — the patient scans a QR that
+// carries this clinic's relay URL + the request). Returns the request plus the
+// ephemeral public key the device seals to.
+export type WalletPairing = WalletShareRequest & { ephemeralPubKey: string };
+
+export async function requestWalletPairing(input: {
+  mode: WalletShareMode;
+  durationHours?: number;
+}): Promise<WalletPairing> {
+  return apiFetch<WalletPairing>("/api/patients/wallet/pair", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
 // Poll a request until the patient approves/denies on their device.
 export async function pollWalletShare(
   id: string,

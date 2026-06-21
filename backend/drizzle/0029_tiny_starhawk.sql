@@ -1,0 +1,1 @@
+ALTER TABLE "wallet_share_requests" ALTER COLUMN "wallet_number" DROP NOT NULL;

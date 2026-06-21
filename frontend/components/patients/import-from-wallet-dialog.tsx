@@ -1,8 +1,9 @@
 "use client";
 
-import { Check, Loader2, Smartphone, X } from "lucide-react";
+import { Check, Loader2, QrCode, Smartphone, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import QRCodeSvg from "react-qr-code";
 
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import { Button } from "@/components/ui/button";
@@ -18,11 +19,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ApiError } from "@/lib/api-client";
+import { ApiError, API_BASE_URL } from "@/lib/api-client";
 import {
   commitWalletShare,
   type Patient,
   pollWalletShare,
+  requestWalletPairing,
   requestWalletShare,
   type WalletShareRequest,
 } from "@/lib/patients";
@@ -37,6 +39,8 @@ type Phase =
   | "denied"
   | "expired"
   | "error";
+
+type Mode = "number" | "qr";
 
 const DURATIONS = [
   { hours: 1, key: "hours", count: 1 },
@@ -57,12 +61,14 @@ export function ImportFromWalletDialog({
   onImported?: (fileNumber: string) => void;
 }) {
   const { t } = useTranslation();
+  const [mode, setMode] = useState<Mode>("number");
   const [walletNumber, setWalletNumber] = useState("");
   const [temporary, setTemporary] = useState(false);
   const [durationHours, setDurationHours] = useState<number>(24);
   const [phase, setPhase] = useState<Phase>("form");
   const [error, setError] = useState<string | null>(null);
   const [request, setRequest] = useState<WalletShareRequest | null>(null);
+  const [pairUri, setPairUri] = useState<string | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const pollTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -76,12 +82,14 @@ export function ImportFromWalletDialog({
   // Reset everything whenever the dialog is (re)opened.
   useEffect(() => {
     if (open) {
+      setMode("number");
       setWalletNumber("");
       setTemporary(false);
       setDurationHours(24);
       setPhase("form");
       setError(null);
       setRequest(null);
+      setPairUri(null);
       setReviewOpen(false);
     }
     return stopPolling;
@@ -140,6 +148,32 @@ export function ImportFromWalletDialog({
     }
   };
 
+  // QR flow: create a pairing request (no wallet number) and build the
+  // `temetro-pair:` URI the app scans (this clinic's relay URL + request + key).
+  const startPairing = async () => {
+    setPhase("requesting");
+    setError(null);
+    try {
+      const pairing = await requestWalletPairing({
+        mode: temporary ? "temporary" : "permanent",
+        durationHours: temporary ? durationHours : undefined,
+      });
+      const params = new URLSearchParams({
+        relay: API_BASE_URL,
+        rid: pairing.id,
+        epk: pairing.ephemeralPubKey,
+        mode: pairing.shareMode,
+      });
+      if (temporary) params.set("dur", String(durationHours));
+      setPairUri(`temetro-pair:?${params.toString()}`);
+      setRequest(pairing);
+      setPhase("waiting");
+    } catch {
+      setError(t("patients.importApp.error"));
+      setPhase("error");
+    }
+  };
+
   const commitDraft = async (record: Patient) => {
     if (!request) return;
     try {
@@ -177,7 +211,20 @@ export function ImportFromWalletDialog({
           </DialogHeader>
 
           <DialogPanel className="flex flex-col gap-4">
-            {phase === "waiting" ? (
+            {phase === "waiting" && mode === "qr" && pairUri ? (
+              <div className="flex flex-col items-center gap-3 py-2 text-center">
+                <div className="rounded-2xl bg-white p-4">
+                  <QRCodeSvg value={pairUri} size={196} />
+                </div>
+                <p className="font-medium text-sm">
+                  {t("patients.importApp.qrCaption")}
+                </p>
+                <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Loader2 className="size-3.5 animate-spin" />
+                  {t("patients.importApp.waitingTitle")}
+                </p>
+              </div>
+            ) : phase === "waiting" ? (
               <div className="flex flex-col items-center gap-3 py-6 text-center">
                 <Loader2 className="size-8 animate-spin text-muted-foreground" />
                 <p className="font-medium text-sm">
@@ -212,18 +259,47 @@ export function ImportFromWalletDialog({
               </div>
             ) : (
               <>
-                <label className="flex flex-col gap-1.5">
-                  <span className="text-xs text-muted-foreground">
-                    {t("patients.importApp.walletLabel")}
-                  </span>
-                  <Input
-                    autoFocus
-                    disabled={phase === "requesting"}
-                    onChange={(e) => setWalletNumber(e.target.value)}
-                    placeholder={t("patients.importApp.walletPlaceholder")}
-                    value={walletNumber}
-                  />
-                </label>
+                <div className="flex gap-1 rounded-2xl bg-muted/50 p-1">
+                  <Button
+                    className="flex-1 rounded-xl"
+                    onClick={() => setMode("number")}
+                    size="sm"
+                    type="button"
+                    variant={mode === "number" ? "default" : "ghost"}
+                  >
+                    <Smartphone className="size-4" />
+                    {t("patients.importApp.tabNumber")}
+                  </Button>
+                  <Button
+                    className="flex-1 rounded-xl"
+                    onClick={() => setMode("qr")}
+                    size="sm"
+                    type="button"
+                    variant={mode === "qr" ? "default" : "ghost"}
+                  >
+                    <QrCode className="size-4" />
+                    {t("patients.importApp.tabQr")}
+                  </Button>
+                </div>
+
+                {mode === "number" ? (
+                  <label className="flex flex-col gap-1.5">
+                    <span className="text-xs text-muted-foreground">
+                      {t("patients.importApp.walletLabel")}
+                    </span>
+                    <Input
+                      autoFocus
+                      disabled={phase === "requesting"}
+                      onChange={(e) => setWalletNumber(e.target.value)}
+                      placeholder={t("patients.importApp.walletPlaceholder")}
+                      value={walletNumber}
+                    />
+                  </label>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {t("patients.importApp.qrHint")}
+                  </p>
+                )}
 
                 <div className="flex items-start justify-between gap-4 rounded-2xl border border-border bg-card/30 p-3">
                   <div className="space-y-0.5">
@@ -282,7 +358,8 @@ export function ImportFromWalletDialog({
                 ? t("patients.importApp.close")
                 : t("patients.importApp.cancel")}
             </DialogClose>
-            {phase === "form" || phase === "requesting" || phase === "error" ? (
+            {(phase === "form" || phase === "requesting" || phase === "error") &&
+            mode === "number" ? (
               <Button
                 disabled={!walletNumber.trim() || phase === "requesting"}
                 onClick={sendRequest}
@@ -291,6 +368,17 @@ export function ImportFromWalletDialog({
                 {phase === "requesting"
                   ? t("patients.importApp.requesting")
                   : t("patients.importApp.request")}
+              </Button>
+            ) : (phase === "form" || phase === "requesting" || phase === "error") &&
+              mode === "qr" ? (
+              <Button
+                disabled={phase === "requesting"}
+                onClick={startPairing}
+                type="button"
+              >
+                {phase === "requesting"
+                  ? t("patients.importApp.requesting")
+                  : t("patients.importApp.generateQr")}
               </Button>
             ) : null}
           </DialogFooter>

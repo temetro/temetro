@@ -27,6 +27,33 @@ const requestSchema = z.object({
   durationHours: z.number().positive().max(8760).optional(),
 });
 
+const pairSchema = z.object({
+  mode: z.enum(["permanent", "temporary"]).default("permanent"),
+  durationHours: z.number().positive().max(8760).optional(),
+});
+
+// Create a QR pairing request (no wallet number yet). Returns the request id +
+// the ephemeral public key the device seals its bundle to; the clinic encodes
+// both — plus its own relay URL — into the QR the patient scans.
+patientsWalletRouter.post(
+  "/pair",
+  requirePermission({ patient: ["write"] }),
+  async (req, res, next) => {
+    try {
+      const input = pairSchema.parse(req.body);
+      const { view, ephemeralPubKey } = await walletShare.createPairingRequest(
+        req.organizationId!,
+        req.user!.id,
+        input.mode,
+        input.durationHours,
+      );
+      res.status(201).json({ ...view, ephemeralPubKey });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 // Start an import: validate the wallet number, mint a per-request ephemeral key,
 // and relay an encrypted-share request to the patient's device. The clinician
 // then polls the request until the patient approves on their phone.
