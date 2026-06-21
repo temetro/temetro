@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
@@ -11,9 +12,77 @@ import {
   SettingsSection,
   whiteButton,
 } from "@/components/settings/settings-parts";
+import {
+  getSigningKey,
+  listSignedRecords,
+  rotateSigningKey,
+  type SharedRecord,
+  type SigningKey,
+} from "@/lib/signing";
+import { notify } from "@/lib/toast";
+
+function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export function SigningPanel() {
   const { t } = useTranslation();
+  const [key, setKey] = useState<SigningKey | null>(null);
+  const [records, setRecords] = useState<SharedRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [rotating, setRotating] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([getSigningKey(), listSignedRecords().catch(() => [])])
+      .then(([k, r]) => {
+        if (!active) return;
+        setKey(k);
+        setRecords(r);
+        setError(null);
+      })
+      .catch(() => {
+        if (active) setError(t("settings.signing.loadError"));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [t]);
+
+  const rotate = async () => {
+    setRotating(true);
+    try {
+      const next = await rotateSigningKey();
+      setKey(next);
+      notify.success(
+        t("settings.signing.rotateSuccessTitle"),
+        t("settings.signing.rotateSuccessBody"),
+      );
+    } catch {
+      notify.error(
+        t("settings.signing.rotateErrorTitle"),
+        t("settings.signing.rotateError"),
+      );
+    } finally {
+      setRotating(false);
+    }
+  };
+
+  const recordStatusLabel = (status: SharedRecord["status"]): string =>
+    t(
+      `settings.signing.records.status${
+        status.charAt(0).toUpperCase() + status.slice(1)
+      }`,
+    );
+
   return (
     <>
       <SettingsCard className="flex flex-col gap-6 p-6 sm:flex-row sm:items-start sm:justify-between">
@@ -29,15 +98,35 @@ export function SigningPanel() {
           <p className="text-sm text-muted-foreground">
             {t("settings.signing.keyDescription")}
           </p>
-          <Button className={cn("rounded-lg", whiteButton)}>
-            {t("settings.signing.rotateKey")}
+          <Button
+            className={cn("rounded-lg", whiteButton)}
+            disabled={rotating || loading}
+            onClick={rotate}
+            type="button"
+          >
+            {rotating
+              ? t("settings.signing.rotating")
+              : t("settings.signing.rotateKey")}
           </Button>
         </div>
         <div className="sm:text-right">
           <p className="text-3xl font-semibold tracking-tight">Ed25519</p>
           <p className="text-sm text-muted-foreground">
-            {t("settings.signing.createdAt")}
+            {key
+              ? t("settings.signing.createdAtLabel", {
+                  date: formatDate(key.createdAt),
+                })
+              : loading
+                ? t("settings.signing.loading")
+                : error ?? ""}
           </p>
+          {key?.rotatedAt ? (
+            <p className="text-xs text-muted-foreground">
+              {t("settings.signing.rotatedAtLabel", {
+                date: formatDate(key.rotatedAt),
+              })}
+            </p>
+          ) : null}
         </div>
       </SettingsCard>
 
@@ -49,7 +138,7 @@ export function SigningPanel() {
           <CopyField
             description={t("settings.signing.fingerprintDescription")}
             label={t("settings.signing.fingerprintLabel")}
-            value="ed25519:9f86 d081 884c 7d65 9a2f eaa0 c55a d015"
+            value={key?.fingerprint ?? "—"}
           />
         </SettingsCard>
       </SettingsSection>
@@ -98,11 +187,41 @@ export function SigningPanel() {
         description={t("settings.signing.signedRecordsDescription")}
         title={t("settings.signing.signedRecordsTitle")}
       >
-        <SettingsCard className="flex items-center justify-center p-12">
-          <p className="text-sm text-muted-foreground">
-            {t("settings.signing.noPending")}
-          </p>
-        </SettingsCard>
+        {records.length === 0 ? (
+          <SettingsCard className="flex items-center justify-center p-12">
+            <p className="text-sm text-muted-foreground">
+              {t("settings.signing.noPending")}
+            </p>
+          </SettingsCard>
+        ) : (
+          <SettingsCard className="divide-y divide-border">
+            {records.map((record) => (
+              <div
+                className="flex items-center justify-between gap-3 px-4 py-3.5"
+                key={record.id}
+              >
+                <div className="min-w-0 space-y-0.5">
+                  <p className="truncate font-mono text-sm">
+                    {record.walletNumber}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {record.shareMode === "temporary"
+                      ? t("settings.signing.records.temporary")
+                      : t("settings.signing.records.permanent")}
+                    {record.shareExpiresAt
+                      ? ` · ${t("settings.signing.records.expires", {
+                          date: formatDate(record.shareExpiresAt),
+                        })}`
+                      : ""}
+                  </p>
+                </div>
+                <Badge variant="secondary">
+                  {recordStatusLabel(record.status)}
+                </Badge>
+              </div>
+            ))}
+          </SettingsCard>
+        )}
       </SettingsSection>
     </>
   );

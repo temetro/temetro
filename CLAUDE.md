@@ -23,10 +23,28 @@ repository (published as `temetro`).
 > (login/signup/reset/onboarding), route protection, clinic switching, and patient data fetched
 > over the API — the old in-memory fixture is gone (`frontend/lib/patients.ts` now calls the backend).
 >
-> **Still vision, not built:** the patient companion app and the blockchain-style **signing /
-> patient-owned storage / approval** flow. The AI chat itself is still **mock replies** (no LLM
-> call yet — a `/chat` endpoint is the next planned step). Email verification is wired but
-> currently **not enforced** at sign-in (see `backend/CLAUDE.md`).
+> **Now built (thin slice):** a **patient wallet app** (`~/Desktop/temetro-app`, sibling repo — see
+> "Patient wallet app" below) and an end-to-end **encrypted share / patient-approval** flow:
+> clinics hold a real **Ed25519 signing key** (Settings → Signing, `backend/src/services/signing.ts`),
+> and "Import from a patient app" on the Patients page relays an encrypted request to the wallet over
+> a **`/wallet` Socket.io namespace**, the patient approves on their phone, and the sealed record is
+> imported (with optional **temporary share + auto-delete**). See `backend/src/routes/{signing,patients-wallet}.ts`.
+>
+> **Still vision, not built:** clinic→wallet push of signed record updates, in-app record editing,
+> QR pairing, and cryptographic time-boxing of temporary shares. The AI chat is still **mock replies**.
+> Email verification is wired but currently **not enforced** at sign-in (see `backend/CLAUDE.md`).
+
+## Patient wallet app (sibling repo `~/Desktop/temetro-app`)
+
+The **patient companion app** is its own git repo on the Desktop (not in this monorepo): an **Expo
+SDK 56** app that **must be built with `@expo/ui`** (real native SwiftUI / Jetpack Compose UI) — this
+is a hard requirement; see its `CLAUDE.md`. It stores the patient's record **encrypted on-device**,
+the patient's identity is an **Ed25519 keypair** whose public key (base58check, `tmw_…`) is their
+**wallet number**, and it shares records by sealing them to a clinic's ephemeral key over the
+backend relay. The crypto wire format mirrors `backend/src/lib/wallet-crypto.ts` exactly. "Decentralization"
+here means keys + data live on the patient's device and the relay only ever forwards ciphertext — it
+is **not** a literal blockchain (records are off-chain, which is also what lets a temporary share be
+deleted). Commit/push that app inside its own repo, separately from this one.
 
 ## Layout
 

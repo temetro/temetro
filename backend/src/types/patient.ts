@@ -71,4 +71,7 @@ export type Patient = {
   labTrend: Trend; // headline lab plotted as a sparkline
   encounters: Encounter[];
   source?: "manual" | "ai"; // "ai" = imported/drafted by the chat agent
+  // Set when this record was imported from a patient wallet as a *temporary*
+  // share — the ISO deadline after which it is auto-deleted from the clinic.
+  shareExpiresAt?: string | null;
 };

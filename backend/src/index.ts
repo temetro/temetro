@@ -24,11 +24,14 @@ import { meetingsRouter } from "./routes/meetings.js";
 import { notesRouter } from "./routes/notes.js";
 import { notificationsRouter } from "./routes/notifications.js";
 import { patientsRouter } from "./routes/patients.js";
+import { patientsWalletRouter } from "./routes/patients-wallet.js";
 import { portalRouter } from "./routes/portal.js";
 import { prescriptionsRouter } from "./routes/prescriptions.js";
 import { settingsRouter } from "./routes/settings.js";
+import { signingRouter } from "./routes/signing.js";
 import { staffRouter } from "./routes/staff.js";
 import { tasksRouter } from "./routes/tasks.js";
+import { sweepExpiredShares } from "./services/wallet-share.js";
 
 const app = express();
 
@@ -67,7 +70,11 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+// Mount the wallet import routes BEFORE the generic patients router so
+// `/api/patients/wallet/...` isn't matched by patients' `/:fileNumber`.
+app.use("/api/patients/wallet", patientsWalletRouter);
 app.use("/api/patients", patientsRouter);
+app.use("/api/signing", signingRouter);
 app.use("/api/attachments", attachmentsRouter);
 app.use("/api/notes", notesRouter);
 app.use("/api/appointments", appointmentsRouter);
@@ -96,6 +103,14 @@ app.use(errorHandler);
 const server = createServer(app);
 initRealtime(server);
 
+// Sweep expired temporary patient-wallet shares (auto-delete) every 5 minutes.
+const SHARE_SWEEP_INTERVAL = 5 * 60 * 1000;
+setInterval(() => {
+  sweepExpiredShares().catch((err) =>
+    console.error("Wallet share sweep failed:", err),
+  );
+}, SHARE_SWEEP_INTERVAL).unref();
+
 server.listen(env.PORT, () => {
   console.log(`temetro backend listening on ${env.BETTER_AUTH_URL}`);
   console.log(`  • auth:     /api/auth/*  (frontend origin: ${env.FRONTEND_URL})`);
@@ -117,4 +132,6 @@ server.listen(env.PORT, () => {
   console.log(`  • chat:     /api/chat  (LLM agent)`);
   console.log(`  • integr.:  /api/integrations  (FHIR / e-Rx / claims)`);
   console.log(`  • portal:   /api/portal  (public clinic kiosk)`);
+  console.log(`  • signing:  /api/signing  (Ed25519 clinic key)`);
+  console.log(`  • wallet:   /api/patients/wallet  (+ /wallet socket relay)`);
 });

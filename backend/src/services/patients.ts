@@ -69,6 +69,7 @@ function toPatient(row: PatientRow, children: Children): Patient {
     labTrend: row.labTrend,
     encounters: children.encounters,
     source: row.source,
+    shareExpiresAt: row.shareExpiresAt ? row.shareExpiresAt.toISOString() : null,
   };
 }
 
@@ -426,6 +427,9 @@ export async function createPatient(
   userId: string,
   rawInput: PatientInput,
   demographicsOnly = false,
+  // Extra columns set on import from a patient wallet (provenance + the
+  // auto-delete deadline for a temporary share).
+  extra?: { shareOrigin?: "wallet" | null; shareExpiresAt?: Date | null },
 ): Promise<Patient> {
   // Auto-assign a file number when one wasn't supplied (e.g. AI imports).
   const input: PatientInput = rawInput.fileNumber
@@ -438,13 +442,13 @@ export async function createPatient(
       if (demographicsOnly) {
         const [row] = await tx
           .insert(patients)
-          .values(demographicColumns(orgId, input, userId))
+          .values({ ...demographicColumns(orgId, input, userId), ...extra })
           .returning();
         return toPatient(row!, emptyChildren());
       }
       const [row] = await tx
         .insert(patients)
-        .values(patientColumns(orgId, input, userId))
+        .values({ ...patientColumns(orgId, input, userId), ...extra })
         .returning();
       await insertChildren(tx, row!.id, input);
       return toPatient(row!, childrenFromInput(input));

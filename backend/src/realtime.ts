@@ -1,13 +1,16 @@
 import type { Server as HttpServer } from "node:http";
 
 import { fromNodeHeaders } from "better-auth/node";
+import { bytesToHex, randomBytes, utf8ToBytes } from "@noble/hashes/utils.js";
 import { Server, type Socket } from "socket.io";
 
 import { auth } from "./auth.js";
 import { env } from "./env.js";
+import { decodeWalletNumber, verifySignature } from "./lib/wallet-crypto.js";
 import * as meetings from "./services/meetings.js";
 import * as messaging from "./services/messaging.js";
 import { createNotification } from "./services/notifications.js";
+import * as walletShare from "./services/wallet-share.js";
 import type { MessageAttachment } from "./types/messaging.js";
 
 let io: Server | null = null;
@@ -16,6 +19,7 @@ const userRoom = (userId: string) => `user:${userId}`;
 const convRoom = (conversationId: string) => `conv:${conversationId}`;
 const callRoom = (roomId: string) => `call:${roomId}`;
 const orgRoom = (orgId: string) => `org:${orgId}`;
+const walletRoom = (walletNumber: string) => `wallet:${walletNumber}`;
 
 // Mesh WebRTC tops out around four peers (each sends its stream to every other);
 // past that the room is closed to new joiners.
@@ -37,6 +41,17 @@ export function emitToConversation(
   data: unknown,
 ): void {
   io?.to(convRoom(conversationId)).emit(event, data);
+}
+
+// Relay an end-to-end-encrypted message to a patient wallet device (the /wallet
+// namespace, room keyed by wallet number). The relay only ever forwards
+// ciphertext — it cannot read the record bundle.
+export function emitToWallet(
+  walletNumber: string,
+  event: string,
+  data: unknown,
+): void {
+  io?.of("/wallet").to(walletRoom(walletNumber)).emit(event, data);
 }
 
 type Ack = (response: { ok: boolean; [key: string]: unknown }) => void;
@@ -268,6 +283,107 @@ export function initRealtime(httpServer: HttpServer): Server {
         emitPresence(roomId);
       }
     });
+  });
+
+  // --- Patient wallet relay (/wallet namespace) ----------------------------
+  // Devices have no clinic session, so this namespace is NOT cookie-gated.
+  // Instead a device proves control of its wallet keypair: the server issues a
+  // random challenge, the device signs it with its Ed25519 key, and only then
+  // may it join its own wallet room. The relay forwards encrypted share
+  // requests/responses without ever reading the record bundle.
+  const walletNs = io.of("/wallet");
+  walletNs.on("connection", (socket: Socket) => {
+    const challenge = bytesToHex(randomBytes(32));
+    socket.data.challenge = challenge;
+    socket.data.walletNumber = null as string | null;
+    socket.emit("wallet:challenge", { challenge });
+
+    socket.on(
+      "wallet:auth",
+      (payload: { walletNumber?: string; signature?: string }, ack?: Ack) => {
+        try {
+          const walletNumber = String(payload?.walletNumber ?? "");
+          const signature = String(payload?.signature ?? "");
+          const publicKey = decodeWalletNumber(walletNumber);
+          const ok = verifySignature(
+            publicKey,
+            signature,
+            utf8ToBytes(socket.data.challenge as string),
+          );
+          if (!ok) {
+            ack?.({ ok: false });
+            return;
+          }
+          socket.data.walletNumber = walletNumber;
+          socket.join(walletRoom(walletNumber));
+          ack?.({ ok: true });
+        } catch {
+          ack?.({ ok: false });
+        }
+      },
+    );
+
+    // The patient approved/denied a share on their device; the sealed bundle (if
+    // approved) rides along and is decrypted + verified server-side.
+    socket.on(
+      "wallet:share-response",
+      async (
+        payload: {
+          requestId?: string;
+          walletNumber?: string;
+          decision?: "approved" | "denied";
+          sealed?: string;
+          signature?: string;
+        },
+        ack?: Ack,
+      ) => {
+        try {
+          if (
+            !socket.data.walletNumber ||
+            socket.data.walletNumber !== payload?.walletNumber
+          ) {
+            ack?.({ ok: false });
+            return;
+          }
+          const view = await walletShare.applyShareResponse(
+            String(payload?.requestId ?? ""),
+            String(payload?.walletNumber ?? ""),
+            payload?.decision === "approved" ? "approved" : "denied",
+            payload?.sealed,
+            payload?.signature,
+          );
+          ack?.({ ok: !!view });
+        } catch (err) {
+          ack?.({ ok: false, error: (err as Error).message });
+        }
+      },
+    );
+
+    // The patient revoked a previously shared record; delete it from the clinic.
+    socket.on(
+      "wallet:revoke",
+      async (
+        payload: { requestId?: string; walletNumber?: string },
+        ack?: Ack,
+      ) => {
+        try {
+          if (
+            !socket.data.walletNumber ||
+            socket.data.walletNumber !== payload?.walletNumber
+          ) {
+            ack?.({ ok: false });
+            return;
+          }
+          const result = await walletShare.revokeShare(
+            String(payload?.requestId ?? ""),
+            String(payload?.walletNumber ?? ""),
+          );
+          ack?.({ ok: !!result });
+        } catch {
+          ack?.({ ok: false });
+        }
+      },
+    );
   });
 
   return io;

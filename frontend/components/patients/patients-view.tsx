@@ -1,12 +1,13 @@
 "use client";
 
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Smartphone } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AiBadge } from "@/components/ai-badge";
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
+import { ImportFromWalletDialog } from "@/components/patients/import-from-wallet-dialog";
 import { PatientDetailSheet } from "@/components/patients/patient-detail-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export function PatientsView() {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   // Bumped on open so the create dialog remounts with a fresh file # / form.
   const [addKey, setAddKey] = useState(0);
 
@@ -112,6 +114,15 @@ export function PatientsView() {
           </div>
           <Button
             className="rounded-3xl"
+            onClick={() => setImportOpen(true)}
+            type="button"
+            variant="outline"
+          >
+            <Smartphone className="size-4" />
+            {t("patients.importFromApp")}
+          </Button>
+          <Button
+            className="rounded-3xl"
             onClick={() => {
               setAddKey((k) => k + 1);
               setAddOpen(true);
@@ -188,6 +199,11 @@ export function PatientsView() {
                     <span className="flex items-center gap-2">
                       {p.name}
                       <AiBadge source={p.source} />
+                      {p.shareExpiresAt ? (
+                        <Badge variant="outline">
+                          {t("patients.tempBadge")}
+                        </Badge>
+                      ) : null}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
@@ -223,6 +239,15 @@ export function PatientsView() {
         }}
         onOpenChange={setAddOpen}
         open={addOpen}
+      />
+
+      <ImportFromWalletDialog
+        onImported={(fileNumber) => {
+          refresh();
+          open(fileNumber);
+        }}
+        onOpenChange={setImportOpen}
+        open={importOpen}
       />
 
       <PatientDetailSheet

@@ -76,6 +76,9 @@ export type Patient = {
   labTrend: Trend; // headline lab plotted as a sparkline
   encounters: Encounter[];
   source?: "manual" | "ai"; // "ai" = imported/drafted by the chat agent
+  // Set when imported from a patient wallet as a temporary share — the ISO
+  // deadline after which the record is auto-deleted from the clinic.
+  shareExpiresAt?: string | null;
 };
 
 // Fetch one patient in the active clinic. Returns null when not found (404).
@@ -179,4 +182,57 @@ export async function transferPatient(
 // source of truth and rejects collisions with a 409.
 export function generateFileNumber(): string {
   return String(10000 + Math.floor(Math.random() * 89999));
+}
+
+// --- Import from a patient wallet app --------------------------------------
+// A clinician enters a wallet number; we relay an encrypted-share request to the
+// patient's device, the patient approves on their phone, and the decrypted draft
+// record comes back for review before it's committed.
+
+export type WalletShareMode = "permanent" | "temporary";
+
+export type WalletShareRequest = {
+  id: string;
+  walletNumber: string;
+  status: "pending" | "approved" | "denied" | "expired";
+  shareMode: WalletShareMode;
+  shareExpiresAt: string | null;
+  draft: Patient | null;
+};
+
+// Start an import: relays a share request to the wallet and returns the pending
+// request to poll. Throws ApiError(400) on a malformed wallet number.
+export async function requestWalletShare(input: {
+  walletNumber: string;
+  mode: WalletShareMode;
+  durationHours?: number;
+}): Promise<WalletShareRequest> {
+  return apiFetch<WalletShareRequest>("/api/patients/wallet/request-share", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+// Poll a request until the patient approves/denies on their device.
+export async function pollWalletShare(
+  id: string,
+): Promise<WalletShareRequest> {
+  return apiFetch<WalletShareRequest>(
+    `/api/patients/wallet/request-share/${encodeURIComponent(id)}`,
+  );
+}
+
+// Commit the (possibly clinician-edited) draft into a real patient record. The
+// temporary-share deadline is applied server-side from the original request.
+export async function commitWalletShare(
+  id: string,
+  patient: Patient,
+): Promise<Patient> {
+  return apiFetch<Patient>(
+    `/api/patients/wallet/request-share/${encodeURIComponent(id)}/commit`,
+    {
+      method: "POST",
+      body: JSON.stringify(patient),
+    },
+  );
 }

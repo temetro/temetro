@@ -19,3 +19,5 @@ export * from "./attachments.js";
 export * from "./integrations.js";
 export * from "./staff-profile.js";
 export * from "./meetings.js";
+export * from "./signing.js";
+export * from "./wallet-share.js";

@@ -54,6 +54,11 @@ export const patients = pgTable(
     // with auto-generated file numbers or placeholder fields) and are flagged
     // for clinician review/edit.
     source: text("source").$type<"manual" | "ai">().notNull().default("manual"),
+    // Provenance for records imported from a patient wallet app, plus the
+    // auto-delete deadline for a *temporary* share. When `shareExpiresAt` is set
+    // and passes, a scheduled sweep hard-deletes the row (services/wallet-share).
+    shareOrigin: text("share_origin").$type<"wallet">(),
+    shareExpiresAt: timestamp("share_expires_at"),
     createdBy: text("created_by").references(() => user.id, {
       onDelete: "set null",
     }),
