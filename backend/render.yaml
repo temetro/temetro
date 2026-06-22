@@ -1,0 +1,48 @@
+# Render Blueprint for the temetro backend + wallet relay.
+#
+# Render discovers render.yaml at the repo root, so for this monorepo either set
+# the service's Root Directory to `backend/` in the dashboard, or copy this file
+# to the repo root and prefix the paths with `backend/`.
+#
+# After the first deploy, set the public URL env vars (Render → service →
+# Environment): PUBLIC_RELAY_URL and BETTER_AUTH_URL to https://<service>.onrender.com,
+# and FRONTEND_URL to your frontend origin. PUBLIC_RELAY_URL is what gets baked
+# into the wallet-import QR, so it must be the public https URL.
+
+databases:
+  - name: temetro-db
+    databaseName: temetro
+    user: temetro
+    plan: free
+    postgresMajorVersion: "17"
+
+services:
+  - type: web
+    name: temetro-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: temetro-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      # Generated once and kept stable by Render (no on-disk volume needed).
+      - key: BETTER_AUTH_SECRET
+        generateValue: true
+      - key: AI_CREDENTIALS_KEY
+        generateValue: true
+      # Set these to your public URLs after the first deploy (sync:false = enter
+      # in the dashboard, not committed).
+      - key: PUBLIC_RELAY_URL
+        sync: false
+      - key: BETTER_AUTH_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false

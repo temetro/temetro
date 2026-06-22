@@ -30,7 +30,14 @@ patientsWalletRouter.use(requireAuth, requireOrg);
 function resolveRelayUrl(req: Request): string {
   if (env.PUBLIC_RELAY_URL) return env.PUBLIC_RELAY_URL;
   const host = req.get("host");
-  if (host) return `${req.protocol}://${host}`;
+  if (host) {
+    // Behind a TLS-terminating proxy (Fly/Render/etc.) req.protocol is "http";
+    // trust x-forwarded-proto so the QR carries an https URL — the phone then
+    // connects over wss, which iOS App Transport Security requires.
+    const proto =
+      req.get("x-forwarded-proto")?.split(",")[0]?.trim() || req.protocol;
+    return `${proto}://${host}`;
+  }
   return env.BETTER_AUTH_URL;
 }
 
