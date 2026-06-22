@@ -31,6 +31,7 @@ import { settingsRouter } from "./routes/settings.js";
 import { signingRouter } from "./routes/signing.js";
 import { staffRouter } from "./routes/staff.js";
 import { tasksRouter } from "./routes/tasks.js";
+import { discoverQuickTunnelUrl } from "./services/relay-url.js";
 import { sweepExpiredShares } from "./services/wallet-share.js";
 
 const app = express();
@@ -135,3 +136,10 @@ server.listen(env.PORT, () => {
   console.log(`  • signing:  /api/signing  (Ed25519 clinic key)`);
   console.log(`  • wallet:   /api/patients/wallet  (+ /wallet socket relay)`);
 });
+
+// Dockerized off-network testing: learn our public Cloudflare quick-tunnel URL
+// (from the `tunnel` compose profile) so the wallet-import QR points at it.
+// No-op unless a tunnel sidecar is configured and PUBLIC_RELAY_URL is unset.
+if (env.CLOUDFLARED_METRICS_URL && !env.PUBLIC_RELAY_URL) {
+  void discoverQuickTunnelUrl(env.CLOUDFLARED_METRICS_URL);
+}

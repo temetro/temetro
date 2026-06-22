@@ -1,0 +1,24 @@
+# Overlay that adds a public Cloudflare tunnel so a patient's phone can scan the
+# wallet-import QR from ANY network (cellular, other Wi-Fi) — not just the LAN.
+#
+#   npm run docker:tunnel        # from backend/  (easiest)
+#   # equivalently:
+#   docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up --build
+#
+# cloudflared opens a random https://<id>.trycloudflare.com URL to the backend
+# and exposes it on its metrics endpoint; the backend reads it from there and
+# bakes it into the QR (CLOUDFLARED_METRICS_URL below). Zero config — no
+# Cloudflare account or token needed for these quick tunnels.
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    depends_on:
+      - backend
+    command: tunnel --no-autoupdate --url http://backend:4000 --metrics 0.0.0.0:3333
+
+  backend:
+    environment:
+      # Where the backend reads its public quick-tunnel URL from.
+      CLOUDFLARED_METRICS_URL: http://cloudflared:3333

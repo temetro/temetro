@@ -25,6 +25,10 @@ const schema = z.object({
   // QR a patient scans. Optional — when unset we derive it from the request host
   // (so opening the web app over the LAN yields a reachable LAN URL).
   PUBLIC_RELAY_URL: z.string().optional(),
+  // Metrics URL of a cloudflared quick-tunnel sidecar (e.g. http://cloudflared:3333).
+  // When set and PUBLIC_RELAY_URL is unset, the backend discovers its public
+  // trycloudflare.com URL from there for Dockerized off-network testing.
+  CLOUDFLARED_METRICS_URL: z.string().optional(),
   PORT: z.coerce.number().int().positive().default(4000),
   NODE_ENV: z
     .enum(["development", "production", "test"])
