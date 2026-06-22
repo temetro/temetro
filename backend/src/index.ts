@@ -31,7 +31,7 @@ import { settingsRouter } from "./routes/settings.js";
 import { signingRouter } from "./routes/signing.js";
 import { staffRouter } from "./routes/staff.js";
 import { tasksRouter } from "./routes/tasks.js";
-import { discoverQuickTunnelUrl } from "./services/relay-url.js";
+import { beginQuickTunnelDiscovery } from "./services/relay-url.js";
 import { sweepExpiredShares } from "./services/wallet-share.js";
 
 const app = express();
@@ -141,5 +141,5 @@ server.listen(env.PORT, () => {
 // (from the `tunnel` compose profile) so the wallet-import QR points at it.
 // No-op unless a tunnel sidecar is configured and PUBLIC_RELAY_URL is unset.
 if (env.CLOUDFLARED_METRICS_URL && !env.PUBLIC_RELAY_URL) {
-  void discoverQuickTunnelUrl(env.CLOUDFLARED_METRICS_URL);
+  void beginQuickTunnelDiscovery(env.CLOUDFLARED_METRICS_URL);
 }

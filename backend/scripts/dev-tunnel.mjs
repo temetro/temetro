@@ -35,7 +35,9 @@ console.log(`\n⛅ Starting Cloudflare tunnel to http://localhost:${PORT} …\n`
 
 const tunnel = spawn(
   "cloudflared",
-  ["tunnel", "--url", `http://localhost:${PORT}`],
+  // --protocol http2 keeps the edge connection on TCP/443 (QUIC/UDP is blocked
+  // on many networks and would leave the tunnel unable to connect).
+  ["tunnel", "--no-autoupdate", "--protocol", "http2", "--url", `http://localhost:${PORT}`],
   { stdio: ["ignore", "pipe", "pipe"] },
 );
 

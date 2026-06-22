@@ -18,7 +18,7 @@ import {
 import { emitToWallet } from "../realtime.js";
 import { recordActivity } from "../services/activity.js";
 import * as patientService from "../services/patients.js";
-import { getDiscoveredRelayUrl } from "../services/relay-url.js";
+import { awaitQuickTunnelUrl } from "../services/relay-url.js";
 import * as walletShare from "../services/wallet-share.js";
 
 export const patientsWalletRouter = Router();
@@ -28,11 +28,14 @@ patientsWalletRouter.use(requireAuth, requireOrg);
 // The device-reachable URL the patient's app should connect to (baked into the
 // QR). Prefer an explicit PUBLIC_RELAY_URL; otherwise derive it from the request
 // host so that opening the web app over the LAN yields a reachable LAN URL.
-function resolveRelayUrl(req: Request): string {
+async function resolveRelayUrl(req: Request): Promise<string> {
   if (env.PUBLIC_RELAY_URL) return env.PUBLIC_RELAY_URL;
-  // A cloudflared quick tunnel (Docker `--profile tunnel`), if one was found.
-  const tunnel = getDiscoveredRelayUrl();
-  if (tunnel) return tunnel;
+  // A cloudflared quick tunnel (`npm run docker:tunnel`). Wait briefly for it to
+  // become reachable so the QR never carries a not-yet-live URL.
+  if (env.CLOUDFLARED_METRICS_URL) {
+    const tunnel = await awaitQuickTunnelUrl(env.CLOUDFLARED_METRICS_URL);
+    if (tunnel) return tunnel;
+  }
   const host = req.get("host");
   if (host) {
     // Behind a TLS-terminating proxy (Fly/Render/etc.) req.protocol is "http";
@@ -71,7 +74,11 @@ patientsWalletRouter.post(
         input.mode,
         input.durationHours,
       );
-      res.status(201).json({ ...view, ephemeralPubKey, relayUrl: resolveRelayUrl(req) });
+      res.status(201).json({
+        ...view,
+        ephemeralPubKey,
+        relayUrl: await resolveRelayUrl(req),
+      });
     } catch (err) {
       next(err);
     }
