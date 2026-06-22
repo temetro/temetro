@@ -2,8 +2,11 @@ import { eq } from "drizzle-orm";
 import { Router } from "express";
 import { z } from "zod";
 
+import type { Request } from "express";
+
 import { db } from "../db/index.js";
 import { organization } from "../db/schema/auth.js";
+import { env } from "../env.js";
 import { HttpError } from "../lib/http-error.js";
 import { patientInputSchema } from "../lib/patient-validation.js";
 import { isReceptionOnly } from "../lib/role-scope.js";
@@ -20,6 +23,16 @@ import * as walletShare from "../services/wallet-share.js";
 export const patientsWalletRouter = Router();
 
 patientsWalletRouter.use(requireAuth, requireOrg);
+
+// The device-reachable URL the patient's app should connect to (baked into the
+// QR). Prefer an explicit PUBLIC_RELAY_URL; otherwise derive it from the request
+// host so that opening the web app over the LAN yields a reachable LAN URL.
+function resolveRelayUrl(req: Request): string {
+  if (env.PUBLIC_RELAY_URL) return env.PUBLIC_RELAY_URL;
+  const host = req.get("host");
+  if (host) return `${req.protocol}://${host}`;
+  return env.BETTER_AUTH_URL;
+}
 
 const requestSchema = z.object({
   walletNumber: z.string().trim().min(1),
@@ -47,7 +60,7 @@ patientsWalletRouter.post(
         input.mode,
         input.durationHours,
       );
-      res.status(201).json({ ...view, ephemeralPubKey });
+      res.status(201).json({ ...view, ephemeralPubKey, relayUrl: resolveRelayUrl(req) });
     } catch (err) {
       next(err);
     }

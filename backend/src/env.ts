@@ -21,6 +21,10 @@ const schema = z.object({
   UPLOAD_DIR: z.string().min(1).default("./uploads"),
   BETTER_AUTH_URL: z.string().min(1).default("http://localhost:4000"),
   FRONTEND_URL: z.string().min(1).default("http://localhost:3000"),
+  // Public, device-reachable URL of this backend's wallet relay, baked into the
+  // QR a patient scans. Optional — when unset we derive it from the request host
+  // (so opening the web app over the LAN yields a reachable LAN URL).
+  PUBLIC_RELAY_URL: z.string().optional(),
   PORT: z.coerce.number().int().positive().default(4000),
   NODE_ENV: z
     .enum(["development", "production", "test"])

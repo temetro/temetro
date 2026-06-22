@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ApiError, API_BASE_URL } from "@/lib/api-client";
+import { ApiError } from "@/lib/api-client";
 import {
   commitWalletShare,
   type Patient,
@@ -159,7 +159,10 @@ export function ImportFromWalletDialog({
         durationHours: temporary ? durationHours : undefined,
       });
       const params = new URLSearchParams({
-        relay: API_BASE_URL,
+        // Use the server-resolved, phone-reachable relay URL — NOT API_BASE_URL,
+        // which is often http://localhost:4000 (the phone itself) and never
+        // connects from a real device.
+        relay: pairing.relayUrl,
         rid: pairing.id,
         epk: pairing.ephemeralPubKey,
         mode: pairing.shareMode,
