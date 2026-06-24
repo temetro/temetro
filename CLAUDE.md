@@ -37,8 +37,9 @@ repository (published as `temetro`).
 ## Patient wallet app (sibling repo `~/Desktop/temetro-app`)
 
 The **patient companion app** is its own git repo on the Desktop (not in this monorepo): an **Expo
-SDK 56** app that **must be built with `@expo/ui`** (real native SwiftUI / Jetpack Compose UI) — this
-is a hard requirement; see its `CLAUDE.md`. It stores the patient's record **encrypted on-device**,
+SDK 56** app whose UI **must be built with HeroUI Native** (`heroui-native` + Uniwind/Tailwind) — a
+hard requirement; the one exception is the native tab bar, which uses expo-router `NativeTabs`. See
+its `CLAUDE.md`. It stores the patient's record **encrypted on-device**,
 the patient's identity is an **Ed25519 keypair** whose public key (base58check, `tmw_…`) is their
 **wallet number**, and it shares records by sealing them to a clinic's ephemeral key over the
 backend relay. The crypto wire format mirrors `backend/src/lib/wallet-crypto.ts` exactly. "Decentralization"
