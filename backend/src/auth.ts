@@ -9,6 +9,7 @@ import * as authSchema from "./db/schema/auth.js";
 import { env } from "./env.js";
 import { ac, roles } from "./lib/access.js";
 import { sendEmail } from "./lib/email.js";
+import { isAllowedOrigin } from "./lib/origins.js";
 
 const WEEK = 60 * 60 * 24 * 7;
 const DAY = 60 * 60 * 24;
@@ -17,7 +18,18 @@ export const auth = betterAuth({
   appName: "temetro",
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
-  trustedOrigins: [env.FRONTEND_URL],
+  // Trust the configured frontend origin plus localhost/LAN hosts so staff can
+  // sign in over the network (mirrors CORS; see src/lib/origins.ts). Reflecting
+  // the request's own origin (when allowed) keeps Better Auth's CSRF check happy
+  // without a per-deployment rebuild.
+  trustedOrigins: (request) => {
+    const origins = [env.FRONTEND_URL];
+    const origin = request?.headers.get("origin");
+    if (origin && isAllowedOrigin(origin) && !origins.includes(origin)) {
+      origins.push(origin);
+    }
+    return origins;
+  },
 
   database: drizzleAdapter(db, {
     provider: "pg",

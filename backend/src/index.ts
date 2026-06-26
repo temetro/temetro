@@ -6,6 +6,7 @@ import express from "express";
 
 import { auth } from "./auth.js";
 import { env } from "./env.js";
+import { isAllowedOrigin } from "./lib/origins.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 import { initRealtime } from "./realtime.js";
 import { activityRouter } from "./routes/activity.js";
@@ -30,7 +31,9 @@ import { prescriptionsRouter } from "./routes/prescriptions.js";
 import { settingsRouter } from "./routes/settings.js";
 import { signingRouter } from "./routes/signing.js";
 import { staffRouter } from "./routes/staff.js";
+import { networkRouter } from "./routes/network.js";
 import { tasksRouter } from "./routes/tasks.js";
+import { versionRouter } from "./routes/version.js";
 import { beginQuickTunnelDiscovery } from "./services/relay-url.js";
 import { sweepExpiredShares } from "./services/wallet-share.js";
 
@@ -39,9 +42,13 @@ const app = express();
 // Behind docker / a reverse proxy we trust forwarding headers for client IPs.
 app.set("trust proxy", true);
 
+// Allow the configured frontend origin plus localhost/LAN hosts, so other
+// departments can reach the app over the network (see src/lib/origins.ts).
+// Requests without an Origin header (curl, same-origin server calls) pass too.
 app.use(
   cors({
-    origin: env.FRONTEND_URL,
+    origin: (origin, cb) =>
+      cb(null, !origin || isAllowedOrigin(origin)),
     credentials: true,
   }),
 );
@@ -70,6 +77,10 @@ app.use(express.json({ limit: "15mb" }));
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
+
+// Public, unauthenticated: running version + update check, and LAN access info.
+app.use("/api/version", versionRouter);
+app.use("/api/network", networkRouter);
 
 // Mount the wallet import routes BEFORE the generic patients router so
 // `/api/patients/wallet/...` isn't matched by patients' `/:fileNumber`.

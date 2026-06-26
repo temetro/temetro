@@ -21,6 +21,13 @@ const schema = z.object({
   UPLOAD_DIR: z.string().min(1).default("./uploads"),
   BETTER_AUTH_URL: z.string().min(1).default("http://localhost:4000"),
   FRONTEND_URL: z.string().min(1).default("http://localhost:3000"),
+  // Extra browser origins allowed to call the API with credentials, beyond
+  // FRONTEND_URL and the auto-allowed private/LAN hosts (see src/lib/origins.ts).
+  // Comma-separated; set to "*" to allow any origin (only for trusted networks).
+  TRUSTED_ORIGINS: z.string().optional(),
+  // Overrides the version reported by GET /api/version. Normally derived from
+  // package.json; the release pipeline can pin it explicitly.
+  APP_VERSION: z.string().optional(),
   // Public, device-reachable URL of this backend's wallet relay, baked into the
   // QR a patient scans. Optional — when unset we derive it from the request host
   // (so opening the web app over the LAN yields a reachable LAN URL).
