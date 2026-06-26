@@ -9,8 +9,15 @@ shape exactly.
 ## Quick start (Docker)
 
 ```bash
-docker compose up            # db + backend + frontend — no setup needed
+docker compose pull          # fetch prebuilt images from Docker Hub (fast)
+docker compose up -d         # db + backend + frontend — no setup needed
 ```
+
+`docker compose up --build` instead builds from source (for development). The
+Compose file references the published `temetro/temetro-backend` and
+`temetro/temetro-frontend` images with a build fallback, so the same file serves
+both clinics and developers. Update with `docker compose pull && docker compose
+up -d` (see [`../RELEASING.md`](../RELEASING.md)).
 
 No `.env` or manual secret generation is required: on first start the backend
 generates any missing secrets (`BETTER_AUTH_SECRET`, `AI_CREDENTIALS_KEY`) and
@@ -72,6 +79,8 @@ Other org-scoped resources follow the same pattern (CRUD, role-gated):
 | Analytics | `GET /api/analytics` | — (any member) | computed clinic aggregates |
 | Conversations | `/api/conversations` | — (participant-scoped) | staff messaging; real-time over Socket.io |
 | Notifications | `/api/notifications` | — (per-recipient) | auto-generated; `read-all` + per-id read |
+| Version | `GET /api/version` | — (public) | running version + GitHub-release update check |
+| Network | `GET /api/network` | — (public) | detected LAN addresses for sharing the app |
 
 Real-time messaging and live notifications are delivered over **Socket.io**, attached to the same
 HTTP server; the handshake is authenticated with the Better Auth session cookie.

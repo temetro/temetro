@@ -1,5 +1,11 @@
 {
+  "name": "temetro",
+  "version": "0.1.0",
+  "private": true,
   "devDependencies": {
     "shadcn": "^4.11.0"
+  },
+  "dependencies": {
+    "xcodebuildmcp": "^2.6.2"
   }
 }

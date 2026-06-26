@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# temetro frontend
 
-## Getting Started
+The clinician-facing **AI chat UI** for [temetro](../) — a Next.js 16 app where
+clinicians retrieve and organize patient data in natural language, rendered as
+rich record cards. It's wired to the [`../backend`](../backend) for real auth,
+multi-tenant clinics, and live patient data.
 
-First, run the development server:
+![temetro AI chat](../.github/assets/screenshot-chat.png)
+
+## Stack
+
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 ·
+[COSS](https://coss.dev) UI components (Base UI) · i18next · Socket.io client.
+
+> This app runs a **customized Next.js 16** whose conventions differ from the
+> public docs (e.g. route protection lives in `proxy.ts`, not `middleware.ts`).
+> See [`CLAUDE.md`](./CLAUDE.md) and `node_modules/next/dist/docs/` before
+> writing Next.js code.
+
+## Develop
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # Next dev server (Turbopack) on http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Other scripts: `npm run build` (production build), `npm run start` (serve the
+build), `npm run lint`. There is no test runner — verify changes by running the
+dev server.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Talking to the backend
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The frontend needs the API running (see [`../backend`](../backend)). It resolves
+the backend URL **from the host you open the app on** — so it works on
+`localhost` and across the clinic LAN (`http://<server-IP>:3000`) without a
+rebuild. Set `NEXT_PUBLIC_API_URL` only to pin a fixed or reverse-proxied URL;
+see [`lib/backend-url.ts`](./lib/backend-url.ts).
 
-## Learn More
+## Architecture
 
-To learn more about Next.js, take a look at the following resources:
+- **`app/`** — App Router. `app/(app)/` is the authenticated product shell;
+  `app/(auth)/` holds the login / signup / onboarding pages.
+- **`components/chat/`** — the chat UI (input, message state, patient cards).
+- **`components/settings/`** — settings panels, including **About & updates**
+  (version + LAN access).
+- **`components/ui/`** — COSS primitives (Base UI, added via the shadcn CLI).
+- **`lib/`** — API + auth clients, i18n, and data helpers.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+See [`CLAUDE.md`](./CLAUDE.md) for the full architecture, theming, and gotchas.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## License
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[MIT](./LICENSE).

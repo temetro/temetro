@@ -1,97 +1,141 @@
+<div align="center">
+
 # temetro
 
-**temetro** is an **open-source** clinical tool that acts as an **AI middleman** between clinicians
-and patient data. Clinicians use a natural-language AI chat to retrieve and organize patient
-information, displayed as rich record cards.
+**An open-source AI middleman between clinicians and patient data.**
 
-Its distinguishing idea is a **patient-owned data model**: instead of (or alongside) living in a
-doctor's own database, a patient's record can be stored on the **patient's own device**. When a
-clinician adds or changes data, they **sign** it (blockchain-style); the change is written to the
-patient's record and **cannot be modified until the patient approves it** through a companion app.
-temetro can also **read existing patient databases** and present them in the same organized card UI.
+Clinicians ask in plain language; temetro retrieves and organizes patient
+information as rich record cards — backed by a **patient-owned data model**.
 
-> **Status.** The **backend is built** — a TypeScript + Express + Postgres API (Drizzle ORM) with
-> authentication and multi-tenant clinics via [Better Auth](https://better-auth.com), an org-scoped
-> patient records API, plus appointments, prescriptions, tasks, doctor's notes, analytics, an
-> activity audit log, real-time staff messaging (Socket.io), and notifications. The **frontend chat
-> is wired to it** (real auth, route protection, clinic switching, live patient data).
->
-> **Still vision, not built:** the patient companion app and the blockchain-style
-> **signing / patient-owned storage / approval** flow, and the AI chat replies themselves (currently
-> mock — no LLM call yet; a `/chat` endpoint is the next planned step).
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Docker images](https://img.shields.io/badge/Docker%20Hub-temetro-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/u/temetro)
+[![Changelog](https://img.shields.io/badge/changelog-0.1.0-success)](./CHANGELOG.md)
 
-## Monorepo layout
+![temetro AI chat](./.github/assets/screenshot-chat.png)
 
-This repository is a **monorepo** containing two independent apps that live side by side (each with
-its own `package.json` / `node_modules` and its own `CLAUDE.md`):
+</div>
 
-- **[`frontend/`](./frontend)** — the Next.js 16 product app (the clinician-facing AI chat UI).
-  See [`frontend/CLAUDE.md`](./frontend/CLAUDE.md).
-- **[`backend/`](./backend)** — the Express 5 + Postgres API (Drizzle ORM + Better Auth).
-  See [`backend/CLAUDE.md`](./backend/CLAUDE.md) and [`backend/README.md`](./backend/README.md).
+## What is temetro?
 
-The marketing **landing page lives in its own separate repository** (`temetro-landing`), not here.
+temetro is a clinical tool that puts a **natural-language AI chat** between
+clinicians and patient records. Instead of clicking through tabs, a clinician
+asks for what they need and temetro returns organized **record cards** —
+vitals, labs, medications, problems, encounters — with trend sparklines and
+detail views.
 
-## Run locally with Docker (recommended)
+Its distinguishing idea is a **patient-owned data model**. Instead of (or
+alongside) living only in a doctor's database, a patient's record can live on
+the **patient's own device**. When a clinician adds or changes data they
+**sign** it (blockchain-style); the change is written to the patient's record
+and **cannot be modified until the patient approves it** through a companion
+wallet app. temetro can also **read existing patient databases** and present
+them in the same card UI.
 
-Docker Compose builds and runs Postgres, the backend, and the frontend together. From the
-**`backend/`** directory (the Compose file builds the sibling `../frontend`):
+> "Decentralization" here means keys and data live on the patient's device and
+> the relay only ever forwards ciphertext — it is **not** a literal blockchain.
+> Records are off-chain, which is what lets a temporary share be deleted.
+
+## Features
+
+- 🗂️ **AI chat over patient records** — `/patient <file#>` (or natural language)
+  renders the record as cards with sparklines and detail dialogs.
+- 🔐 **Auth & multi-tenant clinics** — email/password + staff usernames,
+  organizations, and role-based access (owner / admin / doctor / reception /
+  pharmacy / lab) via [Better Auth](https://better-auth.com).
+- 🩺 **Full clinical surface** — patients, appointments, prescriptions, tasks,
+  doctor's notes, pharmacy inventory, analytics, an activity audit log,
+  real-time staff messaging, and notifications.
+- 📲 **Patient wallet & encrypted share** — a companion app holds the record
+  encrypted on-device; clinics import records over an end-to-end encrypted,
+  patient-approved relay (with optional auto-deleting temporary shares).
+- 🌐 **Works across the clinic LAN** — open it on the server or from any
+  department's computer at `http://<server-IP>:3000`; no per-machine config.
+- 🔄 **Self-update awareness** — the app tells admins when a newer release is
+  out and how to update.
+
+## Quick start (Docker)
+
+The fastest path uses the **prebuilt images** published to Docker Hub. From the
+[`backend/`](./backend) directory (it holds the Compose file):
 
 ```bash
 cd backend
-cp .env.example .env
-
-# generate a strong auth secret and paste it into BETTER_AUTH_SECRET in .env:
-openssl rand -base64 32
-
-docker compose up --build
+docker compose pull        # fetch the latest published images
+docker compose up -d       # start Postgres + backend + frontend
 ```
 
-Then open:
+No `.env` or secret setup is required — the backend generates and persists any
+missing secrets on first start. Then open:
 
-- Frontend → http://localhost:3000
-- Backend → http://localhost:4000 (health check: `GET /health`)
-- Postgres → localhost:5432
+- **Frontend** → http://localhost:3000
+- **Backend** → http://localhost:4000 (health: `GET /health`)
 
-Database migrations are applied automatically on backend container start.
+Prefer to **build from source** (for development)? Use `docker compose up
+--build` instead. Migrations apply automatically on backend start.
 
-**Port conflict?** If another Postgres already holds host port `5432`, set `POSTGRES_PORT` (e.g.
-`5433`) in `backend/.env`. The app still talks to Postgres internally on `db:5432`; only the
-published host port changes.
+> **Port conflict?** If another Postgres holds host port `5432`, set
+> `POSTGRES_PORT` (e.g. `5433`) in `backend/.env`. The app still talks to
+> Postgres internally on `db:5432`; only the published host port changes.
 
-Run just the API + database with `docker compose up db backend`. To browse the database with
-Adminer: `docker compose --profile tools up adminer` → http://localhost:8080.
+### Access from other computers (hospital LAN)
 
-## Run locally without Docker
+temetro figures out the backend address from the host you open it on, so other
+departments can simply visit **`http://<server-LAN-IP>:3000`** — no rebuild
+needed. Settings → **About & updates** shows the exact shareable address. The
+server's firewall must allow ports `3000`/`4000`.
 
-Run each app in its own terminal (you'll need a local Postgres reachable from `DATABASE_URL`):
+### Updating
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+The app surfaces a notification when a newer release exists. See
+[`CHANGELOG.md`](./CHANGELOG.md) for what changed and [`RELEASING.md`](./RELEASING.md)
+for how releases are built and published.
+
+## Run without Docker
+
+Each app runs independently (you'll need a local Postgres in `DATABASE_URL`):
 
 ```bash
 # backend
-cd backend
-npm install
-cp .env.example .env        # point DATABASE_URL at your local Postgres
-npm run db:migrate          # apply migrations
-npm run dev                 # http://localhost:4000
+cd backend && npm install && cp .env.example .env
+npm run db:migrate && npm run dev      # http://localhost:4000
 
 # frontend (second terminal)
-cd frontend
-npm install
-npm run dev                 # http://localhost:3000
+cd frontend && npm install && npm run dev   # http://localhost:3000
 ```
 
-The frontend reads `NEXT_PUBLIC_API_URL` (default `http://localhost:4000`) to reach the backend.
+> With `SMTP_HOST` unset, verification / reset / invitation emails are **printed
+> to the backend console** — no email setup needed for local development.
 
-> If `SMTP_HOST` is unset, verification / reset / invitation emails are **printed to the backend
-> console** instead of being sent — no email setup is needed for local development.
+## Monorepo layout
+
+Two independent apps live side by side, each with its own `package.json` and
+`CLAUDE.md`:
+
+- **[`frontend/`](./frontend)** — Next.js 16 product app (the AI chat UI).
+- **[`backend/`](./backend)** — Express 5 + Postgres API (Drizzle ORM + Better
+  Auth). See [`backend/README.md`](./backend/README.md) for the API reference.
+
+The **patient wallet app** and the **marketing landing page** live in their own
+separate repositories.
 
 ## Tech stack
 
-- **Frontend:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4 · i18next ·
-  Socket.io client.
-- **Backend:** Node ≥ 20 · TypeScript (ESM) · Express 5 · Postgres · Drizzle ORM · Better Auth
-  (email/password + organizations/RBAC) · Socket.io.
+- **Frontend:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS v4
+  · i18next · Socket.io client.
+- **Backend:** Node ≥ 20 · TypeScript (ESM) · Express 5 · Postgres · Drizzle ORM
+  · Better Auth (email/password + organizations/RBAC) · Socket.io · AI SDK.
+
+## Contributing
+
+Issues and pull requests are welcome. Please keep each PR focused on one logical
+change and run the type checks (`npm run typecheck` in `backend/`, `npx tsc
+--noEmit` in `frontend/`) before opening it. Bug reports and feature requests
+have [issue templates](./.github/ISSUE_TEMPLATE).
 
 ## License
 
-MIT.
+[MIT](./LICENSE).

@@ -1,14 +1,24 @@
 # Full-stack dev/run orchestration for temetro.
 #
-#   docker compose up      # db + backend + frontend — that's it.
+#   docker compose up -d            # run prebuilt images (clinics — fast)
+#   docker compose up --build       # build from source (developers)
+#   docker compose pull && docker compose up -d   # update to the latest release
+#
+# Each service has both `image:` (published on Docker Hub) and `build:` (the
+# source), so the same file serves clinics pulling releases and developers
+# building locally. `TEMETRO_VERSION` (default `latest`) pins the image tag.
 #
 # No .env or secret setup is required: the backend generates any missing
 # secrets on first start and persists them (see docker-entrypoint.sh). Create a
 # .env only if you want to override something (SMTP, a real auth secret, etc.).
 #
-# Frontend  -> http://localhost:3000
+# Frontend  -> http://localhost:3000   (also reachable at http://<this-host-LAN-IP>:3000)
 # Backend   -> http://localhost:4000
 # Postgres  -> localhost:5432
+#
+# LAN access: the frontend finds the backend from the address you open it on, so
+# other departments can just visit http://<server-LAN-IP>:3000 — no rebuild. The
+# in-app Settings → "About & updates" page shows the shareable network address.
 #
 # The frontend service builds the sibling ../frontend app. Run just the API
 # with:  docker compose up db backend
@@ -36,6 +46,7 @@ services:
       retries: 10
 
   backend:
+    image: temetro/temetro-backend:${TEMETRO_VERSION:-latest}
     build:
       context: .
     restart: unless-stopped
@@ -68,15 +79,16 @@ services:
       - "4000:4000"
 
   frontend:
+    image: temetro/temetro-frontend:${TEMETRO_VERSION:-latest}
     build:
       context: ../frontend
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:4000
+        # Empty by default -> the app derives the backend URL from the host the
+        # browser uses (localhost or a LAN IP). Set to pin a fixed/proxied URL.
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
     restart: unless-stopped
     depends_on:
       - backend
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:4000
     ports:
       - "3000:3000"
 
