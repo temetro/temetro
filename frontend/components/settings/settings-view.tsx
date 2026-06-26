@@ -12,6 +12,7 @@ import { DevelopersPanel } from "@/components/settings/settings-developers";
 import { IntegrationsPanel } from "@/components/settings/settings-integrations";
 import { ProfilePanel } from "@/components/settings/settings-preferences";
 import { RecordsPanel } from "@/components/settings/settings-records";
+import { VersionPanel } from "@/components/settings/settings-version";
 import { useActiveRole } from "@/lib/roles";
 
 const TABS = [
@@ -22,10 +23,12 @@ const TABS = [
   { id: "careTeam", labelKey: "settings.tabs.careTeam" },
   { id: "integrations", labelKey: "settings.tabs.integrations" },
   { id: "developers", labelKey: "settings.tabs.developers" },
+  { id: "version", labelKey: "settings.tabs.version" },
 ] as const;
 
 // Per-user tabs every clinician sees; the rest are clinic-wide (admin only).
-const PERSONAL_TABS = ["profile", "ai"];
+// "version" (about / updates / network access) is useful to everyone.
+const PERSONAL_TABS = ["profile", "ai", "version"];
 
 type Tab = (typeof TABS)[number]["id"];
 
@@ -81,6 +84,7 @@ export function SettingsView() {
         )}
         {activeTab === "integrations" && <IntegrationsPanel />}
         {activeTab === "developers" && <DevelopersPanel />}
+        {activeTab === "version" && <VersionPanel />}
       </div>
     </div>
   );

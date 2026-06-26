@@ -1,8 +1,11 @@
 // Thin fetch wrapper for the temetro backend's non-auth API (patients, …).
 // Auth itself goes through the Better Auth client (lib/auth-client.ts).
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+import { resolveBackendUrl } from "@/lib/backend-url";
+
+// Derived from the current host in the browser (see lib/backend-url.ts), so the
+// app works over localhost and the clinic LAN without a per-deployment rebuild.
+export const API_BASE_URL = resolveBackendUrl();
 
 export class ApiError extends Error {
   constructor(

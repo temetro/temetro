@@ -13,8 +13,11 @@ RUN npm ci --no-audit --no-fund \
 # --- build (Next.js standalone output) -------------------------------------
 FROM node:22-alpine AS build
 WORKDIR /app
-# NEXT_PUBLIC_* values are inlined at build time.
-ARG NEXT_PUBLIC_API_URL=http://localhost:4000
+# NEXT_PUBLIC_* values are inlined at build time. We deliberately leave the API
+# URL EMPTY by default: the app derives the backend URL from the browser host at
+# runtime (see lib/backend-url.ts), so one prebuilt image works on localhost and
+# any clinic LAN IP. Set NEXT_PUBLIC_API_URL only to pin a fixed/proxied URL.
+ARG NEXT_PUBLIC_API_URL=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

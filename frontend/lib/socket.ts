@@ -1,6 +1,6 @@
 import { io, type Socket } from "socket.io-client";
 
-import { API_BASE_URL } from "@/lib/api-client";
+import { resolveBackendUrl } from "@/lib/backend-url";
 
 // A single shared Socket.io connection to the backend, authenticated by the
 // Better Auth session cookie (withCredentials). Used by messaging and
@@ -9,7 +9,8 @@ let socket: Socket | null = null;
 
 export function getSocket(): Socket {
   if (!socket) {
-    socket = io(API_BASE_URL, {
+    // Resolved lazily in the browser so it targets the host actually in use.
+    socket = io(resolveBackendUrl(), {
       withCredentials: true,
       transports: ["websocket", "polling"],
     });

@@ -3,6 +3,7 @@ import { CommandPaletteProvider } from "@/components/command-palette";
 import { DashboardSidebar } from "@/components/sidebar-02/app-sidebar";
 import { MobileSidebarTrigger } from "@/components/sidebar-02/mobile-sidebar-trigger";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { UpdateBanner } from "@/components/update-banner";
 
 export default function AppLayout({
   children,
@@ -17,6 +18,7 @@ export default function AppLayout({
             <DashboardSidebar />
             <MobileSidebarTrigger />
             {children}
+            <UpdateBanner />
           </div>
         </SidebarProvider>
       </CommandPaletteProvider>

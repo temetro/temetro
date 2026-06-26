@@ -6,6 +6,7 @@ import {
   type ChangeEvent,
   type KeyboardEvent,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -25,7 +26,37 @@ type ChatInputProps = {
 };
 
 const iconButton =
-  "flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+  "flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:pointer-events-none disabled:opacity-40";
+
+// Minimal Web Speech API typings — not in this TS lib.dom. We only use a slice.
+interface SpeechRecognitionEventLike {
+  readonly results: {
+    readonly length: number;
+    [index: number]: { readonly [index: number]: { transcript: string } };
+  };
+}
+interface SpeechRecognitionLike {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
+  onend: (() => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike;
+
+// Web Speech API lives under a vendor prefix in Chromium-based browsers and is
+// absent in others (e.g. Firefox). Resolve the constructor or null.
+function getSpeechRecognition(): SpeechRecognitionCtor | null {
+  if (typeof window === "undefined") return null;
+  const w = window as typeof window & {
+    SpeechRecognition?: SpeechRecognitionCtor;
+    webkitSpeechRecognition?: SpeechRecognitionCtor;
+  };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
 const pillButton =
   "flex h-8 items-center gap-1.5 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
 const contextPill =
@@ -46,6 +77,53 @@ export function ChatInput({
   // Bumped on each open so the dialog remounts with a fresh file number + form.
   const [addKey, setAddKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Voice dictation (Web Speech API). Detected client-side so SSR markup and the
+  // first client render agree (button starts disabled, enabled by the effect).
+  const [speechSupported, setSpeechSupported] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  // The textarea contents when dictation started; transcript is appended to it.
+  const dictationBaseRef = useRef("");
+
+  useEffect(() => {
+    setSpeechSupported(getSpeechRecognition() !== null);
+    return () => recognitionRef.current?.stop();
+  }, []);
+
+  const toggleDictation = useCallback(() => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const Recognition = getSpeechRecognition();
+    if (!Recognition) return;
+
+    const recognition = new Recognition();
+    recognitionRef.current = recognition;
+    recognition.lang = navigator.language || "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    // Continue from where the text leaves off, with a separating space.
+    dictationBaseRef.current = value ? `${value.replace(/\s*$/, "")} ` : "";
+
+    recognition.onresult = (event) => {
+      let transcript = "";
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i]?.[0]?.transcript ?? "";
+      }
+      setValue(dictationBaseRef.current + transcript);
+    };
+    const end = () => {
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+    recognition.onend = end;
+    recognition.onerror = end;
+
+    recognition.start();
+    setIsListening(true);
+  }, [isListening, value]);
 
   const isGenerating = status === "submitted" || status === "streaming";
   const canSend =
@@ -183,8 +261,22 @@ export function ChatInput({
               triggerClassName={cn(pillButton, "mr-1")}
             />
             <button
-              aria-label={t("chat.input.dictate")}
-              className={iconButton}
+              aria-label={
+                isListening ? t("chat.input.dictateStop") : t("chat.input.dictate")
+              }
+              aria-pressed={isListening}
+              className={cn(
+                iconButton,
+                isListening &&
+                  "animate-pulse bg-destructive/10 text-destructive hover:bg-destructive/15 hover:text-destructive"
+              )}
+              disabled={!speechSupported}
+              onClick={toggleDictation}
+              title={
+                speechSupported
+                  ? t("chat.input.dictate")
+                  : t("chat.input.dictateUnsupported")
+              }
               type="button"
             >
               <Mic className="size-[18px]" />
