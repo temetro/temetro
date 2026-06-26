@@ -7,7 +7,8 @@
 # the browser uses at runtime — so one published image works for every clinic.
 #
 # Required repository secrets (Settings → Secrets and variables → Actions):
-#   DOCKERHUB_USERNAME  — a Docker Hub account with push access to `temetro`
+#   DOCKERHUB_USERNAME  — the Docker Hub account `khalidxv` (or one with push
+#                         access to that namespace)
 #   DOCKERHUB_TOKEN     — a Docker Hub access token for that account
 # Without them the build/login step fails; the workflow is otherwise inert.
 name: release
@@ -21,7 +22,7 @@ permissions:
   contents: write # create the GitHub Release (the update check reads this)
 
 env:
-  REGISTRY_NAMESPACE: temetro
+  REGISTRY_NAMESPACE: khalidxv
 
 jobs:
   publish:

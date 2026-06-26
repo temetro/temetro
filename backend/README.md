@@ -14,8 +14,8 @@ docker compose up -d         # db + backend + frontend — no setup needed
 ```
 
 `docker compose up --build` instead builds from source (for development). The
-Compose file references the published `temetro/temetro-backend` and
-`temetro/temetro-frontend` images with a build fallback, so the same file serves
+Compose file references the published `khalidxv/temetro-backend` and
+`khalidxv/temetro-frontend` images with a build fallback, so the same file serves
 both clinics and developers. Update with `docker compose pull && docker compose
 up -d` (see [`../RELEASING.md`](../RELEASING.md)).
 

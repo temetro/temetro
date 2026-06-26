@@ -46,7 +46,7 @@ services:
       retries: 10
 
   backend:
-    image: temetro/temetro-backend:${TEMETRO_VERSION:-latest}
+    image: khalidxv/temetro-backend:${TEMETRO_VERSION:-latest}
     build:
       context: .
     restart: unless-stopped
@@ -79,7 +79,7 @@ services:
       - "4000:4000"
 
   frontend:
-    image: temetro/temetro-frontend:${TEMETRO_VERSION:-latest}
+    image: khalidxv/temetro-frontend:${TEMETRO_VERSION:-latest}
     build:
       context: ../frontend
       args:

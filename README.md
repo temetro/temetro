@@ -8,7 +8,7 @@ Clinicians ask in plain language; temetro retrieves and organizes patient
 information as rich record cards — backed by a **patient-owned data model**.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Docker images](https://img.shields.io/badge/Docker%20Hub-temetro-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/u/temetro)
+[![Docker images](https://img.shields.io/badge/Docker%20Hub-khalidxv-2496ED?logo=docker&logoColor=white)](https://hub.docker.com/u/khalidxv)
 [![Changelog](https://img.shields.io/badge/changelog-0.1.0-success)](./CHANGELOG.md)
 
 ![temetro AI chat](./.github/assets/screenshot-chat.png)

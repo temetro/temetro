@@ -19,10 +19,10 @@ Actions) so the release workflow can publish:
 
 | Secret | What |
 | --- | --- |
-| `DOCKERHUB_USERNAME` | Docker Hub account with push access to the `temetro` namespace |
+| `DOCKERHUB_USERNAME` | Docker Hub account with push access to the `khalidxv` namespace |
 | `DOCKERHUB_TOKEN` | A Docker Hub access token for that account |
 
-Images are published as `temetro/temetro-backend` and `temetro/temetro-frontend`.
+Images are published as `khalidxv/temetro-backend` and `khalidxv/temetro-frontend`.
 
 ## Cutting a release
 

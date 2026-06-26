@@ -16,8 +16,8 @@ for how releases are cut and published.
   browser is using, so other departments can reach temetro at
   `http://<server-LAN-IP>:3000` with no rebuild. A Settings panel surfaces the
   shareable network address. `GET /api/network` reports detected LAN addresses.
-- **Prebuilt Docker images** published to Docker Hub (`temetro/temetro-backend`,
-  `temetro/temetro-frontend`) via a tag-triggered GitHub Actions release workflow.
+- **Prebuilt Docker images** published to Docker Hub (`khalidxv/temetro-backend`,
+  `khalidxv/temetro-frontend`) via a tag-triggered GitHub Actions release workflow.
 - **Voice dictation** on the AI chat input (Web Speech API), with graceful
   fallback where the browser doesn't support it.
 
