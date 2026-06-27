@@ -29,7 +29,14 @@ import { Sparkline } from "@/components/chat/sparkline";
 import { cn } from "@/lib/utils";
 import type { AllergySeverity, LabFlag, Patient, Trend } from "@/lib/patients";
 
-type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
+type BadgeVariant =
+  | "default"
+  | "secondary"
+  | "destructive"
+  | "outline"
+  | "success"
+  | "info"
+  | "warning";
 
 type PatientResultProps = {
   status: "loading" | "ready" | "not-found";
@@ -55,8 +62,8 @@ const labFlagVariant: Record<LabFlag, BadgeVariant> = {
 };
 
 const statusVariant: Record<Patient["status"], BadgeVariant> = {
-  active: "secondary",
-  inpatient: "destructive",
+  active: "success",
+  inpatient: "info",
   discharged: "outline",
 };
 

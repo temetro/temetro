@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Search, Smartphone } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search, Smartphone } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -12,13 +12,44 @@ import { PatientDetailSheet } from "@/components/patients/patient-detail-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+} from "@/components/ui/pagination";
 import { listPatients, type Patient } from "@/lib/patients";
+import { cn } from "@/lib/utils";
 
-type BadgeVariant = "secondary" | "destructive" | "outline";
+// Rows shown per page on the patients table before paginating.
+const PAGE_SIZE = 10;
 
+// Page numbers to render, with `null` marking an ellipsis gap. Keeps the first,
+// last, and a small window around the current page so the control stays compact
+// even with many pages.
+function pageWindow(current: number, total: number): (number | null)[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+  const pages: (number | null)[] = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  if (start > 2) pages.push(null);
+  for (let p = start; p <= end; p++) pages.push(p);
+  if (end < total - 1) pages.push(null);
+  pages.push(total);
+  return pages;
+}
+
+type BadgeVariant = "success" | "info" | "outline";
+
+// Colour the status for at-a-glance scanning: active patients read as success
+// (green), admitted inpatients as info (blue, draws the eye), and discharged as
+// a muted outline.
 const statusVariant: Record<Patient["status"], BadgeVariant> = {
-  active: "secondary",
-  inpatient: "destructive",
+  active: "success",
+  inpatient: "info",
   discharged: "outline",
 };
 
@@ -66,6 +97,17 @@ export function PatientsView() {
     (p) => !q || p.name.toLowerCase().includes(q) || p.fileNumber.includes(q)
   );
 
+  // Client-side pagination over the filtered list (10/page). Searching resets to
+  // the first page (done in the search handler); `page` is clamped at render so a
+  // shrinking list (filter/refresh) never leaves us past the last page.
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(patients.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = patients.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE
+  );
+
   const open = (fileNumber: string) => {
     setSelected(fileNumber);
     setSheetOpen(true);
@@ -100,7 +142,10 @@ export function PatientsView() {
             <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
             <Input
               className="w-full pl-9 sm:w-64"
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(1);
+              }}
               onKeyDown={(event) => {
                 // Enter opens the top match's record, like picking it from the table.
                 if (event.key === "Enter" && patients.length > 0) {
@@ -181,7 +226,7 @@ export function PatientsView() {
                 </td>
               </tr>
             ) : (
-              patients.map((p) => (
+              pageRows.map((p) => (
                 <tr
                   className="cursor-pointer border-border/50 border-b transition-colors last:border-0 hover:bg-accent/50"
                   key={p.fileNumber}
@@ -229,6 +274,79 @@ export function PatientsView() {
           </tbody>
         </table>
       </div>
+
+      {!loading && !loadError && patients.length > PAGE_SIZE ? (
+        <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
+          <p className="text-xs text-muted-foreground">
+            {t("patients.pagination.summary", {
+              from: (safePage - 1) * PAGE_SIZE + 1,
+              to: Math.min(safePage * PAGE_SIZE, patients.length),
+              total: patients.length,
+            })}
+          </p>
+          <Pagination
+            aria-label={t("patients.pagination.label")}
+            className="mx-0 w-auto justify-end"
+          >
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationLink
+                  aria-disabled={safePage === 1}
+                  aria-label={t("patients.pagination.previous")}
+                  className={cn(
+                    "gap-1 px-2.5",
+                    safePage === 1 && "pointer-events-none opacity-50"
+                  )}
+                  onClick={() => setPage(Math.max(1, safePage - 1))}
+                  render={<button type="button" />}
+                  size="default"
+                >
+                  <ChevronLeft className="size-4" />
+                  <span className="max-sm:hidden">
+                    {t("patients.pagination.previous")}
+                  </span>
+                </PaginationLink>
+              </PaginationItem>
+              {pageWindow(safePage, totalPages).map((p, i) =>
+                p === null ? (
+                  <PaginationItem key={`ellipsis-${i}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                ) : (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      aria-label={t("patients.pagination.page", { page: p })}
+                      isActive={p === safePage}
+                      onClick={() => setPage(p)}
+                      render={<button type="button" />}
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+              <PaginationItem>
+                <PaginationLink
+                  aria-disabled={safePage === totalPages}
+                  aria-label={t("patients.pagination.next")}
+                  className={cn(
+                    "gap-1 px-2.5",
+                    safePage === totalPages && "pointer-events-none opacity-50"
+                  )}
+                  onClick={() => setPage(Math.min(totalPages, safePage + 1))}
+                  render={<button type="button" />}
+                  size="default"
+                >
+                  <span className="max-sm:hidden">
+                    {t("patients.pagination.next")}
+                  </span>
+                  <ChevronRight className="size-4" />
+                </PaginationLink>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      ) : null}
 
       <PatientFormDialog
         key={addKey}

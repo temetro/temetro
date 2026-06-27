@@ -222,6 +222,13 @@
     "loading": "Loading patients…",
     "empty": "No patients found.",
     "loadError": "Failed to load patients.",
+    "pagination": {
+      "label": "Patient pages",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{page}}",
+      "summary": "Showing {{from}}–{{to}} of {{total}}"
+    },
     "columns": {
       "name": "Name",
       "mrn": "MRN",
@@ -1024,6 +1031,12 @@
   },
   "chat": {
     "heading": "Which patient would you like to look up?",
+    "setupNotice": {
+      "title": "Connect an AI model to get started",
+      "body": "No AI provider is set up yet. Add an API key or point temetro at a local Ollama model so the assistant can answer.",
+      "action": "Open AI settings",
+      "dismiss": "Dismiss"
+    },
     "input": {
       "placeholder": "Ask anything, or type /patient 10293",
       "message": "Message",
@@ -1311,7 +1324,18 @@
     "notFound": "No patient found for file #{{number}}.",
     "overview": "Overview",
     "edit": "Edit",
+    "exportPdf": "Download summary",
     "clickForMore": "Click for more",
+    "pdf": {
+      "title": "Clinical summary",
+      "mrn": "MRN",
+      "generated": "Generated {{date}}"
+    },
+    "history": {
+      "title": "Record history",
+      "empty": "No recorded changes yet.",
+      "loadError": "Couldn't load the record history."
+    },
     "sex": {
       "F": "Female",
       "M": "Male"
