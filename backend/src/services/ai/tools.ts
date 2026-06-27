@@ -648,12 +648,104 @@ export function createChatTools(ctx: ToolContext) {
     previewImport: tool({
       description:
         "Validate patient records parsed from an uploaded database export, as a dry run. Does NOT save anything. Call this when the clinician wants to import/migrate an existing patient database OR add a single patient; parse the file into our patient shape first. The clinician must approve before any data is written.",
+      // A concrete object schema (not z.unknown()): Google Gemini can only emit a
+      // real function call when the tool's parameters have a defined JSON schema.
+      // An array-of-unknown serializes to an empty schema, which makes Gemini
+      // print the call as `tool_code` text instead of invoking it. Validation
+      // stays lenient — execute() re-parses each record with patientInputSchema,
+      // which coerces gender words, bare-string lists, etc.
       inputSchema: z.object({
         records: z
-          .array(z.unknown())
-          .describe(
-            "Patient records mapped to temetro's shape (fileNumber, name, age, sex, vitals, labs, medications, problems, allergies, encounters).",
-          ),
+          .array(
+            z.object({
+              fileNumber: z
+                .string()
+                .optional()
+                .describe(
+                  "File number / MRN; digits only (leave blank to auto-generate)",
+                ),
+              name: z.string().describe("Patient full name"),
+              age: z.number().optional().describe("Age in years"),
+              sex: z
+                .string()
+                .optional()
+                .describe("Sex — accepts Male/Female or M/F"),
+              status: z
+                .string()
+                .optional()
+                .describe("active, inpatient, or discharged"),
+              pcp: z.string().optional().describe("Primary care provider name"),
+              alerts: z
+                .array(z.string())
+                .optional()
+                .describe("Free-text clinical alerts"),
+              allergies: z
+                .array(
+                  z.object({
+                    substance: z.string().describe("Allergen, e.g. Penicillin"),
+                    reaction: z.string().optional(),
+                    severity: z
+                      .string()
+                      .optional()
+                      .describe("mild, moderate, or severe"),
+                  }),
+                )
+                .optional(),
+              medications: z
+                .array(
+                  z.object({
+                    name: z.string(),
+                    dose: z.string().optional(),
+                    frequency: z.string().optional(),
+                  }),
+                )
+                .optional(),
+              problems: z
+                .array(
+                  z.object({
+                    label: z.string().describe("Problem / diagnosis"),
+                    since: z.string().optional(),
+                  }),
+                )
+                .optional(),
+              labs: z
+                .array(
+                  z.object({
+                    name: z.string(),
+                    value: z.string(),
+                    flag: z
+                      .string()
+                      .optional()
+                      .describe("normal, high, low, or critical"),
+                    takenAt: z
+                      .string()
+                      .optional()
+                      .describe("Date, YYYY-MM-DD"),
+                  }),
+                )
+                .optional(),
+              encounters: z
+                .array(
+                  z.object({
+                    date: z
+                      .string()
+                      .optional()
+                      .describe("Visit date, YYYY-MM-DD"),
+                    type: z
+                      .string()
+                      .optional()
+                      .describe("Visit type / department"),
+                    provider: z.string().optional(),
+                    summary: z
+                      .string()
+                      .optional()
+                      .describe("Diagnosis / treatment / notes combined"),
+                  }),
+                )
+                .optional(),
+            }),
+          )
+          .describe("Patient records parsed from the upload, mapped to temetro's shape"),
       }),
       execute: async ({ records }) => {
         step(`Validating ${records.length} record(s)`);
