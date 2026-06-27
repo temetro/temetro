@@ -27,8 +27,25 @@ import {
 import { useTranslation } from "react-i18next";
 
 import { AppointmentDetailDialog } from "@/components/messages/appointment-detail-dialog";
+import {
+  Attachment,
+  AttachmentAction,
+  AttachmentActions,
+  AttachmentContent,
+  AttachmentDescription,
+  AttachmentMedia,
+  AttachmentTitle,
+  AttachmentTrigger,
+} from "@/components/ui/attachment";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
+import {
+  Message,
+  MessageContent,
+  MessageFooter,
+  MessageHeader,
+} from "@/components/ui/message";
 import {
   Dialog,
   DialogDescription,
@@ -91,75 +108,85 @@ function sameDay(a: string, b: string): boolean {
 // one sender label, one timestamp, tighter spacing.
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
 
-// One sent attachment rendered in the thread: a downloadable file chip or a
-// shared-appointment card. Alignment (left/right) comes from the parent column.
+// One sent attachment rendered in the thread, built on the Attachment primitive:
+// a downloadable file, a shared-appointment card, or a password-reset notice.
+// Alignment (left/right) is inherited from the parent MessageContent.
 function SentAttachment({ att }: { att: MessageAttachment }) {
   const { t } = useTranslation();
   const router = useRouter();
   const [apptOpen, setApptOpen] = useState(false);
+
   if (att.kind === "passwordReset") {
     return (
-      <button
-        className="max-w-[75%] rounded-2xl border border-warning/40 bg-warning/5 p-3 text-left text-sm transition-colors hover:bg-warning/10"
-        onClick={() =>
-          router.push(
-            `/settings?tab=careTeam&member=${encodeURIComponent(att.userId)}`,
-          )
-        }
-        type="button"
-      >
-        <div className="flex items-center gap-1.5 text-warning text-xs">
-          <KeyRound className="size-3.5" />
-          {t("messages.system.label")}
-        </div>
-        <p className="mt-1 font-medium text-foreground">
-          {t("messages.system.passwordResetTitle")}
-        </p>
-        <p className="text-muted-foreground text-xs">
-          {t("messages.system.passwordResetBody", { name: att.userName })}
-        </p>
-      </button>
+      <Attachment className="max-w-[20rem] border-warning/40 bg-warning/5 hover:bg-warning/10">
+        <AttachmentTrigger
+          aria-label={t("messages.system.passwordResetTitle")}
+          onClick={() =>
+            router.push(
+              `/settings?tab=careTeam&member=${encodeURIComponent(att.userId)}`,
+            )
+          }
+        />
+        <AttachmentMedia className="bg-warning/15 text-warning">
+          <KeyRound />
+        </AttachmentMedia>
+        <AttachmentContent>
+          <AttachmentTitle>
+            {t("messages.system.passwordResetTitle")}
+          </AttachmentTitle>
+          <AttachmentDescription>
+            {t("messages.system.passwordResetBody", { name: att.userName })}
+          </AttachmentDescription>
+        </AttachmentContent>
+      </Attachment>
     );
   }
+
   if (att.kind === "file") {
     return (
-      <button
-        className="flex max-w-[75%] items-center gap-2 rounded-2xl border bg-card px-3 py-2 text-left text-foreground text-sm transition-colors hover:bg-accent"
-        onClick={() => {
-          void downloadAttachment(att.attachmentId, att.fileName).catch(() => {
-            /* ignore — surfaced by the browser */
-          });
-        }}
-        type="button"
-      >
-        <FileText className="size-4 shrink-0 text-muted-foreground" />
-        <span className="min-w-0 max-w-48 flex-1 truncate">{att.fileName}</span>
-        <Download className="size-4 shrink-0 text-muted-foreground" />
-      </button>
+      <Attachment className="max-w-[20rem]">
+        <AttachmentMedia>
+          <FileText />
+        </AttachmentMedia>
+        <AttachmentContent>
+          <AttachmentTitle>{att.fileName}</AttachmentTitle>
+        </AttachmentContent>
+        <AttachmentActions className="pr-1.5">
+          <AttachmentAction
+            aria-label={t("messages.attach.download")}
+            onClick={() => {
+              void downloadAttachment(att.attachmentId, att.fileName).catch(
+                () => {
+                  /* ignore — surfaced by the browser */
+                },
+              );
+            }}
+          >
+            <Download />
+          </AttachmentAction>
+        </AttachmentActions>
+      </Attachment>
     );
   }
+
   const a = att.appointment;
   return (
     <>
-      <button
-        className="max-w-[75%] rounded-2xl border bg-card p-3 text-left text-sm transition-colors hover:bg-accent"
-        onClick={() => setApptOpen(true)}
-        type="button"
-      >
-        <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-          <CalendarClock className="size-3.5" />
-          {t("messages.attach.apptCardLabel")}
-        </div>
-        <p className="mt-1 font-medium text-foreground">{a.name}</p>
-        <p className="text-muted-foreground text-xs">
-          {[a.date, a.time].filter(Boolean).join(" · ")}
-        </p>
-        {[a.type, a.provider].filter(Boolean).length > 0 && (
-          <p className="text-muted-foreground text-xs">
-            {[a.type, a.provider].filter(Boolean).join(" · ")}
-          </p>
-        )}
-      </button>
+      <Attachment className="max-w-[20rem]">
+        <AttachmentTrigger
+          aria-label={t("messages.attach.apptCardLabel")}
+          onClick={() => setApptOpen(true)}
+        />
+        <AttachmentMedia>
+          <CalendarClock />
+        </AttachmentMedia>
+        <AttachmentContent>
+          <AttachmentTitle>{a.name}</AttachmentTitle>
+          <AttachmentDescription>
+            {[a.date, a.time, a.type, a.provider].filter(Boolean).join(" · ")}
+          </AttachmentDescription>
+        </AttachmentContent>
+      </Attachment>
       <AppointmentDetailDialog
         appointment={a}
         onOpenChange={setApptOpen}
@@ -661,46 +688,34 @@ export function MessagesView() {
                           <div className="h-px flex-1 bg-border" />
                         </div>
                       )}
-                      <div
+                      <Message
+                        align={out ? "end" : "start"}
                         className={cn(
-                          "flex flex-col gap-1",
-                          out ? "items-end" : "items-start",
                           !newDay && (startsGroup ? "mt-4" : "mt-1"),
                         )}
                       >
-                        {selected.isGroup && !out && startsGroup && (
-                          <span className="px-1 text-muted-foreground text-[11px]">
-                            {m.senderName}
-                          </span>
-                        )}
-                        {m.body && (
-                          <div
-                            className={cn(
-                              "max-w-[75%] rounded-2xl px-3 py-2 text-sm",
-                              out
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted text-foreground",
-                              !startsGroup &&
-                                (out ? "rounded-tr-md" : "rounded-tl-md"),
-                              !endsGroup &&
-                                (out ? "rounded-br-md" : "rounded-bl-md"),
-                            )}
-                          >
-                            {m.body}
-                          </div>
-                        )}
-                        {m.attachments?.map((att, ai) => (
-                          <SentAttachment
-                            att={att}
-                            key={`${m.id}-att-${ai}`}
-                          />
-                        ))}
-                        {endsGroup && (
-                          <span className="px-1 text-muted-foreground text-[11px]">
-                            {formatTime(m.createdAt)}
-                          </span>
-                        )}
-                      </div>
+                        <MessageContent>
+                          {selected.isGroup && !out && startsGroup && (
+                            <MessageHeader>{m.senderName}</MessageHeader>
+                          )}
+                          {m.body && (
+                            <Bubble
+                              align={out ? "end" : "start"}
+                              variant={out ? "default" : "muted"}
+                            >
+                              <BubbleContent>{m.body}</BubbleContent>
+                            </Bubble>
+                          )}
+                          {m.attachments?.map((att, ai) => (
+                            <SentAttachment att={att} key={`${m.id}-att-${ai}`} />
+                          ))}
+                          {endsGroup && (
+                            <MessageFooter>
+                              {formatTime(m.createdAt)}
+                            </MessageFooter>
+                          )}
+                        </MessageContent>
+                      </Message>
                     </Fragment>
                   );
                 })}
