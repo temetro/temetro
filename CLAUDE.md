@@ -106,6 +106,22 @@ with the area when useful (e.g. `frontend:` / `backend:`). End commit messages w
 
 `.env` files are git-ignored (only `.env.example` is tracked) — never commit real secrets.
 
+### Always release after pushing
+
+When you finish a unit of work and **push to `main`**, you must **also cut a release** — temetro
+ships as prebuilt Docker images, so an un-released change never reaches a self-hosted clinic. After
+the push:
+
+1. **Bump the version** to the new `X.Y.Z` in **all three** `package.json` files (root,
+   `backend/`, `frontend/`) — they must stay in sync (`GET /api/version` reports it).
+2. **Update `CHANGELOG.md`** (move `Unreleased` notes under a dated `## [X.Y.Z]` heading).
+3. **Publish the images to Docker Hub** as `khalidxv/temetro-backend` and
+   `khalidxv/temetro-frontend`, tagged `X.Y.Z` **and** `latest`. The tag-triggered
+   `release` workflow does this automatically (`git tag vX.Y.Z && git push origin main --tags`).
+
+See [`RELEASING.md`](./RELEASING.md) for the full checklist. **Never** consider work "done and
+pushed" without the version bump + image publish.
+
 ## Customized Next.js (frontend)
 
 The `frontend/` app runs a **customized Next.js 16** whose APIs/conventions differ from public docs.

@@ -8,6 +8,15 @@ for how releases are cut and published.
 ## [Unreleased]
 
 ### Added
+- **Patients table pagination.** The Patients list now paginates at 10 rows per
+  page (COSS `Pagination`), so large clinics no longer scroll endlessly.
+- **Per-patient record history.** The patient detail sheet shows an audit
+  timeline of every add/change on that chart. `GET /api/activity/patient/:fileNumber`.
+- **Patient summary PDF.** A **Download summary** action on the patient sheet
+  produces a clean, printable one-page clinical summary (browser "Save as PDF").
+- **AI setup notice.** A single, dismissible heads-up appears above the chat
+  input on a fresh chat when no AI provider (API key or local Ollama) is
+  configured; it clears itself once you send a message.
 - **Version & update awareness.** `GET /api/version` reports the running version
   and checks GitHub Releases for a newer one; Settings → **About & updates** shows
   the current/latest version, and an optional, dismissible banner appears when an
@@ -22,8 +31,21 @@ for how releases are cut and published.
   fallback where the browser doesn't support it.
 
 ### Changed
+- **Messages thread** rebuilt on the shadcn `Message` / `Bubble` / `Attachment`
+  components (COSS colour tokens preserved) for a cleaner conversation surface.
+- **Patient status badges** now use semantic colours (active → success,
+  inpatient → info) instead of a flat secondary badge.
 - `docker-compose.yml` references the published images (with a build fallback) and
   no longer bakes a fixed API URL into the frontend.
+
+### Fixed
+- **AI import approval card.** `previewImport` now declares a concrete record
+  schema so Google Gemini emits a real tool call (and the approval card renders)
+  instead of dumping a `tool_code`/JSON wall as text. The system prompt also
+  forbids printing tool calls and re-listing fields.
+- **Settings network address** no longer shows a bogus container IP / "Error"
+  under Docker — the `/api/network` endpoint now skips container-internal
+  interfaces, and the panel falls back to the helpful LAN hint.
 
 ## [0.1.0] — 2026-06-26
 
