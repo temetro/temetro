@@ -62,7 +62,25 @@ jobs:
             ${{ env.REGISTRY_NAMESPACE }}/temetro-frontend:${{ steps.meta.outputs.version }}
             ${{ env.REGISTRY_NAMESPACE }}/temetro-frontend:latest
 
+      # Pull this version's section out of CHANGELOG.md so the release has real,
+      # human-written notes (the auto "Full Changelog" link is still appended
+      # below via generate_release_notes). Falls back to a generic line if the
+      # version has no CHANGELOG entry.
+      - name: Extract changelog notes
+        id: notes
+        run: |
+          version="${{ steps.meta.outputs.version }}"
+          awk -v v="$version" '
+            $0 ~ "^## \\[" v "\\]" {flag=1; next}
+            /^## \[/ {flag=0}
+            flag {print}
+          ' CHANGELOG.md | sed '/./,$!d' > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "Release $version. See the changelog for details." > release-notes.md
+          fi
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          body_path: release-notes.md
           generate_release_notes: true
