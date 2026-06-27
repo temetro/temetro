@@ -7,6 +7,21 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-06-27
+
+### Fixed
+- **Patients pagination** controls now render as proper buttons — the prev/next
+  and page-number controls were unstyled and wrapping (the COSS `PaginationLink`
+  drops its button styling when given a `render` prop).
+- **Patient detail sheet header** reflowed: actions (Download summary / Transfer
+  / Edit / Delete) moved to their own wrapping row so the patient name is no
+  longer truncated.
+- **Messages thread** now shows **sender and recipient avatars** alongside the
+  chat bubbles.
+- **Release notes** — the `release` workflow now publishes the matching
+  `CHANGELOG.md` section as the GitHub Release body (instead of only the
+  auto-generated "Full Changelog" link).
+
 ## [0.2.0] — 2026-06-27
 
 ### Added
