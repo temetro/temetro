@@ -25,3 +25,12 @@ export type ActivityEntry = {
 export function listActivity(): Promise<ActivityEntry[]> {
   return apiFetch<ActivityEntry[]>("/api/activity");
 }
+
+// A single patient's record history (every clinician's adds/changes on it).
+export function listPatientActivity(
+  fileNumber: string,
+): Promise<ActivityEntry[]> {
+  return apiFetch<ActivityEntry[]>(
+    `/api/activity/patient/${encodeURIComponent(fileNumber)}`,
+  );
+}

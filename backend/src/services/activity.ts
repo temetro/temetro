@@ -54,6 +54,28 @@ export async function recordActivity(params: {
   }
 }
 
+// Lists every audit entry tied to a single patient (by file number), newest
+// first. Unlike the clinic feed this is NOT scoped to one actor: a patient's
+// record history should show every clinician who added or changed data on it.
+export async function listPatientActivity(
+  orgId: string,
+  fileNumber: string,
+  limit = 100,
+): Promise<ActivityEntry[]> {
+  const rows = await db
+    .select()
+    .from(activityLog)
+    .where(
+      and(
+        eq(activityLog.organizationId, orgId),
+        eq(activityLog.patientFileNumber, fileNumber),
+      ),
+    )
+    .orderBy(desc(activityLog.createdAt))
+    .limit(limit);
+  return rows.map(toEntry);
+}
+
 // Lists the clinic's audit feed. When `actorId` is given, only that user's own
 // actions are returned (each employee sees their own activity); admins/owners
 // call without it to see the whole clinic.

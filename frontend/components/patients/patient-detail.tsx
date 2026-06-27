@@ -1,12 +1,14 @@
 "use client";
 
-import { ArrowLeftRight, Network, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeftRight, FileDown, Network, Pencil, Trash2 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Sparkline } from "@/components/chat/sparkline";
 import { AttachmentsSection } from "@/components/patients/patient-files";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { type ActivityEntry, listPatientActivity } from "@/lib/activity";
+import { printPatientSummary } from "@/lib/patient-pdf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,7 +41,14 @@ type RecordFile = {
   rows: { label: string; value: string }[];
 };
 
-type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
+type BadgeVariant =
+  | "default"
+  | "secondary"
+  | "destructive"
+  | "outline"
+  | "success"
+  | "info"
+  | "warning";
 
 const severityVariant: Record<AllergySeverity, BadgeVariant> = {
   mild: "outline",
@@ -53,8 +62,8 @@ const labFlagVariant: Record<LabFlag, BadgeVariant> = {
   critical: "destructive",
 };
 const statusVariant: Record<Patient["status"], BadgeVariant> = {
-  active: "secondary",
-  inpatient: "destructive",
+  active: "success",
+  inpatient: "info",
   discharged: "outline",
 };
 
@@ -102,6 +111,60 @@ function TrendBlock({ trend }: { trend: Trend }) {
         <Sparkline className="h-12" points={trend.points} unit={trend.unit} />
       </div>
     </div>
+  );
+}
+
+// The patient's record history: every audited add/change on this chart, newest
+// first. Reuses the clinic activity log scoped to this file number.
+function RecordHistory({ fileNumber }: { fileNumber: string }) {
+  const { t } = useTranslation();
+  const [entries, setEntries] = useState<ActivityEntry[] | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    listPatientActivity(fileNumber)
+      .then((e) => active && setEntries(e))
+      .catch(() => active && setError(true));
+    return () => {
+      active = false;
+    };
+  }, [fileNumber]);
+
+  return (
+    <Section title={t("patientCard.history.title")}>
+      {error ? (
+        <p className="text-muted-foreground text-sm">
+          {t("patientCard.history.loadError")}
+        </p>
+      ) : entries === null ? (
+        <p className="text-muted-foreground text-sm">{t("patients.loading")}</p>
+      ) : entries.length === 0 ? (
+        <p className="text-muted-foreground text-sm">
+          {t("patientCard.history.empty")}
+        </p>
+      ) : (
+        <ol className="flex flex-col gap-3">
+          {entries.map((e) => (
+            <li className="flex items-start gap-3" key={e.id}>
+              <Avatar className="mt-0.5 size-7 shrink-0">
+                <AvatarFallback className="text-[11px]">
+                  {e.actorInitials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="text-foreground text-sm">
+                  <span className="font-medium">{e.actorName}</span> {e.action}
+                </span>
+                <span className="text-muted-foreground text-xs">
+                  {new Date(e.createdAt).toLocaleString()}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+    </Section>
   );
 }
 
@@ -200,6 +263,15 @@ export function PatientDetail({
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <Button
+            onClick={() => printPatientSummary(patient, t)}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <FileDown className="size-4" />
+            {t("patientCard.exportPdf")}
+          </Button>
           {onTransfer && (
             <Button
               onClick={onTransfer}
@@ -532,6 +604,8 @@ export function PatientDetail({
           )}
         </Section>
       )}
+
+      <RecordHistory fileNumber={patient.fileNumber} />
 
       <Dialog
         onOpenChange={(o) => {

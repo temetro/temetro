@@ -25,3 +25,18 @@ activityRouter.get("/", async (req, res, next) => {
     next(err);
   }
 });
+
+// A single patient's record history (who added/changed what, when). Any clinic
+// member can read it — it's the audit trail for that chart.
+activityRouter.get("/patient/:fileNumber", async (req, res, next) => {
+  try {
+    res.json(
+      await service.listPatientActivity(
+        req.organizationId!,
+        req.params.fileNumber as string,
+      ),
+    );
+  } catch (err) {
+    next(err);
+  }
+});
