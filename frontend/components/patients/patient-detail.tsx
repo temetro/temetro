@@ -238,31 +238,35 @@ export function PatientDetail({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-start gap-3">
-        <Avatar className="size-12">
-          <AvatarFallback>{patient.initials}</AvatarFallback>
-        </Avatar>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="truncate font-semibold text-base text-foreground">
-              {patient.name}
-            </span>
-            <Badge variant={statusVariant[patient.status]}>
-              {t(`patients.status.${patient.status}`)}
-            </Badge>
-          </div>
-          <span className="text-muted-foreground text-sm">{idLine}</span>
-          {patient.alerts.length > 0 && (
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              {patient.alerts.map((alert) => (
-                <Badge key={alert} variant="outline">
-                  {alert}
-                </Badge>
-              ))}
+      <div className="flex flex-col gap-3">
+        {/* Identity — full width so the name never gets squeezed by the actions. */}
+        <div className="flex items-start gap-3">
+          <Avatar className="size-12">
+            <AvatarFallback>{patient.initials}</AvatarFallback>
+          </Avatar>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-semibold text-base text-foreground">
+                {patient.name}
+              </span>
+              <Badge variant={statusVariant[patient.status]}>
+                {t(`patients.status.${patient.status}`)}
+              </Badge>
             </div>
-          )}
+            <span className="text-muted-foreground text-sm">{idLine}</span>
+            {patient.alerts.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {patient.alerts.map((alert) => (
+                  <Badge key={alert} variant="outline">
+                    {alert}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        {/* Actions — their own wrapping row beneath the identity. */}
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             onClick={() => printPatientSummary(patient, t)}
             size="sm"
@@ -292,6 +296,7 @@ export function PatientDetail({
           {onDelete && (
             <Button
               aria-label={t("patients.delete.action")}
+              className="ml-auto"
               onClick={onDelete}
               size="sm"
               type="button"

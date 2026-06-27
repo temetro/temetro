@@ -42,6 +42,7 @@ import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { Button } from "@/components/ui/button";
 import {
   Message,
+  MessageAvatar,
   MessageContent,
   MessageFooter,
   MessageHeader,
@@ -200,6 +201,7 @@ export function MessagesView() {
   const { t } = useTranslation();
   const { data: session } = authClient.useSession();
   const myId = session?.user?.id ?? "";
+  const myInitials = initials(session?.user?.name ?? "");
 
   const router = useRouter();
 
@@ -694,6 +696,19 @@ export function MessagesView() {
                           !newDay && (startsGroup ? "mt-4" : "mt-1"),
                         )}
                       >
+                        {/* Avatar at the bottom of each run (messenger-style); a
+                            spacer keeps stacked bubbles aligned otherwise. */}
+                        {endsGroup ? (
+                          <MessageAvatar>
+                            <Avatar className="size-8">
+                              <AvatarFallback className="text-[11px]">
+                                {out ? myInitials : initials(m.senderName)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </MessageAvatar>
+                        ) : (
+                          <div className="w-8 shrink-0" />
+                        )}
                         <MessageContent>
                           {selected.isGroup && !out && startsGroup && (
                             <MessageHeader>{m.senderName}</MessageHeader>

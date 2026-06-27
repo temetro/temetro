@@ -17,10 +17,8 @@ import {
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,
-  PaginationLink,
 } from "@/components/ui/pagination";
 import { listPatients, type Patient } from "@/lib/patients";
-import { cn } from "@/lib/utils";
 
 // Rows shown per page on the patients table before paginating.
 const PAGE_SIZE = 10;
@@ -290,22 +288,20 @@ export function PatientsView() {
           >
             <PaginationContent>
               <PaginationItem>
-                <PaginationLink
-                  aria-disabled={safePage === 1}
+                <Button
                   aria-label={t("patients.pagination.previous")}
-                  className={cn(
-                    "gap-1 px-2.5",
-                    safePage === 1 && "pointer-events-none opacity-50"
-                  )}
+                  className="gap-1"
+                  disabled={safePage === 1}
                   onClick={() => setPage(Math.max(1, safePage - 1))}
-                  render={<button type="button" />}
-                  size="default"
+                  size="sm"
+                  type="button"
+                  variant="ghost"
                 >
                   <ChevronLeft className="size-4" />
                   <span className="max-sm:hidden">
                     {t("patients.pagination.previous")}
                   </span>
-                </PaginationLink>
+                </Button>
               </PaginationItem>
               {pageWindow(safePage, totalPages).map((p, i) =>
                 p === null ? (
@@ -314,34 +310,34 @@ export function PatientsView() {
                   </PaginationItem>
                 ) : (
                   <PaginationItem key={p}>
-                    <PaginationLink
+                    <Button
+                      aria-current={p === safePage ? "page" : undefined}
                       aria-label={t("patients.pagination.page", { page: p })}
-                      isActive={p === safePage}
                       onClick={() => setPage(p)}
-                      render={<button type="button" />}
+                      size="icon-sm"
+                      type="button"
+                      variant={p === safePage ? "outline" : "ghost"}
                     >
                       {p}
-                    </PaginationLink>
+                    </Button>
                   </PaginationItem>
                 )
               )}
               <PaginationItem>
-                <PaginationLink
-                  aria-disabled={safePage === totalPages}
+                <Button
                   aria-label={t("patients.pagination.next")}
-                  className={cn(
-                    "gap-1 px-2.5",
-                    safePage === totalPages && "pointer-events-none opacity-50"
-                  )}
+                  className="gap-1"
+                  disabled={safePage === totalPages}
                   onClick={() => setPage(Math.min(totalPages, safePage + 1))}
-                  render={<button type="button" />}
-                  size="default"
+                  size="sm"
+                  type="button"
+                  variant="ghost"
                 >
                   <span className="max-sm:hidden">
                     {t("patients.pagination.next")}
                   </span>
                   <ChevronRight className="size-4" />
-                </PaginationLink>
+                </Button>
               </PaginationItem>
             </PaginationContent>
           </Pagination>
