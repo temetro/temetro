@@ -7,6 +7,8 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-06-27
+
 ### Added
 - **Patients table pagination.** The Patients list now paginates at 10 rows per
   page (COSS `Pagination`), so large clinics no longer scroll endlessly.
