@@ -54,6 +54,7 @@ import {
   ToolOutput,
 } from "@/components/ai-elements/tool";
 import { ActionPreviewCard } from "@/components/chat/action-preview-card";
+import { AiSetupNotice } from "@/components/chat/ai-setup-notice";
 import { AnalyticsCard } from "@/components/chat/analytics-card";
 import { BatchActionPreviewCard } from "@/components/chat/batch-action-preview-card";
 import { ChatHistoryPanel } from "@/components/chat/chat-history-panel";
@@ -722,6 +723,9 @@ export function ChatPanel() {
           <div className="flex w-full flex-col gap-3">
             {errorAlert}
             {veilGate}
+            {/* One-time setup heads-up — only on the empty state, so it clears
+                itself once the first message is sent. */}
+            <AiSetupNotice />
             {promptInput}
             <Suggestions className="justify-center pt-1">
               {suggestions.map((s) => (
