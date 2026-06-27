@@ -66,7 +66,9 @@ export function VersionPanel() {
   useEffect(() => {
     if (localShareUrl) return;
     getNetworkInfo()
-      .then((n) => setNetworkUrls(n.urls))
+      // Guard against an unexpected shape so a missing/garbled response shows the
+      // helpful "open via the server's IP" hint rather than a broken value.
+      .then((n) => setNetworkUrls(Array.isArray(n?.urls) ? n.urls : []))
       .catch(() => setNetworkUrls([]));
   }, [localShareUrl]);
 
