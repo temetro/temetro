@@ -40,6 +40,18 @@ export type ToolContext = {
   writer: UIMessageStreamWriter;
 };
 
+// Shared schema for tools that take no real arguments. Google Gemini cannot
+// emit a function call when a tool's parameter schema has no properties — it
+// prints the call as `tool_code` text instead of invoking it (see the
+// previewImport note below). One optional, ignored field keeps the schema
+// non-empty so Gemini calls the tool; other providers ignore the extra field.
+const emptyToolArgs = z.object({
+  filter: z
+    .string()
+    .optional()
+    .describe("Optional free-text filter (ignored — the full list is shown)"),
+});
+
 // Compact, model-facing projection of a patient (Veil-redacted upstream). Keeps
 // clinical signal, drops bulky arrays the model rarely needs verbatim.
 function forModel(p: Patient) {
@@ -213,7 +225,7 @@ export function createChatTools(ctx: ToolContext) {
     listAppointments: tool({
       description:
         "Display the clinic's appointments. Use when the clinician asks to see the schedule, upcoming visits, or today's appointments.",
-      inputSchema: z.object({}),
+      inputSchema: emptyToolArgs,
       execute: async () => {
         step("Loading appointments");
         const all = await appointments.listAppointments(orgId);
@@ -235,7 +247,7 @@ export function createChatTools(ctx: ToolContext) {
     listTasks: tool({
       description:
         "Display the care-team task list. Use when the clinician asks to see open tasks, to-dos, or what's assigned.",
-      inputSchema: z.object({}),
+      inputSchema: emptyToolArgs,
       execute: async () => {
         step("Loading tasks");
         const all = await tasks.listTasks(orgId, {
@@ -258,7 +270,7 @@ export function createChatTools(ctx: ToolContext) {
     listPrescriptions: tool({
       description:
         "Display prescriptions for the clinic. Use when the clinician asks to see prescriptions or medications prescribed.",
-      inputSchema: z.object({}),
+      inputSchema: emptyToolArgs,
       execute: async () => {
         if (demographicsOnly) {
           return { found: false as const, reason: "not_authorized" as const };
@@ -454,7 +466,7 @@ export function createChatTools(ctx: ToolContext) {
     getClinicInfo: tool({
       description:
         "Get the clinic's name and basic info. Use when the clinician asks about their clinic/organization (e.g. 'what's my clinic called?').",
-      inputSchema: z.object({}),
+      inputSchema: emptyToolArgs,
       execute: async () => {
         step("Loading clinic info");
         const [org] = await db
@@ -479,7 +491,7 @@ export function createChatTools(ctx: ToolContext) {
     getAnalytics: tool({
       description:
         "Retrieve the clinic's analytics AND earnings — patient/appointment/prescription/task counts plus money billed, paid, and outstanding (from invoices), with a by-month earnings trend. Use for KPIs, earnings, revenue, or performance questions.",
-      inputSchema: z.object({}),
+      inputSchema: emptyToolArgs,
       execute: async () => {
         step("Loading clinic analytics");
         const data = await analytics.getAnalytics(orgId);
@@ -492,7 +504,7 @@ export function createChatTools(ctx: ToolContext) {
     listInventory: tool({
       description:
         "List the clinic's inventory (medications/supplies, stock levels, reorder thresholds). Use for stock, low-stock, or reorder questions.",
-      inputSchema: z.object({}),
+      inputSchema: emptyToolArgs,
       execute: async () => {
         step("Loading inventory");
         const items = await inventory.listInventory(orgId);
