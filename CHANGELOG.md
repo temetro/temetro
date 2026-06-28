@@ -7,6 +7,18 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-06-28
+
+### Fixed
+- **AI chat record cards** now render on Google Gemini. The card-emitting
+  chat tools (`listAppointments`, `listTasks`, `listPrescriptions`,
+  `getClinicInfo`, `getAnalytics`, `listInventory`) used an empty parameter
+  schema; Gemini can't emit a function call for a schema with no properties,
+  so it printed the call as `tool_code` text instead of invoking the tool —
+  leaving replies as plain text (e.g. "Show today's schedule" leaked a raw
+  `<tool_code>` block) with no cards. The tools now share a non-empty schema
+  so Gemini calls them; other providers are unaffected.
+
 ## [0.2.1] — 2026-06-27
 
 ### Fixed
