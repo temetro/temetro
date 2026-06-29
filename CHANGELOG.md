@@ -7,6 +7,18 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.2.3] — 2026-06-29
+
+### Fixed
+- **AI chat patient record cards** now render on Google Gemini for name
+  lookups. "Show me <name>'s medical record" relied on the model chaining
+  `searchPatients` → `getPatient`, but Gemini often called `searchPatients`
+  and then emitted only a canned closing line ("Here's the record.") without
+  the second tool call — so no card was ever drawn. `searchPatients` now
+  displays the record card directly when exactly one patient matches, so the
+  flow no longer depends on a follow-up tool call. (The previous Gemini fix in
+  0.2.2 only covered the empty-schema list tools.)
+
 ## [0.2.2] — 2026-06-28
 
 ### Fixed
