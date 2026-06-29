@@ -1,5 +1,6 @@
 "use client";
 
+import { RefreshCw } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -8,6 +9,7 @@ import {
   SettingsCard,
   SettingsSection,
 } from "@/components/settings/settings-parts";
+import { Button } from "@/components/ui/button";
 import { getNetworkInfo, getVersionInfo, type VersionInfo } from "@/lib/version";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +47,7 @@ export function VersionPanel() {
   const { t } = useTranslation();
   const [info, setInfo] = useState<VersionInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
   const [networkUrls, setNetworkUrls] = useState<string[]>([]);
 
   useEffect(() => {
@@ -53,6 +56,17 @@ export function VersionPanel() {
       .catch(() => setInfo(null))
       .finally(() => setLoading(false));
   }, []);
+
+  // "Check for updates" — force a fresh, cache-bypassing lookup on the backend.
+  const checkForUpdates = () => {
+    setChecking(true);
+    getVersionInfo(true)
+      .then(setInfo)
+      .catch(() => {
+        /* keep the last known info on a failed manual check */
+      })
+      .finally(() => setChecking(false));
+  };
 
   // The most reliable shareable URL is the one the browser is already using —
   // unless that's localhost, in which case we fall back to the backend's
@@ -72,7 +86,7 @@ export function VersionPanel() {
       .catch(() => setNetworkUrls([]));
   }, [localShareUrl]);
 
-  const statusBadge = loading ? (
+  const statusBadge = loading || checking ? (
     <Badge tone="muted">{t("settings.version.checking")}</Badge>
   ) : !info || info.latest === null ? (
     <Badge tone="muted">{t("settings.version.offline")}</Badge>
@@ -121,6 +135,20 @@ export function VersionPanel() {
                 {t("settings.version.viewRelease")}
               </a>
             ) : null}
+          </div>
+          <div className="flex justify-end border-t border-border pt-4">
+            <Button
+              disabled={loading || checking}
+              onClick={checkForUpdates}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <RefreshCw className={cn("size-4", checking && "animate-spin")} />
+              {checking
+                ? t("settings.version.checking")
+                : t("settings.version.checkNow")}
+            </Button>
           </div>
         </SettingsCard>
       </SettingsSection>

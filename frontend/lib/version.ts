@@ -14,8 +14,8 @@ export type NetworkInfo = {
   urls: string[];
 };
 
-export function getVersionInfo(): Promise<VersionInfo> {
-  return apiFetch<VersionInfo>("/api/version");
+export function getVersionInfo(force = false): Promise<VersionInfo> {
+  return apiFetch<VersionInfo>(`/api/version${force ? "?refresh=1" : ""}`);
 }
 
 export function getNetworkInfo(): Promise<NetworkInfo> {

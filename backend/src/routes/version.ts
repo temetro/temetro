@@ -1,6 +1,8 @@
-// GET /api/version — reports the running version and whether a newer release
-// exists on GitHub. Public (no PHI); the frontend uses it for the Settings
-// "About & Updates" panel and the optional update banner.
+// GET /api/version — reports the running version and whether a newer image is
+// available. The latest version is read from Docker Hub (the actual update
+// channel: clinics run `docker compose pull`), falling back to the GitHub
+// release if Docker Hub's API is unreachable. Public (no PHI); the frontend uses
+// it for the Settings "About & Updates" panel and the optional update banner.
 import { createRequire } from "node:module";
 
 import { Router } from "express";
@@ -13,16 +15,24 @@ const require = createRequire(import.meta.url);
 const pkg = require("../../package.json") as { version?: string };
 const CURRENT = env.APP_VERSION ?? pkg.version ?? "0.0.0";
 
-const LATEST_RELEASE_URL =
+// The published image whose tags reflect what `docker compose pull` would fetch.
+const DOCKERHUB_TAGS_URL =
+  "https://hub.docker.com/v2/repositories/khalidxv/temetro-backend/tags?page_size=100";
+// GitHub release of a given version — used for the human-readable "what's new"
+// link, and as a fallback source for the latest version.
+const GITHUB_LATEST_RELEASE_URL =
   "https://api.github.com/repos/temetro/temetro/releases/latest";
-const CACHE_TTL = 6 * 60 * 60 * 1000; // 6h — releases are infrequent.
+const releaseUrlFor = (version: string) =>
+  `https://github.com/temetro/temetro/releases/tag/v${version}`;
+
+const CACHE_TTL = 60 * 60 * 1000; // 1h — surface a new release reasonably fast.
 const ERROR_TTL = 10 * 60 * 1000; // back off ~10m after a failed lookup.
 
 type LatestInfo = { latest: string | null; releaseUrl: string | null };
 let cache: { at: number; ttl: number; info: LatestInfo } | null = null;
 
 function parseSemver(v: string): [number, number, number] | null {
-  const m = v.trim().replace(/^v/, "").match(/^(\d+)\.(\d+)\.(\d+)/);
+  const m = v.trim().replace(/^v/, "").match(/^(\d+)\.(\d+)\.(\d+)$/);
   return m ? [Number(m[1]), Number(m[2]), Number(m[3])] : null;
 }
 
@@ -38,18 +48,52 @@ function isNewer(latest: string, current: string): boolean {
   return false;
 }
 
-async function fetchLatest(): Promise<LatestInfo> {
-  if (cache && Date.now() - cache.at < cache.ttl) return cache.info;
+// Highest strict X.Y.Z tag in the list (ignores `latest` and any non-semver).
+function maxSemver(versions: string[]): string | null {
+  let best: string | null = null;
+  for (const v of versions) {
+    if (parseSemver(v) && (best === null || isNewer(v, best))) best = v;
+  }
+  return best;
+}
+
+// Primary source: the published Docker Hub image tags.
+async function fetchFromDockerHub(): Promise<string | null> {
+  const res = await fetch(DOCKERHUB_TAGS_URL, {
+    headers: { Accept: "application/json", "User-Agent": "temetro" },
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!res.ok) throw new Error(`Docker Hub responded ${res.status}`);
+  const body = (await res.json()) as { results?: Array<{ name?: string }> };
+  const names = (body.results ?? [])
+    .map((r) => r.name)
+    .filter((n): n is string => typeof n === "string");
+  return maxSemver(names);
+}
+
+// Fallback source: the latest GitHub release tag (used if Docker Hub is blocked).
+async function fetchFromGitHub(): Promise<string | null> {
+  const res = await fetch(GITHUB_LATEST_RELEASE_URL, {
+    headers: { Accept: "application/vnd.github+json", "User-Agent": "temetro" },
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!res.ok) throw new Error(`GitHub responded ${res.status}`);
+  const body = (await res.json()) as { tag_name?: string };
+  return body.tag_name ? body.tag_name.replace(/^v/, "") : null;
+}
+
+async function fetchLatest(force = false): Promise<LatestInfo> {
+  if (!force && cache && Date.now() - cache.at < cache.ttl) return cache.info;
   try {
-    const res = await fetch(LATEST_RELEASE_URL, {
-      headers: { Accept: "application/vnd.github+json", "User-Agent": "temetro" },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) throw new Error(`GitHub responded ${res.status}`);
-    const body = (await res.json()) as { tag_name?: string; html_url?: string };
+    let latest: string | null = null;
+    try {
+      latest = await fetchFromDockerHub();
+    } catch {
+      latest = await fetchFromGitHub();
+    }
     const info: LatestInfo = {
-      latest: body.tag_name ? body.tag_name.replace(/^v/, "") : null,
-      releaseUrl: body.html_url ?? null,
+      latest,
+      releaseUrl: latest ? releaseUrlFor(latest) : null,
     };
     cache = { at: Date.now(), ttl: CACHE_TTL, info };
     return info;
@@ -63,8 +107,10 @@ async function fetchLatest(): Promise<LatestInfo> {
 
 const router = Router();
 
-router.get("/", async (_req, res) => {
-  const { latest, releaseUrl } = await fetchLatest();
+router.get("/", async (req, res) => {
+  // `?refresh=1` powers the "Check for updates" button — bypass the cache.
+  const force = req.query.refresh === "1" || req.query.refresh === "true";
+  const { latest, releaseUrl } = await fetchLatest(force);
   res.json({
     current: CURRENT,
     latest,
