@@ -6,7 +6,14 @@
     "signIn": "Sign in",
     "signUp": "Sign up",
     "backToSignIn": "Back to sign in",
-    "addedByAi": "Added by AI"
+    "addedByAi": "Added by AI",
+    "pagination": {
+      "label": "Pages",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{page}}",
+      "summary": "Showing {{from}}–{{to}} of {{total}}"
+    }
   },
   "auth": {
     "login": {
@@ -222,13 +229,6 @@
     "loading": "Loading patients…",
     "empty": "No patients found.",
     "loadError": "Failed to load patients.",
-    "pagination": {
-      "label": "Patient pages",
-      "previous": "Previous",
-      "next": "Next",
-      "page": "Page {{page}}",
-      "summary": "Showing {{from}}–{{to}} of {{total}}"
-    },
     "columns": {
       "name": "Name",
       "mrn": "MRN",
@@ -1520,6 +1520,7 @@
       "current": "Current version",
       "latest": "Latest release",
       "checking": "Checking for updates…",
+      "checkNow": "Check for updates",
       "upToDate": "Up to date",
       "updateAvailable": "Update available",
       "offline": "Couldn't reach the update server",
@@ -1683,6 +1684,13 @@
       "professionalLinks": "Professional links",
       "professionalLinksHint": "Registry or institutional profiles used to verify your identity. They are never shown to patients.",
       "addLink": "Add link",
+      "language": {
+        "title": "Language",
+        "description": "The language temetro's interface is shown in on this device.",
+        "label": "Display language",
+        "en": "English",
+        "fr": "Français"
+      },
       "patientNotifications": "Patient notifications",
       "patientNotificationsDescription": "Emails sent to patients about their records, results, and pending approvals",
       "accountNotifications": "Account notifications",
