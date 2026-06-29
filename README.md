@@ -73,9 +73,11 @@ missing secrets on first start. Then open:
 Prefer to **build from source** (for development)? Use `docker compose up
 --build` instead. Migrations apply automatically on backend start.
 
-> **Port conflict?** If another Postgres holds host port `5432`, set
-> `POSTGRES_PORT` (e.g. `5433`) in `backend/.env`. The app still talks to
-> Postgres internally on `db:5432`; only the published host port changes.
+> **Port conflict?** If host ports `5432`, `4000` or `3000` are already in use,
+> set `POSTGRES_PORT`, `BACKEND_PORT` and/or `FRONTEND_PORT` (e.g. `5433` /
+> `4001` / `3001`) in `backend/.env`. The services still talk to each other on
+> their internal ports (`db:5432`, `backend:4000`); only the published host
+> ports change.
 
 ### Access from other computers (hospital LAN)
 

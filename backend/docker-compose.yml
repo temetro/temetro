@@ -25,6 +25,12 @@
 #
 # Optional DB browser (Adminer) lives behind a profile:
 #   docker compose --profile tools up adminer   # http://localhost:8080
+#
+# Host ports are configurable to avoid clashing with software already running on
+# this machine. Override any of them in a .env file (or inline), e.g.:
+#   POSTGRES_PORT=5433  BACKEND_PORT=4001  FRONTEND_PORT=3001  docker compose up -d
+# Only the published host port changes; the services still talk to each other on
+# their internal ports (db:5432, backend:4000).
 
 services:
   db:
@@ -76,7 +82,8 @@ services:
       # Persists uploaded files across restarts/rebuilds.
       - temetro_uploads:/var/lib/temetro/uploads
     ports:
-      - "4000:4000"
+      # Host port is configurable to avoid clashing with an existing service.
+      - "${BACKEND_PORT:-4000}:4000"
 
   frontend:
     image: khalidxv/temetro-frontend:${TEMETRO_VERSION:-latest}
@@ -90,7 +97,8 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:3000"
+      # Host port is configurable to avoid clashing with an existing service.
+      - "${FRONTEND_PORT:-3000}:3000"
 
   adminer:
     image: adminer:5
@@ -99,7 +107,7 @@ services:
     depends_on:
       - db
     ports:
-      - "8080:8080"
+      - "${ADMINER_PORT:-8080}:8080"
 
 volumes:
   temetro_pgdata:
