@@ -16,6 +16,7 @@ import {
   ToggleRow,
 } from "@/components/settings/settings-parts";
 import { authClient } from "@/lib/auth-client";
+import { supportedLanguages } from "@/lib/i18n/config";
 import {
   getSettings,
   saveSettings,
@@ -53,9 +54,13 @@ const DEFAULT_PREFS: UserPreferences = {
 };
 
 export function ProfilePanel() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: session } = authClient.useSession();
   const user = session?.user;
+
+  // The active UI language — `i18n.changeLanguage` persists the choice to
+  // localStorage (the detector's cache), so it survives reloads.
+  const activeLang = i18n.resolvedLanguage ?? i18n.language;
 
   const [prefs, setPrefs] = useState<UserPreferences>(DEFAULT_PREFS);
   const [baseline, setBaseline] = useState<UserPreferences>(DEFAULT_PREFS);
@@ -207,6 +212,30 @@ export function ProfilePanel() {
               <Plus className="size-4" />
               {t("settings.profile.addLink")}
             </Button>
+          </div>
+        </SettingsCard>
+      </SettingsSection>
+
+      <SettingsSection
+        description={t("settings.profile.language.description")}
+        title={t("settings.profile.language.title")}
+      >
+        <SettingsCard className="space-y-1.5 p-5">
+          <FieldLabel>{t("settings.profile.language.label")}</FieldLabel>
+          <div className="flex flex-wrap gap-2">
+            {supportedLanguages.map((lng) => (
+              <Button
+                aria-pressed={activeLang === lng}
+                className="rounded-3xl"
+                key={lng}
+                onClick={() => void i18n.changeLanguage(lng)}
+                size="sm"
+                type="button"
+                variant={activeLang === lng ? "default" : "outline"}
+              >
+                {t(`settings.profile.language.${lng}`)}
+              </Button>
+            ))}
           </div>
         </SettingsCard>
       </SettingsSection>
