@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ListPagination } from "@/components/ui/list-pagination";
 import {
   formatInvoiceDate,
   formatMoney,
@@ -30,10 +31,14 @@ const statusVariant: Record<
   void: "destructive",
 };
 
+// Invoices shown per page before paginating.
+const PAGE_SIZE = 10;
+
 export function InvoicesView() {
   const { t } = useTranslation();
   const [list, setList] = useState<Invoice[]>([]);
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [selected, setSelected] = useState<Invoice | null>(null);
@@ -69,6 +74,15 @@ export function InvoicesView() {
         inv.status.toLowerCase().includes(search),
     );
   }, [list, search]);
+
+  // Client-side pagination over the filtered list (10/page); clamp at render so a
+  // shrinking list never leaves us past the last page.
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
 
   const kpis = useMemo(() => {
     const unpaid = list
@@ -124,7 +138,10 @@ export function InvoicesView() {
             <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
             <Input
               className="w-full pl-9 sm:w-64"
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setPage(1);
+              }}
               placeholder={t("invoices.searchPlaceholder")}
               value={query}
             />
@@ -161,7 +178,7 @@ export function InvoicesView() {
       </div>
 
       <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
-        {filtered.map((inv) => (
+        {pageRows.map((inv) => (
           <button
             className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/50"
             key={inv.id}
@@ -198,6 +215,13 @@ export function InvoicesView() {
           </p>
         )}
       </div>
+
+      <ListPagination
+        onPageChange={setPage}
+        page={safePage}
+        pageSize={PAGE_SIZE}
+        total={filtered.length}
+      />
 
       <InvoiceFormDialog
         invoice={editing ?? undefined}

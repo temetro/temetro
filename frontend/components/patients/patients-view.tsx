@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Plus, Search, Smartphone } from "lucide-react";
+import { Plus, Search, Smartphone } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -12,33 +12,11 @@ import { PatientDetailSheet } from "@/components/patients/patient-detail-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-} from "@/components/ui/pagination";
+import { ListPagination } from "@/components/ui/list-pagination";
 import { listPatients, type Patient } from "@/lib/patients";
 
 // Rows shown per page on the patients table before paginating.
 const PAGE_SIZE = 10;
-
-// Page numbers to render, with `null` marking an ellipsis gap. Keeps the first,
-// last, and a small window around the current page so the control stays compact
-// even with many pages.
-function pageWindow(current: number, total: number): (number | null)[] {
-  if (total <= 7) {
-    return Array.from({ length: total }, (_, i) => i + 1);
-  }
-  const pages: (number | null)[] = [1];
-  const start = Math.max(2, current - 1);
-  const end = Math.min(total - 1, current + 1);
-  if (start > 2) pages.push(null);
-  for (let p = start; p <= end; p++) pages.push(p);
-  if (end < total - 1) pages.push(null);
-  pages.push(total);
-  return pages;
-}
 
 type BadgeVariant = "success" | "info" | "outline";
 
@@ -273,75 +251,13 @@ export function PatientsView() {
         </table>
       </div>
 
-      {!loading && !loadError && patients.length > PAGE_SIZE ? (
-        <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
-          <p className="text-xs text-muted-foreground">
-            {t("patients.pagination.summary", {
-              from: (safePage - 1) * PAGE_SIZE + 1,
-              to: Math.min(safePage * PAGE_SIZE, patients.length),
-              total: patients.length,
-            })}
-          </p>
-          <Pagination
-            aria-label={t("patients.pagination.label")}
-            className="mx-0 w-auto justify-end"
-          >
-            <PaginationContent>
-              <PaginationItem>
-                <Button
-                  aria-label={t("patients.pagination.previous")}
-                  className="gap-1"
-                  disabled={safePage === 1}
-                  onClick={() => setPage(Math.max(1, safePage - 1))}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <ChevronLeft className="size-4" />
-                  <span className="max-sm:hidden">
-                    {t("patients.pagination.previous")}
-                  </span>
-                </Button>
-              </PaginationItem>
-              {pageWindow(safePage, totalPages).map((p, i) =>
-                p === null ? (
-                  <PaginationItem key={`ellipsis-${i}`}>
-                    <PaginationEllipsis />
-                  </PaginationItem>
-                ) : (
-                  <PaginationItem key={p}>
-                    <Button
-                      aria-current={p === safePage ? "page" : undefined}
-                      aria-label={t("patients.pagination.page", { page: p })}
-                      onClick={() => setPage(p)}
-                      size="icon-sm"
-                      type="button"
-                      variant={p === safePage ? "outline" : "ghost"}
-                    >
-                      {p}
-                    </Button>
-                  </PaginationItem>
-                )
-              )}
-              <PaginationItem>
-                <Button
-                  aria-label={t("patients.pagination.next")}
-                  className="gap-1"
-                  disabled={safePage === totalPages}
-                  onClick={() => setPage(Math.min(totalPages, safePage + 1))}
-                  size="sm"
-                  type="button"
-                  variant="ghost"
-                >
-                  <span className="max-sm:hidden">
-                    {t("patients.pagination.next")}
-                  </span>
-                  <ChevronRight className="size-4" />
-                </Button>
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
+      {!loading && !loadError ? (
+        <ListPagination
+          onPageChange={setPage}
+          page={safePage}
+          pageSize={PAGE_SIZE}
+          total={patients.length}
+        />
       ) : null}
 
       <PatientFormDialog

@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ListPagination } from "@/components/ui/list-pagination";
 import {
   type ActivityEntityType,
   type ActivityEntry,
@@ -108,10 +109,14 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+// Entries shown per page in the activity feed before paginating.
+const PAGE_SIZE = 10;
+
 export function ActivityView() {
   const { t } = useTranslation();
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
   const [selected, setSelected] = useState<ActivityEntry | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     let active = true;
@@ -153,6 +158,15 @@ export function ActivityView() {
     ];
   }, [entries, t]);
 
+  // Client-side pagination over the feed (10/page). `page` is clamped at render
+  // so a shrinking feed never leaves us past the last page.
+  const totalPages = Math.max(1, Math.ceil(entries.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = entries.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
+  );
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-6 py-10">
       <div>
@@ -173,10 +187,11 @@ export function ActivityView() {
           {t("activity.empty")}
         </div>
       ) : (
+        <div>
         <ol className="flex flex-col">
-          {entries.map((entry, i) => {
+          {pageRows.map((entry, i) => {
             const Icon = entityIcon[entry.entityType] ?? FileText;
-            const isLast = i === entries.length - 1;
+            const isLast = i === pageRows.length - 1;
             const context = [
               entry.actorName,
               entry.patientName &&
@@ -226,6 +241,13 @@ export function ActivityView() {
             );
           })}
         </ol>
+        <ListPagination
+          onPageChange={setPage}
+          page={safePage}
+          pageSize={PAGE_SIZE}
+          total={entries.length}
+        />
+        </div>
       )}
 
       <Dialog
