@@ -189,10 +189,12 @@ export function createChatTools(ctx: ToolContext) {
       },
     }),
 
-    // Search the clinic's patients by name or file number.
+    // Search the clinic's patients by name or file number. On a unique match this
+    // also displays that patient's record card directly (see below), so the common
+    // "show me <name>'s record" flow doesn't depend on a follow-up getPatient call.
     searchPatients: tool({
       description:
-        "Search the clinic's patients by name fragment. Returns matches with file numbers so you can then call getPatient.",
+        "Search the clinic's patients by name fragment. If EXACTLY ONE patient matches, this already displays their full record card — do NOT call getPatient again; just confirm in one sentence. If multiple match, it returns the matches (with file numbers) so you can disambiguate or call getPatient on the right one.",
       inputSchema: z.object({
         query: z.string().describe("Name or file-number fragment to match"),
       }),
@@ -204,17 +206,42 @@ export function createChatTools(ctx: ToolContext) {
           scopeProviderId,
         );
         const q = query.trim().toLowerCase();
-        const matches = all
+        // Keep the full Patient objects so a unique match can render a card.
+        const matched = all
           .filter(
             (p) =>
               p.name.toLowerCase().includes(q) ||
               p.fileNumber.toLowerCase().includes(q),
           )
-          .slice(0, 10)
-          .map((p) => {
-            const r = veil.redactPatient(p);
-            return { fileNumber: r.fileNumber, name: r.name, status: p.status };
-          });
+          .slice(0, 10);
+
+        // Unique match → show the record card right here. Gemini often skips the
+        // search→getPatient hand-off and just emits a canned sentence, leaving the
+        // clinician with no card; rendering it directly removes that dependency.
+        if (matched.length === 1) {
+          const patient = matched[0]!;
+          step(`Looking up patient ${patient.fileNumber}`);
+          writer.write(
+            mode === "graph"
+              ? { type: "data-recordGraph", data: patient }
+              : { type: "data-patientCard", data: patient },
+          );
+          const sourceId = addSource(
+            `${patient.name} · MRN ${patient.fileNumber}`,
+            "patient",
+          );
+          return {
+            count: 1,
+            shownCard: true,
+            sourceId,
+            patient: forModel(veil.redactPatient(patient)),
+          };
+        }
+
+        const matches = matched.map((p) => {
+          const r = veil.redactPatient(p);
+          return { fileNumber: r.fileNumber, name: r.name, status: p.status };
+        });
         step(`Found ${matches.length} match(es)`);
         return { count: matches.length, matches };
       },
