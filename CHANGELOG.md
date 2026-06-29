@@ -7,6 +7,25 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.2.4] — 2026-06-29
+
+### Added
+- **Pagination** on the Activity and Invoices pages (10 per page), matching the
+  Patients page, via a shared `ListPagination` component.
+- **French (Français)** interface language, with a language switcher in
+  Settings → Profile. The choice persists on the device.
+- **"Check for updates"** button in Settings → About & updates that forces a
+  fresh check.
+
+### Changed
+- **Update detection** now reads the latest version from **Docker Hub** image
+  tags (the channel clinics actually pull), falling back to the GitHub release
+  if Docker Hub is unreachable. This fixes "About & updates" showing *Up to
+  date* when a newer image was already published.
+- **docker compose** host ports are now configurable (`BACKEND_PORT`,
+  `FRONTEND_PORT`, `ADMINER_PORT`, alongside `POSTGRES_PORT`) so a port clash on
+  `docker compose up -d` can be resolved from `.env` without editing the file.
+
 ## [0.2.3] — 2026-06-29
 
 ### Fixed
