@@ -80,6 +80,11 @@ accurate (e.g. a new backend route needs an `content/docs/api/*.mdx` entry; a UI
 in the matching guide; status changes belong in the roadmap). Commit docs changes inside that
 repo, separately from this one.
 
+**Every release must also get a dated entry in the docs changelog**
+(`content/docs/changelog.mdx`, newest first) — not just the monorepo `CHANGELOG.md`. When you cut a
+version (see "Always release after pushing"), add a matching, user-facing section to that page in the
+same session so `../temetro/docs` never falls behind the shipped version.
+
 ## Running the stack
 
 From `backend/`: ensure a `.env` exists (`cp .env.example .env`, then set `BETTER_AUTH_SECRET` via

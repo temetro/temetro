@@ -6,7 +6,15 @@ import { useTranslation } from "react-i18next";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectItem,
+  SelectPopup,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { DeleteAccountDialog } from "@/components/settings/delete-account-dialog";
 import {
   CopyField,
@@ -68,6 +76,10 @@ export function ProfilePanel() {
   const [baselineName, setBaselineName] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  // A language picked in the Select but not yet applied — its presence opens the
+  // confirmation dialog. The Select stays bound to `activeLang`, so cancelling
+  // (clearing this) automatically reverts the shown selection.
+  const [pendingLang, setPendingLang] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -222,21 +234,23 @@ export function ProfilePanel() {
       >
         <SettingsCard className="space-y-1.5 p-5">
           <FieldLabel>{t("settings.profile.language.label")}</FieldLabel>
-          <div className="flex flex-wrap gap-2">
-            {supportedLanguages.map((lng) => (
-              <Button
-                aria-pressed={activeLang === lng}
-                className="rounded-3xl"
-                key={lng}
-                onClick={() => void i18n.changeLanguage(lng)}
-                size="sm"
-                type="button"
-                variant={activeLang === lng ? "default" : "outline"}
-              >
-                {t(`settings.profile.language.${lng}`)}
-              </Button>
-            ))}
-          </div>
+          <Select
+            onValueChange={(value) => {
+              if (value !== activeLang) setPendingLang(value);
+            }}
+            value={activeLang}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectPopup>
+              {supportedLanguages.map((lng) => (
+                <SelectItem key={lng} value={lng}>
+                  {t(`settings.profile.language.${lng}`)}
+                </SelectItem>
+              ))}
+            </SelectPopup>
+          </Select>
         </SettingsCard>
       </SettingsSection>
 
@@ -315,6 +329,27 @@ export function ProfilePanel() {
       </SettingsSection>
 
       <DeleteAccountDialog onOpenChange={setDeleteOpen} open={deleteOpen} />
+
+      <ConfirmDialog
+        cancelLabel={t("settings.profile.language.cancel")}
+        confirmLabel={t("settings.profile.language.confirmCta")}
+        description={
+          pendingLang
+            ? t("settings.profile.language.confirmBody", {
+                language: t(`settings.profile.language.${pendingLang}`),
+              })
+            : undefined
+        }
+        onConfirm={() => {
+          if (pendingLang) void i18n.changeLanguage(pendingLang);
+        }}
+        onOpenChange={(open) => {
+          if (!open) setPendingLang(null);
+        }}
+        open={pendingLang !== null}
+        title={t("settings.profile.language.confirmTitle")}
+        variant="default"
+      />
 
       {dirty ? (
         <div className="sticky bottom-4 z-10">

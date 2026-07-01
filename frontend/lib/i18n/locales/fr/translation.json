@@ -1689,7 +1689,11 @@
         "description": "La langue dans laquelle l'interface de temetro s'affiche sur cet appareil.",
         "label": "Langue d'affichage",
         "en": "English",
-        "fr": "Français"
+        "fr": "Français",
+        "confirmTitle": "Changer la langue d'affichage ?",
+        "confirmBody": "Basculer l'interface en {{language}} ? L'application rechargera ses textes dans la nouvelle langue.",
+        "confirmCta": "Changer la langue",
+        "cancel": "Annuler"
       },
       "patientNotifications": "Notifications patients",
       "patientNotificationsDescription": "E-mails envoyés aux patients à propos de leurs dossiers, résultats et approbations en attente",
