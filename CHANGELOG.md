@@ -7,6 +7,20 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.2.5] — 2026-07-01
+
+### Fixed
+- **Multi-arch Docker images** — the `release` workflow now builds and publishes
+  `khalidxv/temetro-backend` and `khalidxv/temetro-frontend` for both
+  `linux/amd64` and `linux/arm64`. Previously the images were amd64-only, so
+  `docker compose pull` on Apple Silicon failed with *no matching manifest for
+  linux/arm64/v8* and fell back to building from source.
+
+### Changed
+- **Language switcher** in Settings → Profile is now a **select** that asks for
+  confirmation before switching the interface language, instead of applying the
+  change instantly on a button tap.
+
 ## [0.2.4] — 2026-06-29
 
 ### Added
