@@ -196,7 +196,7 @@ export function ImportPreviewCard({
         <span className="text-sm font-medium">{t("chat.importCard.title")}</span>
         {status === "pending" && records.length > 0 ? (
           <Button
-            className="ml-auto"
+            className="ms-auto"
             onClick={() => setReviewOpen(true)}
             size="sm"
             variant="ghost"
@@ -289,7 +289,7 @@ export function ImportPreviewCard({
                 t("chat.importCard.unnamed");
               return (
                 <button
-                  className="flex items-start gap-2 rounded-xl border bg-card/30 p-3 text-left transition-colors hover:bg-accent"
+                  className="flex items-start gap-2 rounded-xl border bg-card/30 p-3 text-start transition-colors hover:bg-accent"
                   key={index}
                   onClick={() => setEditingIndex(index)}
                   type="button"

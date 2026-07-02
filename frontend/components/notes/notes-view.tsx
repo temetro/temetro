@@ -153,7 +153,7 @@ export function NotesView() {
         <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
           {notes.map((n) => (
             <button
-              className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-left transition-colors hover:bg-accent/50"
+              className="flex w-full flex-col items-start gap-0.5 px-4 py-3 text-start transition-colors hover:bg-accent/50"
               key={n.id}
               onClick={() => openNote(n)}
               type="button"

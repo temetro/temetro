@@ -60,7 +60,7 @@ export function AiSetupNotice() {
       </div>
       <button
         aria-label={t("chat.setupNotice.dismiss")}
-        className="-mr-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        className="-me-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         onClick={() => setDismissed(true)}
         type="button"
       >

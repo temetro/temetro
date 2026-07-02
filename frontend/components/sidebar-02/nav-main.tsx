@@ -66,7 +66,7 @@ export default function DashboardNavigation({ routes }: { routes: Route[] }) {
             >
               {route.icon}
               {!isCollapsed && (
-                <span className="ml-2 flex-1 truncate font-medium text-sm">
+                <span className="ms-2 flex-1 truncate font-medium text-sm">
                   {route.title}
                 </span>
               )}

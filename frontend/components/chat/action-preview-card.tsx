@@ -269,7 +269,7 @@ export function ActionPreviewCard({
         </span>
         {editable ? (
           <Button
-            className="ml-auto"
+            className="ms-auto"
             onClick={() => setEditOpen(true)}
             size="sm"
             variant="ghost"

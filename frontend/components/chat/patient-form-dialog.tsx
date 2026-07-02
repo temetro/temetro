@@ -724,7 +724,7 @@ export function PatientFormDialog({
 
           <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center">
             {error && (
-              <p className="text-sm text-destructive sm:mr-auto">{error}</p>
+              <p className="text-sm text-destructive sm:me-auto">{error}</p>
             )}
             <DialogClose render={<Button type="button" variant="outline" />}>
               {t("patientForm.cancel")}

@@ -147,7 +147,7 @@ export function PrescriptionDetailSheet({
           <SheetFooter>
             {onDelete && (
               <Button
-                className="sm:mr-auto"
+                className="sm:me-auto"
                 onClick={onDelete}
                 type="button"
                 variant="destructive"

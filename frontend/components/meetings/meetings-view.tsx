@@ -246,13 +246,13 @@ export function MeetingsView() {
                   return (
                     <div
                       className={cn(
-                        "group flex w-full items-center gap-1 rounded-lg pr-1 transition-colors hover:bg-accent/50",
+                        "group flex w-full items-center gap-1 rounded-lg pe-1 transition-colors hover:bg-accent/50",
                         activeRoom?.id === room.id && "bg-accent hover:bg-accent",
                       )}
                       key={room.id}
                     >
                       <button
-                        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-2 text-left"
+                        className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-2 text-start"
                         onClick={() => setActiveRoom(room)}
                         type="button"
                       >
@@ -352,7 +352,7 @@ export function MeetingsView() {
                 <div className="flex flex-col gap-1">
                   {upcoming.map((e) => (
                     <button
-                      className="flex flex-col gap-0.5 rounded-xl border bg-card px-2.5 py-2 text-left transition-colors hover:bg-accent/50"
+                      className="flex flex-col gap-0.5 rounded-xl border bg-card px-2.5 py-2 text-start transition-colors hover:bg-accent/50"
                       key={e.id}
                       onClick={() => setSelectedDay(new Date(`${e.date}T00:00:00`))}
                       type="button"

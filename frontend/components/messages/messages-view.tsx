@@ -152,7 +152,7 @@ function SentAttachment({ att }: { att: MessageAttachment }) {
         <AttachmentContent>
           <AttachmentTitle>{att.fileName}</AttachmentTitle>
         </AttachmentContent>
-        <AttachmentActions className="pr-1.5">
+        <AttachmentActions className="pe-1.5">
           <AttachmentAction
             aria-label={t("messages.attach.download")}
             onClick={() => {
@@ -491,10 +491,10 @@ export function MessagesView() {
         </div>
         <div className="border-border border-b px-3 py-2">
           <div className="relative">
-            <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+            <Search className="-translate-y-1/2 absolute top-1/2 start-3 size-4 text-muted-foreground" />
             <Input
               aria-label={t("messages.searchPlaceholder")}
-              className="pl-9"
+              className="ps-9"
               onChange={(e) => setInboxQuery(e.target.value)}
               placeholder={t("messages.searchPlaceholder")}
               size="sm"
@@ -520,7 +520,7 @@ export function MessagesView() {
               return (
                 <div
                   className={cn(
-                    "flex w-full items-center gap-1 rounded-lg pr-2 transition-colors hover:bg-accent/50",
+                    "flex w-full items-center gap-1 rounded-lg pe-2 transition-colors hover:bg-accent/50",
                     selected?.id === c.id && "bg-accent hover:bg-accent",
                   )}
                   key={c.id}
@@ -544,7 +544,7 @@ export function MessagesView() {
                     </button>
                   )}
                   <button
-                    className="flex min-w-0 flex-1 items-center gap-3 rounded-lg py-2 pr-1 text-left"
+                    className="flex min-w-0 flex-1 items-center gap-3 rounded-lg py-2 pe-1 text-start"
                     onClick={() => open(c.id)}
                     type="button"
                   >
@@ -880,10 +880,10 @@ export function MessagesView() {
           </DialogHeader>
           <DialogPanel className="flex flex-col gap-2">
             <div className="relative">
-              <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+              <Search className="-translate-y-1/2 absolute top-1/2 start-3 size-4 text-muted-foreground" />
               <Input
                 aria-label={t("messages.compose.searchPlaceholder")}
-                className="pl-9"
+                className="ps-9"
                 onChange={(e) => setMemberQuery(e.target.value)}
                 placeholder={t("messages.compose.searchPlaceholder")}
                 size="sm"
@@ -902,7 +902,7 @@ export function MessagesView() {
               ) : (
                 visibleMembers.map((m) => (
                   <button
-                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
+                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-start transition-colors hover:bg-accent"
                     key={m.id}
                     onClick={() => startConversation(m.id)}
                     type="button"
@@ -932,10 +932,10 @@ export function MessagesView() {
           </DialogHeader>
           <DialogPanel className="flex flex-col gap-2">
             <div className="relative">
-              <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+              <Search className="-translate-y-1/2 absolute top-1/2 start-3 size-4 text-muted-foreground" />
               <Input
                 aria-label={t("messages.attach.apptSearchPlaceholder")}
-                className="pl-9"
+                className="ps-9"
                 onChange={(e) => setApptQuery(e.target.value)}
                 placeholder={t("messages.attach.apptSearchPlaceholder")}
                 size="sm"
@@ -954,7 +954,7 @@ export function MessagesView() {
               ) : (
                 visibleAppts.map((a) => (
                   <button
-                    className="flex w-full flex-col gap-0.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
+                    className="flex w-full flex-col gap-0.5 rounded-lg px-2 py-2 text-start transition-colors hover:bg-accent"
                     key={a.id}
                     onClick={() => attachAppointment(a)}
                     type="button"

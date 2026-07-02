@@ -164,11 +164,11 @@ export function CareTeamPanel({
                     {initials(m.name, m.email)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="min-w-0 flex-1 text-left">
+                <div className="min-w-0 flex-1 text-start">
                   <p className="truncate text-sm font-medium">
                     {m.name || m.email || m.userId}
                     {isSelf && (
-                      <span className="ml-1 text-xs text-muted-foreground">
+                      <span className="ms-1 text-xs text-muted-foreground">
                         {t("settings.careTeam.you")}
                       </span>
                     )}

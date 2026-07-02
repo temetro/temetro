@@ -104,9 +104,9 @@ export function ChatHistoryPanel() {
               {t("chat.history.startNew")}
             </Button>
             <div className="relative">
-              <Search className="-translate-y-1/2 absolute top-1/2 left-2.5 size-4 text-muted-foreground" />
+              <Search className="-translate-y-1/2 absolute top-1/2 start-2.5 size-4 text-muted-foreground" />
               <Input
-                className="pl-8"
+                className="ps-8"
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t("chat.history.search")}
                 value={query}
@@ -123,7 +123,7 @@ export function ChatHistoryPanel() {
                   return (
                     <button
                       className={cn(
-                        "group flex items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors hover:bg-accent",
+                        "group flex items-center gap-2 rounded-md px-2 py-2 text-start text-sm transition-colors hover:bg-accent",
                         active
                           ? "bg-accent text-foreground"
                           : "text-muted-foreground",

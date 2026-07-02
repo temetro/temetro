@@ -422,7 +422,7 @@ export function EmployeeDetailDialog({
         <DialogFooter>
           {editable && member && (
             <Button
-              className="sm:mr-auto"
+              className="sm:me-auto"
               onClick={() => onRemove(member)}
               type="button"
               variant="destructive"

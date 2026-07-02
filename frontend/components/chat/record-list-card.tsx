@@ -31,7 +31,7 @@ function Shell({
       <div className="flex items-center gap-2 border-b px-4 py-3">
         <Icon className="size-4 text-muted-foreground" />
         <span className="font-medium text-sm">{title}</span>
-        <Badge className="ml-auto" variant="secondary">
+        <Badge className="ms-auto" variant="secondary">
           {rows.length}
         </Badge>
       </div>
@@ -123,7 +123,7 @@ export function AppointmentListCard({
         {range ? (
           <span className="text-muted-foreground text-xs">{range}</span>
         ) : null}
-        <Badge className="ml-auto" variant="secondary">
+        <Badge className="ms-auto" variant="secondary">
           {appointments.length}
         </Badge>
       </div>
@@ -157,7 +157,7 @@ export function AppointmentListCard({
         </span>
         <Button render={<Link href={href} />} size="sm" variant="ghost">
           {t("chat.lists.viewInCalendar")}
-          <ChevronRight className="size-4" />
+          <ChevronRight className="size-4 rtl:rotate-180" />
         </Button>
       </div>
     </Card>

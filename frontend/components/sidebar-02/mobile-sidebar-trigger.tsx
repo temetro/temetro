@@ -21,7 +21,7 @@ export function MobileSidebarTrigger() {
   return (
     <Button
       aria-label={t("nav.openSidebar")}
-      className="fixed top-3 right-3 z-50 size-9 rounded-full bg-background/80 shadow-sm backdrop-blur md:hidden"
+      className="fixed top-3 end-3 z-50 size-9 rounded-full bg-background/80 shadow-sm backdrop-blur md:hidden"
       onClick={toggleSidebar}
       size="icon"
       variant="outline"

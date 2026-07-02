@@ -25,6 +25,7 @@ import {
 } from "@/components/settings/settings-parts";
 import { authClient } from "@/lib/auth-client";
 import { supportedLanguages } from "@/lib/i18n/config";
+import { persistLanguage } from "@/lib/language";
 import {
   getSettings,
   saveSettings,
@@ -341,7 +342,10 @@ export function ProfilePanel() {
             : undefined
         }
         onConfirm={() => {
-          if (pendingLang) void i18n.changeLanguage(pendingLang);
+          if (pendingLang) {
+            void i18n.changeLanguage(pendingLang);
+            void persistLanguage(pendingLang);
+          }
         }}
         onOpenChange={(open) => {
           if (!open) setPendingLang(null);

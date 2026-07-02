@@ -421,7 +421,7 @@ export function ChatPanel() {
         </div>
         <button
           aria-label={t("chat.error.dismiss")}
-          className="-mr-1 shrink-0 rounded-md p-1 text-destructive-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive-foreground"
+          className="-me-1 shrink-0 rounded-md p-1 text-destructive-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive-foreground"
           onClick={() => setErrorDismissed(true)}
           type="button"
         >

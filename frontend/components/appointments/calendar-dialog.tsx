@@ -145,7 +145,7 @@ export function CalendarDialog({
                 type="button"
                 variant="ghost"
               >
-                <ChevronLeft />
+                <ChevronLeft className="rtl:rotate-180" />
               </Button>
               <Button
                 aria-label="Next month"
@@ -154,7 +154,7 @@ export function CalendarDialog({
                 type="button"
                 variant="ghost"
               >
-                <ChevronRight />
+                <ChevronRight className="rtl:rotate-180" />
               </Button>
             </div>
           </div>
@@ -182,7 +182,7 @@ export function CalendarDialog({
                 return (
                   <button
                     className={cn(
-                      "flex min-h-22 flex-col gap-1 rounded-lg border p-1.5 text-left align-top transition-colors hover:bg-accent/50",
+                      "flex min-h-22 flex-col gap-1 rounded-lg border p-1.5 text-start align-top transition-colors hover:bg-accent/50",
                       inMonth
                         ? "bg-card/30"
                         : "bg-transparent text-muted-foreground/40",

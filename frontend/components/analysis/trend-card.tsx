@@ -37,7 +37,7 @@ export function TrendCard({
   return (
     <>
       <button
-        className="w-full text-left"
+        className="w-full text-start"
         disabled={!hasData}
         onClick={() => setOpen(true)}
         type="button"

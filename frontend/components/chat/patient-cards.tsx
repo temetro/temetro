@@ -71,11 +71,11 @@ const statusVariant: Record<Patient["status"], BadgeVariant> = {
 // plus a subtle clickable affordance (they open a detail dialog). Compact cards
 // size to their own (short) content — see `items-start` in PatientResult.
 const rowCard =
-  "w-72 shrink-0 cursor-pointer gap-0 text-left outline-none transition hover:bg-accent/30 hover:ring-foreground/20 focus-visible:ring-2 focus-visible:ring-ring";
+  "w-72 shrink-0 cursor-pointer gap-0 text-start outline-none transition hover:bg-accent/30 hover:ring-foreground/20 focus-visible:ring-2 focus-visible:ring-ring";
 
 // Same footprint as `rowCard` but with no clickable affordance — used when a
 // card has nothing extra to reveal, so it shouldn't promise "Click for more".
-const rowCardStatic = "w-72 shrink-0 gap-0 text-left";
+const rowCardStatic = "w-72 shrink-0 gap-0 text-start";
 
 // COSS Card has no `size` variant; recreate the old compact ("sm") density by
 // tightening the inner section padding from p-6 → p-4 via data-slot selectors.
@@ -196,7 +196,7 @@ function ExpandableCard({
         {children}
         <div className="flex items-center gap-1 px-4 pt-2 pb-3 text-muted-foreground text-xs">
           {t("patientCard.clickForMore")}
-          <ArrowRight className="size-3" />
+          <ArrowRight className="size-3 rtl:rotate-180" />
         </div>
       </DialogTrigger>
       <DialogPopup className="max-h-[80dvh] sm:max-w-lg">

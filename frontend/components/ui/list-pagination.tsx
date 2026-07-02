@@ -76,7 +76,7 @@ export function ListPagination({
               type="button"
               variant="ghost"
             >
-              <ChevronLeft className="size-4" />
+              <ChevronLeft className="size-4 rtl:rotate-180" />
               <span className="max-sm:hidden">
                 {t("common.pagination.previous")}
               </span>
@@ -115,7 +115,7 @@ export function ListPagination({
               <span className="max-sm:hidden">
                 {t("common.pagination.next")}
               </span>
-              <ChevronRight className="size-4" />
+              <ChevronRight className="size-4 rtl:rotate-180" />
             </Button>
           </PaginationItem>
         </PaginationContent>

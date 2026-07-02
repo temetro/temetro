@@ -108,7 +108,7 @@ export function CopyField({
           <p className="text-xs text-muted-foreground">{description}</p>
         ) : null}
       </div>
-      <div className="flex h-9 w-full items-center gap-2 rounded-3xl bg-input/50 pr-1 pl-3 sm:w-80">
+      <div className="flex h-9 w-full items-center gap-2 rounded-3xl bg-input/50 pe-1 ps-3 sm:w-80">
         <span className="flex-1 truncate text-sm text-muted-foreground">
           {value}
         </span>

@@ -135,9 +135,9 @@ export function InvoicesView() {
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative">
-            <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+            <Search className="-translate-y-1/2 absolute top-1/2 start-3 size-4 text-muted-foreground" />
             <Input
-              className="w-full pl-9 sm:w-64"
+              className="w-full ps-9 sm:w-64"
               onChange={(event) => {
                 setQuery(event.target.value);
                 setPage(1);
@@ -180,7 +180,7 @@ export function InvoicesView() {
       <div className="divide-y divide-border overflow-hidden rounded-2xl border bg-card/30">
         {pageRows.map((inv) => (
           <button
-            className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/50"
+            className="flex w-full items-center gap-3 px-4 py-3 text-start transition-colors hover:bg-accent/50"
             key={inv.id}
             onClick={() => openInvoice(inv)}
             type="button"

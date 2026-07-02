@@ -314,9 +314,9 @@ export function AppointmentsView() {
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+            <Search className="-translate-y-1/2 absolute top-1/2 start-3 size-4 text-muted-foreground" />
             <Input
-              className="w-full pl-9 sm:w-64"
+              className="w-full ps-9 sm:w-64"
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("appointments.searchPlaceholder")}
               value={query}

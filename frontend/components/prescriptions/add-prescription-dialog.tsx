@@ -378,11 +378,11 @@ export function AddPrescriptionDialog({
               ) : (
                 <div className="flex flex-col gap-1.5">
                   <div className="relative">
-                    <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+                    <Search className="-translate-y-1/2 absolute top-1/2 start-3 size-4 text-muted-foreground" />
                     <Input
                       aria-autocomplete="list"
                       autoFocus
-                      className="pl-9"
+                      className="ps-9"
                       onChange={(event) => setQuery(event.target.value)}
                       onKeyDown={onPatientKeyDown}
                       placeholder={t("prescriptions.dialog.searchPlaceholder")}
@@ -399,7 +399,7 @@ export function AddPrescriptionDialog({
                         matches.map((p, i) => (
                           <button
                             className={cn(
-                              "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left transition-colors",
+                              "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-start transition-colors",
                               i === activeIndex
                                 ? "bg-accent"
                                 : "hover:bg-accent",
@@ -442,7 +442,7 @@ export function AddPrescriptionDialog({
                       return (
                         <button
                           className={cn(
-                            "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left transition-colors",
+                            "flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-start transition-colors",
                             i === medIndex ? "bg-accent" : "hover:bg-accent",
                           )}
                           // Use onMouseDown so the pick fires before the input's

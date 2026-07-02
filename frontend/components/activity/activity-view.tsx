@@ -104,7 +104,7 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <span className="shrink-0 text-muted-foreground text-xs">{label}</span>
-      <span className="text-right text-foreground text-sm">{value}</span>
+      <span className="text-end text-foreground text-sm">{value}</span>
     </div>
   );
 }
@@ -212,7 +212,7 @@ export function ActivityView() {
 
                 <button
                   className={cn(
-                    "-mx-2 flex-1 rounded-lg px-2 py-1 text-left transition-colors hover:bg-accent/40",
+                    "-mx-2 flex-1 rounded-lg px-2 py-1 text-start transition-colors hover:bg-accent/40",
                     isLast ? "pb-1" : "mb-5",
                   )}
                   onClick={() => setSelected(entry)}

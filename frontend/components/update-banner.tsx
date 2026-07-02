@@ -40,7 +40,7 @@ export function UpdateBanner() {
   };
 
   return (
-    <div className="fixed right-4 bottom-4 z-50 flex max-w-sm items-start gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-lg">
+    <div className="fixed end-4 bottom-4 z-50 flex max-w-sm items-start gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-lg">
       <div className="space-y-1.5">
         <p className="text-sm text-foreground">
           {t("settings.version.banner", { version: latest })}
@@ -55,7 +55,7 @@ export function UpdateBanner() {
       </div>
       <button
         aria-label={t("settings.version.bannerDismiss")}
-        className="-mr-1 shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        className="-me-1 shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         onClick={dismiss}
         type="button"
       >

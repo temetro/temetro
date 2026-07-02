@@ -336,7 +336,7 @@ function AddResultDialog({
                   {t("lab.addResult.patient")}
                 </span>
                 <div className="relative">
-                  <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+                  <Search className="-translate-y-1/2 absolute top-1/2 start-3 size-4 text-muted-foreground" />
                   <Input
                     aria-activedescendant={
                       matches[activeIndex]
@@ -344,7 +344,7 @@ function AddResultDialog({
                         : undefined
                     }
                     autoFocus
-                    className="pl-9"
+                    className="ps-9"
                     onChange={(event) => {
                       setPatientQuery(event.target.value);
                       setActiveIndex(0);
@@ -359,7 +359,7 @@ function AddResultDialog({
                     {matches.map((p, index) => (
                       <button
                         className={cn(
-                          "flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors",
+                          "flex items-center gap-3 rounded-lg px-2 py-2 text-start transition-colors",
                           index === activeIndex
                             ? "bg-accent"
                             : "hover:bg-accent",
@@ -650,7 +650,7 @@ export function LabView() {
                     }
                     onClick={() => toggle(task.id)}
                   />
-                  <CollapsibleTrigger className="group flex min-w-0 flex-1 items-center gap-3 text-left">
+                  <CollapsibleTrigger className="group flex min-w-0 flex-1 items-center gap-3 text-start">
                     <div className="flex min-w-0 flex-1 flex-col">
                       <span
                         className={cn(
@@ -679,7 +679,7 @@ export function LabView() {
                   </CollapsibleTrigger>
                 </div>
                 <CollapsibleContent>
-                  <div className="space-y-3 px-4 pb-4 pl-12 text-sm">
+                  <div className="space-y-3 px-4 pb-4 ps-12 text-sm">
                     <p
                       className={cn(
                         "whitespace-pre-wrap",

@@ -53,7 +53,7 @@ export function NotificationsPopover() {
       >
         <BellIcon className="size-5" />
         {unread > 0 && (
-          <span className="-top-0.5 -right-0.5 absolute flex min-w-4 items-center justify-center rounded-full bg-primary px-1 font-medium text-[10px] text-primary-foreground leading-4">
+          <span className="-top-0.5 -end-0.5 absolute flex min-w-4 items-center justify-center rounded-full bg-primary px-1 font-medium text-[10px] text-primary-foreground leading-4">
             {unread > 9 ? "9+" : unread}
           </span>
         )}

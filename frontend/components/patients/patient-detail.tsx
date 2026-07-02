@@ -296,7 +296,7 @@ export function PatientDetail({
           {onDelete && (
             <Button
               aria-label={t("patients.delete.action")}
-              className="ml-auto"
+              className="ms-auto"
               onClick={onDelete}
               size="sm"
               type="button"
@@ -358,7 +358,7 @@ export function PatientDetail({
             <div className="divide-y divide-border overflow-hidden rounded-xl border bg-card/30">
               {files.map((file) => (
                 <button
-                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-accent"
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-start transition-colors hover:bg-accent"
                   key={file.id}
                   onClick={() => setOpenFile(file)}
                   type="button"

@@ -146,13 +146,13 @@ export function NavUser() {
             </Avatar>
             {!isCollapsed && (
               <>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-start text-sm leading-tight">
                   <span className="truncate font-medium">{name}</span>
                   <span className="truncate text-muted-foreground text-xs">
                     {secondary}
                   </span>
                 </div>
-                <ChevronsUpDown className="ml-auto size-4" />
+                <ChevronsUpDown className="ms-auto size-4" />
               </>
             )}
           </MenuTrigger>
@@ -167,7 +167,7 @@ export function NavUser() {
                 <Avatar className="size-8">
                   <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
+                <div className="grid flex-1 text-start text-sm leading-tight">
                   <span className="truncate font-medium">{name}</span>
                   <span className="truncate text-muted-foreground text-xs">
                     {secondary}

@@ -115,7 +115,7 @@ export function BatchActionPreviewCard({
         <span className="font-medium text-sm">
           {t("chat.actionCard.batch.title", { count: items.length })}
         </span>
-        <Badge className="ml-auto gap-1" variant="secondary">
+        <Badge className="ms-auto gap-1" variant="secondary">
           <Sparkles className="size-3" />
           AI
         </Badge>

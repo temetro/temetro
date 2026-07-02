@@ -179,7 +179,7 @@ function IntegrationCard({
               : t("settings.integrations.test")}
           </Button>
           {config.lastSyncAt ? (
-            <span className="ml-auto text-xs text-muted-foreground">
+            <span className="ms-auto text-xs text-muted-foreground">
               {t("settings.integrations.lastSync", {
                 when: new Date(config.lastSyncAt).toLocaleString(),
               })}

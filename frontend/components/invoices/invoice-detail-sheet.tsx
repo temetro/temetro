@@ -171,7 +171,7 @@ export function InvoiceDetailSheet({
           <SheetTitle className="flex items-center gap-2">
             {invoice.number}
             <AiBadge source={invoice.source} />
-            <Badge className="ml-auto" variant={statusVariant[invoice.status]}>
+            <Badge className="ms-auto" variant={statusVariant[invoice.status]}>
               {t(`invoices.status.${invoice.status}`)}
             </Badge>
           </SheetTitle>
@@ -222,7 +222,7 @@ export function InvoiceDetailSheet({
                     <span className="shrink-0 text-muted-foreground text-xs tabular-nums">
                       {li.quantity} × {formatMoney(li.unitPrice)}
                     </span>
-                    <span className="w-20 shrink-0 text-right font-medium text-foreground tabular-nums">
+                    <span className="w-20 shrink-0 text-end font-medium text-foreground tabular-nums">
                       {formatMoney(li.quantity * li.unitPrice)}
                     </span>
                   </div>

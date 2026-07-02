@@ -43,7 +43,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1.5 text-left">
+    <label className="flex flex-col gap-1.5 text-start">
       <span className="font-medium text-foreground text-sm">{label}</span>
       {children}
     </label>
@@ -122,7 +122,7 @@ function ChooseStep({ onPick }: { onPick: (step: Step) => void }) {
     <div className="grid w-full gap-4 sm:grid-cols-2">
       {cards.map((c) => (
         <button
-          className="group flex flex-col items-start gap-4 rounded-3xl border bg-card/40 p-6 text-left transition-colors hover:border-primary/50 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="group flex flex-col items-start gap-4 rounded-3xl border bg-card/40 p-6 text-start transition-colors hover:border-primary/50 hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           key={c.step}
           onClick={() => onPick(c.step)}
           type="button"
@@ -133,7 +133,7 @@ function ChooseStep({ onPick }: { onPick: (step: Step) => void }) {
           <span className="flex flex-col gap-1">
             <span className="flex items-center gap-1 font-semibold text-lg text-foreground">
               {c.title}
-              <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+              <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 rtl:rotate-180" />
             </span>
             <span className="text-muted-foreground text-sm">{c.desc}</span>
           </span>
@@ -151,7 +151,7 @@ function BackButton({ onBack }: { onBack: () => void }) {
       onClick={onBack}
       type="button"
     >
-      <ArrowLeft className="size-4" />
+      <ArrowLeft className="size-4 rtl:rotate-180" />
       {t("portal.back")}
     </button>
   );

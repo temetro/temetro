@@ -16,7 +16,7 @@ export function InventoryListCard({ items }: { items: InventoryItem[] }) {
       <div className="flex items-center gap-2 border-b px-4 py-3">
         <Boxes className="size-4 text-muted-foreground" />
         <span className="font-medium text-sm">{t("chat.lists.inventory")}</span>
-        <Badge className="ml-auto" variant="secondary">
+        <Badge className="ms-auto" variant="secondary">
           {items.length}
         </Badge>
       </div>

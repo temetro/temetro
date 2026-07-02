@@ -28,7 +28,7 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-3">
       <dt className="text-muted-foreground text-sm">{label}</dt>
-      <dd className="text-right text-foreground text-sm">{value}</dd>
+      <dd className="text-end text-foreground text-sm">{value}</dd>
     </div>
   );
 }

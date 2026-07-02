@@ -115,9 +115,9 @@ export function PatientsView() {
         </h1>
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+            <Search className="-translate-y-1/2 absolute top-1/2 start-3 size-4 text-muted-foreground" />
             <Input
-              className="w-full pl-9 sm:w-64"
+              className="w-full ps-9 sm:w-64"
               onChange={(event) => {
                 setQuery(event.target.value);
                 setPage(1);
@@ -159,7 +159,7 @@ export function PatientsView() {
       <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-card/30">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-border border-b text-left text-xs text-muted-foreground uppercase">
+            <tr className="border-border border-b text-start text-xs text-muted-foreground uppercase">
               <th className="px-4 py-3 font-medium">{t("patients.columns.name")}</th>
               <th className="px-4 py-3 font-medium">{t("patients.columns.mrn")}</th>
               <th className="px-4 py-3 font-medium">

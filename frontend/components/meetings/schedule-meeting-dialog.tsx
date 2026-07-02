@@ -159,7 +159,7 @@ export function ScheduleMeetingDialog({
                       return (
                         <button
                           className={cn(
-                            "flex items-center gap-3 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/50",
+                            "flex items-center gap-3 rounded-lg px-2 py-1.5 text-start transition-colors hover:bg-accent/50",
                             on && "bg-accent",
                           )}
                           key={m.id}

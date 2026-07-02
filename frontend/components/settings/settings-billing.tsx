@@ -109,7 +109,7 @@ export function SigningPanel() {
               : t("settings.signing.rotateKey")}
           </Button>
         </div>
-        <div className="sm:text-right">
+        <div className="sm:text-end">
           <p className="text-3xl font-semibold tracking-tight">Ed25519</p>
           <p className="text-sm text-muted-foreground">
             {key

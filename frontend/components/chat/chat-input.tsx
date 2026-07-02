@@ -242,7 +242,7 @@ export function ChatInput({
               />
             </label>
             <button
-              className={cn(contextPill, "ml-0.5")}
+              className={cn(contextPill, "ms-0.5")}
               onClick={() => {
                 setAddKey((k) => k + 1);
                 setAddOpen(true);
@@ -258,7 +258,7 @@ export function ChatInput({
             <ModePicker
               mode={mode}
               onModeChange={onModeChange}
-              triggerClassName={cn(pillButton, "mr-1")}
+              triggerClassName={cn(pillButton, "me-1")}
             />
             <button
               aria-label={

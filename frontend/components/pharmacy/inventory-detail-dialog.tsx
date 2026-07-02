@@ -35,7 +35,7 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-4 py-2">
       <span className="text-muted-foreground text-sm">{label}</span>
-      <span className="text-right text-foreground text-sm">{value}</span>
+      <span className="text-end text-foreground text-sm">{value}</span>
     </div>
   );
 }
@@ -68,7 +68,7 @@ export function InventoryDetailDialog({
             </span>
             <span className="min-w-0 truncate">{item.name}</span>
             <Badge
-              className="ml-auto shrink-0"
+              className="ms-auto shrink-0"
               variant={availabilityVariant[availability]}
             >
               {t(`inventory.availability.${availability}`)}

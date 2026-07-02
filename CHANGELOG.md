@@ -7,6 +7,25 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-07-02
+
+### Added
+- **Three new interface languages** — Somali (`so`), Arabic (`ar`) and German
+  (`de`) join English and French, selectable in Settings → Profile → Language.
+  Each locale carries a full translation of the ~1,660 UI strings, with native
+  names shown in the selector (Soomaali, العربية, Deutsch).
+- **Right-to-left (RTL) support** — selecting Arabic sets `dir="rtl"` on the
+  document (applied before first paint via an inline script, so no flash), flips
+  physical spacing/alignment to logical CSS utilities, mirrors directional icons,
+  and loads an Arabic-capable typeface (IBM Plex Sans Arabic) appended to the
+  font stack for per-character fallback.
+- **Language roams across devices** — the chosen language is persisted to the
+  per-user `user_settings` preferences and re-applied on sign-in, with
+  localStorage remaining the offline source of truth.
+- **`frontend/scripts/check-locales.mjs`** (+ `npm run check-locales`) — a parity
+  check that fails on missing/extra keys or `{{placeholder}}` mismatches across
+  locales and warns when Arabic count-keys lack the full CLDR plural forms.
+
 ## [0.2.5] — 2026-07-01
 
 ### Fixed

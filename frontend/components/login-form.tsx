@@ -124,7 +124,7 @@ export function LoginForm({
                     {t("auth.login.passwordLabel")}
                   </FieldLabel>
                   <Link
-                    className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                    className="ms-auto inline-block text-sm underline-offset-4 hover:underline"
                     href="/forgot-password"
                   >
                     {t("auth.login.forgotPassword")}

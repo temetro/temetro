@@ -210,7 +210,7 @@ export function AttachmentsSection({
               key={attachment.id}
             >
               <button
-                className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                className="flex min-w-0 flex-1 items-center gap-2.5 text-start"
                 onClick={() => setPreview(attachment)}
                 type="button"
               >

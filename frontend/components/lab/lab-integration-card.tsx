@@ -92,7 +92,7 @@ export function LabIntegrationCard({
           {t("integrations.fhir.cardTitle")}
         </h2>
         <Badge
-          className="ml-auto"
+          className="ms-auto"
           variant={
             config.status === "connected"
               ? "secondary"
@@ -141,9 +141,9 @@ export function LabIntegrationCard({
       ) : (
         <div className="flex flex-col gap-1.5">
           <div className="relative">
-            <Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+            <Search className="-translate-y-1/2 absolute top-1/2 start-3 size-4 text-muted-foreground" />
             <Input
-              className="pl-9"
+              className="ps-9"
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t("integrations.fhir.searchPlaceholder")}
               value={query}
@@ -153,7 +153,7 @@ export function LabIntegrationCard({
             <div className="flex flex-col gap-1">
               {matches.map((p) => (
                 <button
-                  className="flex items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent"
+                  className="flex items-center gap-3 rounded-lg px-2 py-2 text-start transition-colors hover:bg-accent"
                   key={p.fileNumber}
                   onClick={() => setSelected(p)}
                   type="button"

@@ -1,12 +1,13 @@
 {
   "name": "frontend",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check-locales": "node scripts/check-locales.mjs"
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.206",

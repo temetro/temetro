@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useRef } from "react";
 
 import { useAiAccess } from "@/lib/ai-policy";
 import { authClient } from "@/lib/auth-client";
+import { applyStoredLanguage } from "@/lib/language";
 import { canAccessRoute, defaultLandingFor, useActiveRole } from "@/lib/roles";
 
 // Authoritative client-side gate for the app shell. Requires a session and an
@@ -23,6 +24,16 @@ export function AppAuthGuard({ children }: { children: ReactNode }) {
 
   const hasUser = Boolean(session?.user);
   const activeOrgId = session?.session?.activeOrganizationId ?? null;
+
+  // Adopt the language saved on the backend once signed in, so the UI language
+  // roams across devices. Best-effort and one-shot; localStorage stays the
+  // offline source of truth.
+  const languageSynced = useRef(false);
+  useEffect(() => {
+    if (!hasUser || languageSynced.current) return;
+    languageSynced.current = true;
+    void applyStoredLanguage();
+  }, [hasUser]);
 
   useEffect(() => {
     if (isPending) return;
