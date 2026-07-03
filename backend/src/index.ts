@@ -18,6 +18,7 @@ import { appointmentsRouter } from "./routes/appointments.js";
 import { chatRouter } from "./routes/chat.js";
 import { conversationsRouter } from "./routes/conversations.js";
 import { dispensesRouter } from "./routes/dispenses.js";
+import { fhirRouter } from "./routes/fhir.js";
 import { integrationsRouter } from "./routes/integrations.js";
 import { inventoryRouter } from "./routes/inventory.js";
 import { invoicesRouter } from "./routes/invoices.js";
@@ -110,6 +111,11 @@ app.use("/api/integrations", integrationsRouter);
 app.use("/api/portal", portalRouter);
 app.use("/api/auth-helpers", authHelpersRouter);
 
+// Read-only FHIR R4 server, mounted OUTSIDE /api. Bearer-only (per-clinic API
+// keys), no Better Auth session/cookie coupling. Errors are FHIR
+// OperationOutcomes, not our standard error JSON.
+app.use("/fhir", fhirRouter);
+
 app.use(notFound);
 app.use(errorHandler);
 
@@ -146,6 +152,7 @@ server.listen(env.PORT, () => {
   console.log(`  • chat:     /api/chat  (LLM agent)`);
   console.log(`  • integr.:  /api/integrations  (FHIR / e-Rx / claims)`);
   console.log(`  • portal:   /api/portal  (public clinic kiosk)`);
+  console.log(`  • fhir:     /fhir  (read-only FHIR R4 server, API-key auth)`);
   console.log(`  • signing:  /api/signing  (Ed25519 clinic key)`);
   console.log(`  • wallet:   /api/patients/wallet  (+ /wallet socket relay)`);
 });

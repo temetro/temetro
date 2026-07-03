@@ -15,6 +15,9 @@ declare global {
       };
       organizationId?: string;
       memberRole?: string;
+      // Set by the FHIR bearer-auth middleware (machine-to-machine API key)
+      // instead of a Better Auth session; used for org scoping + audit.
+      fhirKey?: { id: string; name: string };
     }
   }
 }

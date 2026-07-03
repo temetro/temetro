@@ -64,6 +64,37 @@ export function submitInsuranceClaim(
   });
 }
 
+// --- FHIR server API keys (owner/admin only) --------------------------------
+
+export type FhirApiKey = {
+  id: string;
+  name: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revoked: boolean;
+};
+
+// A freshly created key includes the one-time plaintext secret; it is never
+// returned again.
+export type CreatedFhirApiKey = FhirApiKey & { secret: string };
+
+export function listFhirKeys(): Promise<FhirApiKey[]> {
+  return apiFetch<FhirApiKey[]>("/api/integrations/fhir-server/keys");
+}
+
+export function createFhirKey(name: string): Promise<CreatedFhirApiKey> {
+  return apiFetch<CreatedFhirApiKey>("/api/integrations/fhir-server/keys", {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
+}
+
+export function revokeFhirKey(id: string): Promise<{ revoked: boolean }> {
+  return apiFetch(`/api/integrations/fhir-server/keys/${id}`, {
+    method: "DELETE",
+  });
+}
+
 // Convenience hook-style fetch reused by the on-page sections: returns the
 // config for one type (or null while loading/absent).
 export async function getIntegration(

@@ -18,6 +18,7 @@ import {
   listConfigs,
   saveConfig,
 } from "../services/integrations/config.js";
+import { createKey, listKeys, revokeKey } from "../services/fhir-server/keys.js";
 import * as eprescribe from "../services/integrations/eprescribe.js";
 import * as fhir from "../services/integrations/fhir.js";
 
@@ -113,6 +114,75 @@ integrationsRouter.post(
             ? eprescribe.testConnection
             : claims.testConnection;
       res.json(await tester(config.endpoint, token));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// --- FHIR server API keys (owner/admin only) --------------------------------
+// These credential the read-only /fhir server. The plaintext secret is returned
+// exactly once (on creation) and only its hash is stored.
+
+integrationsRouter.get(
+  "/fhir-server/keys",
+  requireAuth,
+  requireOrg,
+  async (req, res, next) => {
+    try {
+      assertAdmin(req.memberRole);
+      res.json(await listKeys(req.organizationId!));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+const createKeySchema = z.object({ name: z.string().trim().min(1).max(120) });
+
+integrationsRouter.post(
+  "/fhir-server/keys",
+  requireAuth,
+  requireOrg,
+  async (req, res, next) => {
+    try {
+      assertAdmin(req.memberRole);
+      const { name } = createKeySchema.parse(req.body);
+      const { secret, key } = await createKey(
+        req.organizationId!,
+        name,
+        req.user!.id,
+      );
+      void recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: `Created a FHIR API key ("${key.name}")`,
+        entityType: "settings",
+      });
+      // `secret` is present only in this response — the client must show it now.
+      res.status(201).json({ ...key, secret });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+integrationsRouter.delete(
+  "/fhir-server/keys/:id",
+  requireAuth,
+  requireOrg,
+  async (req, res, next) => {
+    try {
+      assertAdmin(req.memberRole);
+      const revoked = await revokeKey(req.organizationId!, String(req.params.id));
+      if (!revoked) throw new HttpError(404, "API key not found.");
+      void recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: "Revoked a FHIR API key",
+        entityType: "settings",
+      });
+      res.json({ revoked: true });
     } catch (err) {
       next(err);
     }
