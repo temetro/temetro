@@ -7,6 +7,27 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-07-04
+
+### Added
+- **Read-only FHIR R4 server** — temetro can now be a FHIR **server**, not just a client.
+  A new endpoint tree at **`/fhir`** (mounted outside `/api`, bearer-only) exposes each
+  clinic's records as FHIR R4: **Patient**, **Observation** (labs + synthesized vital signs),
+  **AllergyIntolerance**, **Condition**, **MedicationRequest**, **Encounter** and
+  **Appointment**, plus an unauthenticated **`GET /fhir/metadata`** CapabilityStatement.
+  Searches return searchset `Bundle`s with `_count`/`_offset` pagination and self/next/prev
+  links. Because temetro stores free-text clinical values, every `CodeableConcept` is
+  **text-only** (no SNOMED/LOINC) and patients carry an **age** extension rather than a
+  `birthDate` — documented in the CapabilityStatement and API docs.
+- **Per-clinic FHIR API keys** — machine-to-machine auth via `Authorization: Bearer tmf_…`.
+  Keys are created/revoked under **Settings → Integrations → FHIR server** (owner/admin),
+  **SHA-256-hashed** at rest, and shown **once** at creation. Every FHIR request is
+  org-scoped (no cross-clinic reads) and written to the activity log with the key name and
+  result count. New `fhir_api_keys` table, `middleware/fhir-auth.ts`, the
+  `services/fhir-server/` mapping module (queries, resources, bundle, capability, keys), the
+  `/fhir` router, and `GET/POST/DELETE /api/integrations/fhir-server/keys`. New `fhirServer`
+  locale namespace across all five languages.
+
 ## [0.5.0] — 2026-07-03
 
 ### Added
