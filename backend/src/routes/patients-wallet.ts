@@ -20,6 +20,7 @@ import { recordActivity } from "../services/activity.js";
 import * as patientService from "../services/patients.js";
 import { awaitQuickTunnelUrl } from "../services/relay-url.js";
 import * as walletShare from "../services/wallet-share.js";
+import * as walletUpdates from "../services/wallet-updates.js";
 
 export const patientsWalletRouter = Router();
 
@@ -131,6 +132,94 @@ patientsWalletRouter.get(
         req.params.id as string,
       );
       if (!view) throw new HttpError(404, "Share request not found.");
+      res.json(view);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// --- Clinic → wallet record-update push ------------------------------------
+
+// Whether a patient is linked to a wallet (drives the "Push update" button).
+// Returns the wallet number when linked, 404 otherwise.
+patientsWalletRouter.get(
+  "/link/:fileNumber",
+  requirePermission({ patient: ["read"] }),
+  async (req, res, next) => {
+    try {
+      const walletNumber = await walletUpdates.walletNumberForPatient(
+        req.organizationId!,
+        req.params.fileNumber as string,
+      );
+      if (!walletNumber) throw new HttpError(404, "Not wallet-linked.");
+      res.json({ walletNumber });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+const pushSchema = z.object({
+  fileNumber: z.string().trim().min(1),
+  changes: z.array(z.string().trim().min(1)).min(1).max(50),
+});
+
+// Push the current record snapshot to the linked wallet. Seals + signs it,
+// stores it pending, and delivers live if the device is connected (it is also
+// re-sent on the wallet's next connect). The patient must approve in-app.
+patientsWalletRouter.post(
+  "/push",
+  requirePermission({ patient: ["write"] }),
+  async (req, res, next) => {
+    try {
+      const input = pushSchema.parse(req.body);
+      const row = await walletUpdates.createRecordUpdate(
+        req.organizationId!,
+        req.user!.id,
+        input.fileNumber,
+        input.changes,
+      );
+      const event = await walletUpdates.toEvent(row);
+      emitToWallet(row.walletNumber, "wallet:update-request", event);
+      await recordActivity({
+        orgId: req.organizationId!,
+        actor: { id: req.user!.id, name: req.user!.name },
+        action: `Pushed a record update to a patient wallet (#${row.fileNumber})`,
+        entityType: "patient",
+        entityId: row.fileNumber,
+        patientFileNumber: row.fileNumber,
+      });
+      res.status(201).json(walletUpdates.viewOf(row));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// The clinic's recent update pushes (Signing panel + status polling).
+patientsWalletRouter.get(
+  "/updates",
+  requirePermission({ patient: ["read"] }),
+  async (req, res, next) => {
+    try {
+      res.json(await walletUpdates.listUpdates(req.organizationId!));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+patientsWalletRouter.get(
+  "/updates/:id",
+  requirePermission({ patient: ["read"] }),
+  async (req, res, next) => {
+    try {
+      const view = await walletUpdates.getUpdate(
+        req.organizationId!,
+        req.params.id as string,
+      );
+      if (!view) throw new HttpError(404, "Update not found.");
       res.json(view);
     } catch (err) {
       next(err);

@@ -7,6 +7,24 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-07-03
+
+### Added
+- **Clinic → wallet record-update push** — a clinician can push an updated record to a
+  **wallet-linked** patient (a permanent, approved share). The record snapshot is **signed**
+  with the clinic's Ed25519 key and **sealed** to the wallet's X25519 key (derived from its
+  Ed25519 wallet number via the birational map — verified byte-for-byte against the wallet's
+  own derivation), stored `pending`, and delivered over the `/wallet` relay live **and** on
+  the wallet's next authenticated connect (so an offline phone catches up). The patient
+  reviews it in a **pending-updates inbox** and approves/denies; the wallet signs its
+  decision, the backend verifies it, and the on-device record is replaced only on approval.
+  The wallet **pins** the clinic key (TOFU) and warns on a key change. New
+  `POST /api/patients/wallet/push`, `GET /api/patients/wallet/{link/:fileNumber,updates,updates/:id}`,
+  `walletRecordUpdates` table + service, `wallet:update-request` / `wallet:update-response`
+  relay events, a "Push to wallet" dialog with live status, and a "Sent updates" list under
+  Settings → Signing. New `walletPush` / `walletUpdatesList` locale namespaces across all five
+  languages. (The wallet app half ships in the sibling `temetro-app` repo.)
+
 ## [0.4.0] — 2026-07-03
 
 ### Added

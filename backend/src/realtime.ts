@@ -11,6 +11,7 @@ import * as meetings from "./services/meetings.js";
 import * as messaging from "./services/messaging.js";
 import { createNotification } from "./services/notifications.js";
 import * as walletShare from "./services/wallet-share.js";
+import * as walletUpdates from "./services/wallet-updates.js";
 import type { MessageAttachment } from "./types/messaging.js";
 
 let io: Server | null = null;
@@ -317,8 +318,53 @@ export function initRealtime(httpServer: HttpServer): Server {
           socket.data.walletNumber = walletNumber;
           socket.join(walletRoom(walletNumber));
           ack?.({ ok: true });
+          // Deliver any record updates the device missed while offline. Sent
+          // after the ack so the client is ready to receive them.
+          void walletUpdates
+            .pendingUpdatesForWallet(walletNumber)
+            .then(async (rows) => {
+              for (const row of rows) {
+                socket.emit("wallet:update-request", await walletUpdates.toEvent(row));
+                await walletUpdates.markDelivered(row.id);
+              }
+            })
+            .catch(() => {});
         } catch {
           ack?.({ ok: false });
+        }
+      },
+    );
+
+    // The patient approved/denied a clinic→wallet record update on their device.
+    // We verify the wallet's signature over the decision and resolve the row.
+    socket.on(
+      "wallet:update-response",
+      async (
+        payload: {
+          requestId?: string;
+          walletNumber?: string;
+          decision?: "approved" | "denied";
+          signature?: string;
+        },
+        ack?: Ack,
+      ) => {
+        try {
+          if (
+            !socket.data.walletNumber ||
+            socket.data.walletNumber !== payload?.walletNumber
+          ) {
+            ack?.({ ok: false });
+            return;
+          }
+          const view = await walletUpdates.applyUpdateResponse(
+            String(payload?.requestId ?? ""),
+            String(payload?.walletNumber ?? ""),
+            payload?.decision === "approved" ? "approved" : "denied",
+            payload?.signature,
+          );
+          ack?.({ ok: !!view });
+        } catch (err) {
+          ack?.({ ok: false, error: (err as Error).message });
         }
       },
     );

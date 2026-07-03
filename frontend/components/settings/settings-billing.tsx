@@ -19,6 +19,7 @@ import {
   type SharedRecord,
   type SigningKey,
 } from "@/lib/signing";
+import { listWalletUpdates, type WalletUpdate } from "@/lib/wallet-updates";
 import { notify } from "@/lib/toast";
 
 function formatDate(iso: string): string {
@@ -33,17 +34,23 @@ export function SigningPanel() {
   const { t } = useTranslation();
   const [key, setKey] = useState<SigningKey | null>(null);
   const [records, setRecords] = useState<SharedRecord[]>([]);
+  const [updates, setUpdates] = useState<WalletUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rotating, setRotating] = useState(false);
 
   useEffect(() => {
     let active = true;
-    Promise.all([getSigningKey(), listSignedRecords().catch(() => [])])
-      .then(([k, r]) => {
+    Promise.all([
+      getSigningKey(),
+      listSignedRecords().catch(() => []),
+      listWalletUpdates().catch(() => []),
+    ])
+      .then(([k, r, u]) => {
         if (!active) return;
         setKey(k);
         setRecords(r);
+        setUpdates(u);
         setError(null);
       })
       .catch(() => {
@@ -217,6 +224,40 @@ export function SigningPanel() {
                 </div>
                 <Badge variant="secondary">
                   {recordStatusLabel(record.status)}
+                </Badge>
+              </div>
+            ))}
+          </SettingsCard>
+        )}
+      </SettingsSection>
+
+      <SettingsSection
+        description={t("walletUpdatesList.description")}
+        title={t("walletUpdatesList.title")}
+      >
+        {updates.length === 0 ? (
+          <SettingsCard className="flex items-center justify-center p-12">
+            <p className="text-sm text-muted-foreground">
+              {t("walletUpdatesList.none")}
+            </p>
+          </SettingsCard>
+        ) : (
+          <SettingsCard className="divide-y divide-border">
+            {updates.map((update) => (
+              <div
+                className="flex items-center justify-between gap-3 px-4 py-3.5"
+                key={update.id}
+              >
+                <div className="min-w-0 space-y-0.5">
+                  <p className="truncate text-sm">
+                    {update.changes.join(" · ") || `#${update.fileNumber}`}
+                  </p>
+                  <p className="truncate font-mono text-xs text-muted-foreground">
+                    #{update.fileNumber} · {formatDate(update.createdAt)}
+                  </p>
+                </div>
+                <Badge variant="secondary">
+                  {t(`walletPush.status.${update.status}.title`)}
                 </Badge>
               </div>
             ))}

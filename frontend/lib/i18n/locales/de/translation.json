@@ -43,6 +43,53 @@
       "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
     }
   },
+  "walletUpdatesList": {
+    "title": "An Wallets gesendete Updates",
+    "description": "Aktenupdates, die Sie an Patienten-Wallets gesendet haben, und ob der Patient sie bestätigt hat.",
+    "none": "Sie haben noch keine Wallet-Updates gesendet."
+  },
+  "walletPush": {
+    "action": "An Wallet senden",
+    "title": "Update an Wallet senden",
+    "subtitle": "Senden Sie {{name}}s aktualisierte Akte an die Wallet-App. Der Patient muss sie auf dem Telefon bestätigen, bevor sie die Kopie auf dem Gerät ersetzt.",
+    "sectionsLabel": "Was sich geändert hat",
+    "sections": {
+      "demographics": "Stammdaten",
+      "problems": "Probleme",
+      "medications": "Medikamente",
+      "allergies": "Allergien",
+      "labs": "Labor",
+      "vitals": "Vitalwerte",
+      "visits": "Besuche"
+    },
+    "noteLabel": "Notiz (optional)",
+    "notePlaceholder": "Eine kurze Notiz zu diesem Update…",
+    "notice": "Dies sendet die vollständige aktuelle Akte, signiert mit Ihrem Klinikschlüssel. Sie ersetzt die Kopie auf dem Gerät des Patienten erst nach dessen Zustimmung.",
+    "cancel": "Abbrechen",
+    "send": "Update senden",
+    "done": "Fertig",
+    "errors": {
+      "generic": "Update konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+    },
+    "status": {
+      "pending": {
+        "title": "Warten auf den Patienten",
+        "body": "Das Update wurde gesendet. Es erreicht das Telefon des Patienten jetzt oder beim nächsten Öffnen der App."
+      },
+      "delivered": {
+        "title": "An das Telefon zugestellt",
+        "body": "Der Patient hat das Update erhalten und muss es auf seinem Gerät bestätigen."
+      },
+      "approved": {
+        "title": "Vom Patienten bestätigt",
+        "body": "Der Patient hat das Update bestätigt; seine Akte auf dem Gerät ist nun aktuell."
+      },
+      "denied": {
+        "title": "Vom Patienten abgelehnt",
+        "body": "Der Patient hat dieses Update abgelehnt; seine Akte auf dem Gerät bleibt unverändert."
+      }
+    }
+  },
   "common": {
     "appName": "temetro",
     "email": "E-Mail",

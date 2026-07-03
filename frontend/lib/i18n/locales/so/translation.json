@@ -43,6 +43,53 @@
       "generic": "Wax baa qaldamay. Fadlan isku day mar kale."
     }
   },
+  "walletUpdatesList": {
+    "title": "Cusboonaysiimaha loo diray walletyada",
+    "description": "Cusboonaysiimaha diiwaanka ee aad u dirtay walletyada bukaannada, iyo haddii bukaanku ansixiyay.",
+    "none": "Weli ma aadan dirin wax cusboonaysiin walletka ah."
+  },
+  "walletPush": {
+    "action": "U dir walletka",
+    "title": "U dir cusboonaysiinta walletka",
+    "subtitle": "U dir diiwaanka la cusboonaysiiyay ee {{name}} abka walletkooda. Waa inay taleefankooda ku ansixiyaan ka hor inta uusan bedelin nuqulka qalabkooda ku jira.",
+    "sectionsLabel": "Waxa isbedelay",
+    "sections": {
+      "demographics": "Xogta shakhsi",
+      "problems": "Dhibaatooyinka",
+      "medications": "Daawooyinka",
+      "allergies": "Xasaasiyadda",
+      "labs": "Baaritaannada",
+      "vitals": "Calaamadaha muhiimka ah",
+      "visits": "Booqashooyinka"
+    },
+    "noteLabel": "Qoraal (ikhtiyaari)",
+    "notePlaceholder": "Qoraal gaaban oo ku saabsan cusboonaysiintan…",
+    "notice": "Tan waxay dirtaa diiwaanka hadda oo dhan, oo lagu saxeexay furaha rugtaada. Waxay bedeshaa nuqulka qalabka bukaanka oo keliya ka dib marka ay ansixiyaan.",
+    "cancel": "Jooji",
+    "send": "Dir cusboonaysiinta",
+    "done": "Dhammaystiran",
+    "errors": {
+      "generic": "Lama diri karin cusboonaysiinta. Fadlan isku day mar kale."
+    },
+    "status": {
+      "pending": {
+        "title": "Sugaya bukaanka",
+        "body": "Cusboonaysiintii waa la diray. Waxay ku iman doontaa taleefanka bukaanka hadda, ama marka xigta ee ay furaan abka."
+      },
+      "delivered": {
+        "title": "La gaarsiiyay taleefanka",
+        "body": "Bukaanku wuu helay cusboonaysiinta wuxuuna u baahan yahay inuu ku ansixiyo qalabkiisa."
+      },
+      "approved": {
+        "title": "Bukaanku wuu ansixiyay",
+        "body": "Bukaanku wuu ansixiyay cusboonaysiinta, diiwaanka qalabkooduna hadda waa cusub yahay."
+      },
+      "denied": {
+        "title": "Bukaanku wuu diiday",
+        "body": "Bukaanku wuu diiday cusboonaysiintan, sidaas darteed diiwaanka qalabkoodu isma bedelin."
+      }
+    }
+  },
   "common": {
     "appName": "temetro",
     "email": "Iimayl",

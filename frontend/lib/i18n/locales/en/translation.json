@@ -43,6 +43,53 @@
       "generic": "Something went wrong. Please try again."
     }
   },
+  "walletUpdatesList": {
+    "title": "Updates sent to wallets",
+    "description": "Record updates you've pushed to patient wallets, and whether the patient has approved them.",
+    "none": "You haven't pushed any wallet updates yet."
+  },
+  "walletPush": {
+    "action": "Push to wallet",
+    "title": "Push update to wallet",
+    "subtitle": "Send {{name}}'s updated record to their wallet app. They must approve it on their phone before it replaces the copy on their device.",
+    "sectionsLabel": "What changed",
+    "sections": {
+      "demographics": "Demographics",
+      "problems": "Problems",
+      "medications": "Medications",
+      "allergies": "Allergies",
+      "labs": "Labs",
+      "vitals": "Vitals",
+      "visits": "Visits"
+    },
+    "noteLabel": "Note (optional)",
+    "notePlaceholder": "A short note about this update…",
+    "notice": "This sends the full current record, signed with your clinic key. It replaces the patient's on-device copy only after they approve it.",
+    "cancel": "Cancel",
+    "send": "Send update",
+    "done": "Done",
+    "errors": {
+      "generic": "Couldn't send the update. Please try again."
+    },
+    "status": {
+      "pending": {
+        "title": "Waiting for the patient",
+        "body": "The update was sent. It will arrive on the patient's phone now, or the next time they open the app."
+      },
+      "delivered": {
+        "title": "Delivered to the phone",
+        "body": "The patient has received the update and needs to approve it on their device."
+      },
+      "approved": {
+        "title": "Approved by the patient",
+        "body": "The patient approved the update and their on-device record is now up to date."
+      },
+      "denied": {
+        "title": "Declined by the patient",
+        "body": "The patient declined this update, so their on-device record is unchanged."
+      }
+    }
+  },
   "common": {
     "appName": "temetro",
     "email": "Email",

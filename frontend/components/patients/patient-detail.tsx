@@ -6,6 +6,7 @@ import {
   Mic,
   Network,
   Pencil,
+  Send,
   Trash2,
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
@@ -181,6 +182,7 @@ export function PatientDetail({
   patient,
   onEdit,
   onScribe,
+  onWalletPush,
   onTransfer,
   onDelete,
   onOpenGraph,
@@ -192,6 +194,8 @@ export function PatientDetail({
   onEdit?: () => void;
   // Opens the ambient AI visit scribe (record/transcribe → draft note).
   onScribe?: () => void;
+  // Pushes the record to the patient's wallet (only when wallet-linked).
+  onWalletPush?: () => void;
   onTransfer?: () => void;
   onDelete?: () => void;
   // Pops the record graph out into its own dialog (closing this sheet).
@@ -307,6 +311,17 @@ export function PatientDetail({
             <Button onClick={onEdit} size="sm" type="button" variant="outline">
               <Pencil className="size-4" />
               {t("patientCard.edit")}
+            </Button>
+          )}
+          {onWalletPush && (
+            <Button
+              onClick={onWalletPush}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              <Send className="size-4" />
+              {t("walletPush.action")}
             </Button>
           )}
           {onDelete && (

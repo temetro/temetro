@@ -43,6 +43,53 @@
       "generic": "Une erreur s'est produite. Veuillez réessayer."
     }
   },
+  "walletUpdatesList": {
+    "title": "Mises à jour envoyées aux portefeuilles",
+    "description": "Les mises à jour de dossiers que vous avez envoyées aux portefeuilles des patients, et si le patient les a approuvées.",
+    "none": "Vous n'avez encore envoyé aucune mise à jour de portefeuille."
+  },
+  "walletPush": {
+    "action": "Envoyer au portefeuille",
+    "title": "Envoyer la mise à jour au portefeuille",
+    "subtitle": "Envoyez le dossier mis à jour de {{name}} vers son application portefeuille. Le patient doit l'approuver sur son téléphone avant qu'elle ne remplace la copie sur son appareil.",
+    "sectionsLabel": "Ce qui a changé",
+    "sections": {
+      "demographics": "Données démographiques",
+      "problems": "Problèmes",
+      "medications": "Médicaments",
+      "allergies": "Allergies",
+      "labs": "Analyses",
+      "vitals": "Signes vitaux",
+      "visits": "Visites"
+    },
+    "noteLabel": "Note (facultatif)",
+    "notePlaceholder": "Une courte note sur cette mise à jour…",
+    "notice": "Ceci envoie le dossier actuel complet, signé avec la clé de votre clinique. Il ne remplace la copie sur l'appareil du patient qu'après son approbation.",
+    "cancel": "Annuler",
+    "send": "Envoyer la mise à jour",
+    "done": "Terminé",
+    "errors": {
+      "generic": "Impossible d'envoyer la mise à jour. Veuillez réessayer."
+    },
+    "status": {
+      "pending": {
+        "title": "En attente du patient",
+        "body": "La mise à jour a été envoyée. Elle arrivera sur le téléphone du patient maintenant, ou à la prochaine ouverture de l'application."
+      },
+      "delivered": {
+        "title": "Reçue sur le téléphone",
+        "body": "Le patient a reçu la mise à jour et doit l'approuver sur son appareil."
+      },
+      "approved": {
+        "title": "Approuvée par le patient",
+        "body": "Le patient a approuvé la mise à jour ; son dossier sur l'appareil est maintenant à jour."
+      },
+      "denied": {
+        "title": "Refusée par le patient",
+        "body": "Le patient a refusé cette mise à jour ; son dossier sur l'appareil est inchangé."
+      }
+    }
+  },
   "common": {
     "appName": "temetro",
     "email": "E-mail",

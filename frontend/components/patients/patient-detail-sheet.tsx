@@ -9,6 +9,7 @@ import { RecordGraph } from "@/components/graph/record-graph";
 import { PatientDetail } from "@/components/patients/patient-detail";
 import { ScribeDialog } from "@/components/patients/scribe-dialog";
 import { TransferPatientDialog } from "@/components/patients/transfer-patient-dialog";
+import { WalletPushDialog } from "@/components/patients/wallet-push-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
@@ -32,6 +33,7 @@ import { listPrescriptions, type Prescription } from "@/lib/prescriptions";
 import { useAiAccess } from "@/lib/ai-policy";
 import { hasClinicalAccess, useActiveRole } from "@/lib/roles";
 import { notify } from "@/lib/toast";
+import { getWalletLink } from "@/lib/wallet-updates";
 
 type Status = "loading" | "ready" | "not-found";
 
@@ -86,6 +88,9 @@ export function PatientDetailSheet({
   const [status, setStatus] = useState<Status>("loading");
   const [editOpen, setEditOpen] = useState(false);
   const [scribeOpen, setScribeOpen] = useState(false);
+  const [walletPushOpen, setWalletPushOpen] = useState(false);
+  // Set once we confirm this patient is linked to a wallet (permanent share).
+  const [walletLinked, setWalletLinked] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   // Graph popped out of the sheet into its own dialog (the sheet closes first).
@@ -130,6 +135,21 @@ export function PatientDetailSheet({
       active = false;
     };
   }, [open, fileNumber]);
+
+  // Whether this patient is wallet-linked (drives the "Push update" button).
+  // Separate from the main load so it re-checks once the role resolves without
+  // refetching the record. Only clinicians can push.
+  useEffect(() => {
+    setWalletLinked(false);
+    if (!open || !fileNumber || !hasClinicalAccess(role)) return;
+    let active = true;
+    getWalletLink(fileNumber)
+      .then(() => active && setWalletLinked(true))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [open, fileNumber, role]);
 
   const remove = async () => {
     if (!patient) return;
@@ -179,6 +199,9 @@ export function PatientDetailSheet({
                   setEditOpen(true);
                 }}
                 onScribe={canScribe ? () => setScribeOpen(true) : undefined}
+                onWalletPush={
+                  walletLinked ? () => setWalletPushOpen(true) : undefined
+                }
                 onOpenGraph={() => {
                   onOpenChange(false);
                   setGraphOpen(true);
@@ -210,6 +233,14 @@ export function PatientDetailSheet({
           onOpenChange={setScribeOpen}
           onSaved={(updated) => setPatient(updated)}
           open={scribeOpen}
+          patient={patient}
+        />
+      )}
+
+      {patient && (
+        <WalletPushDialog
+          onOpenChange={setWalletPushOpen}
+          open={walletPushOpen}
           patient={patient}
         />
       )}
