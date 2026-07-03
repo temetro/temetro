@@ -26,6 +26,15 @@ export type Veil = {
   redactPatient: (patient: Patient) => Patient;
   /** Map a possibly-tokenized file number from a tool call back to the real one. */
   resolveFileNumber: (input: string) => string;
+  /**
+   * De-identify free text (e.g. a visit transcript) by swapping any KNOWN
+   * identifiers — the patient name, MRN and provider names already seen via
+   * redactPatient — for their tokens. Seed the token maps by calling
+   * redactPatient(patient) first. Note: this only catches identifiers we know
+   * about; free-text PHI spoken aloud (addresses, relatives' names) is not
+   * covered — see the ambient-scribe consent notice.
+   */
+  redactText: (text: string) => string;
   /** Swap any tokens in model output back to real identifiers. */
   rehydrate: (text: string) => string;
   /** Token classes actually emitted — for the audit log. */
@@ -81,6 +90,21 @@ export function createVeil(level: VeilLevel, active: boolean): Veil {
     return mrnByToken.get(input.trim()) ?? input;
   }
 
+  function redactText(text: string): string {
+    if (!isActive || fromToken.size === 0) return text;
+    let out = text;
+    // Longest real values first so a provider name containing the patient name
+    // (or similar overlap) is replaced whole before its substrings.
+    const byLength = [...fromToken.entries()]
+      .filter(([, real]) => real.trim().length > 0)
+      .sort((a, b) => b[1].length - a[1].length);
+    for (const [token, real] of byLength) {
+      const escaped = real.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      out = out.replace(new RegExp(escaped, "gi"), token);
+    }
+    return out;
+  }
+
   function rehydrate(text: string): string {
     if (!isActive || fromToken.size === 0) return text;
     let out = text;
@@ -101,6 +125,7 @@ export function createVeil(level: VeilLevel, active: boolean): Veil {
     level,
     redactPatient,
     resolveFileNumber,
+    redactText,
     rehydrate,
     usedClasses,
   };

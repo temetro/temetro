@@ -1,4 +1,48 @@
 {
+  "scribe": {
+    "recordVisit": "Record visit",
+    "title": "Visit scribe",
+    "subtitle": "Record or paste a visit for {{name}}, then review the drafted note before saving.",
+    "tabs": {
+      "record": "Record",
+      "paste": "Paste transcript"
+    },
+    "record": {
+      "start": "Start recording",
+      "stop": "Stop",
+      "ready": "Recording ready ({{duration}})",
+      "discard": "Discard"
+    },
+    "paste": {
+      "placeholder": "Paste the visit transcript here…"
+    },
+    "visitType": {
+      "label": "Visit type (optional)",
+      "placeholder": "e.g. Follow-up"
+    },
+    "consent": "The audio is stored on the patient's chart. When you use an external AI provider, the recording leaves the clinic to be transcribed — Veil cannot redact speech, so only the drafted note is de-identified.",
+    "generate": "Draft note",
+    "processing": "Working…",
+    "cancel": "Cancel",
+    "review": {
+      "type": "Visit type",
+      "date": "Date",
+      "summary": "Note",
+      "provider": "Provider: {{provider}}",
+      "veil": "De-identified through Veil before {{provider}}.",
+      "back": "Back",
+      "save": "Save to record"
+    },
+    "saved": {
+      "title": "Visit note saved"
+    },
+    "errors": {
+      "mic": "Couldn't access the microphone. Check browser permissions or paste a transcript instead.",
+      "noRecording": "Record the visit first, or switch to the paste tab.",
+      "empty": "The transcript is empty.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
   "common": {
     "appName": "temetro",
     "email": "Email",

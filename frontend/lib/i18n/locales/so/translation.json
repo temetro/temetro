@@ -1,4 +1,48 @@
 {
+  "scribe": {
+    "recordVisit": "Duub booqasho",
+    "title": "Qoraaga booqashada",
+    "subtitle": "Duub ama ku dhaji booqasho {{name}}, ka dibna dib u eeg qoraalka la sameeyay ka hor inta aadan keydin.",
+    "tabs": {
+      "record": "Duub",
+      "paste": "Ku dhaji qoraalka"
+    },
+    "record": {
+      "start": "Bilow duubista",
+      "stop": "Jooji",
+      "ready": "Duubista diyaar ({{duration}})",
+      "discard": "Tirtir"
+    },
+    "paste": {
+      "placeholder": "Halkan ku dhaji qoraalka booqashada…"
+    },
+    "visitType": {
+      "label": "Nooca booqashada (ikhtiyaari)",
+      "placeholder": "tusaale: Dib-u-eegis"
+    },
+    "consent": "Codka waxaa lagu keydiyaa faylka bukaanka. Marka aad isticmaasho bixiye AI dibadeed, duubistu waxay ka baxdaa rugta si loo qoro — Veil ma tirtiri karo hadalka, sidaas darteed kaliya qoraalka la sameeyay ayaa la qariyaa.",
+    "generate": "Samee qoraalka",
+    "processing": "Waa la shaqaynayaa…",
+    "cancel": "Jooji",
+    "review": {
+      "type": "Nooca booqashada",
+      "date": "Taariikhda",
+      "summary": "Qoraalka",
+      "provider": "Bixiye: {{provider}}",
+      "veil": "Waxaa lagu qariyay Veil ka hor {{provider}}.",
+      "back": "Dib u noqo",
+      "save": "Ku keydi diiwaanka"
+    },
+    "saved": {
+      "title": "Qoraalka booqashada waa la keydiyay"
+    },
+    "errors": {
+      "mic": "Lama gaari karin makarafoonka. Hubi oggolaanshaha browserka ama ku dhaji qoraal.",
+      "noRecording": "Marka hore duub booqashada, ama u wareeg tabka ku-dhajinta.",
+      "empty": "Qoraalku waa madhan yahay.",
+      "generic": "Wax baa qaldamay. Fadlan isku day mar kale."
+    }
+  },
   "common": {
     "appName": "temetro",
     "email": "Iimayl",

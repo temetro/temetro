@@ -1,6 +1,13 @@
 "use client";
 
-import { ArrowLeftRight, FileDown, Network, Pencil, Trash2 } from "lucide-react";
+import {
+  ArrowLeftRight,
+  FileDown,
+  Mic,
+  Network,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -173,6 +180,7 @@ function RecordHistory({ fileNumber }: { fileNumber: string }) {
 export function PatientDetail({
   patient,
   onEdit,
+  onScribe,
   onTransfer,
   onDelete,
   onOpenGraph,
@@ -182,6 +190,8 @@ export function PatientDetail({
 }: {
   patient: Patient;
   onEdit?: () => void;
+  // Opens the ambient AI visit scribe (record/transcribe → draft note).
+  onScribe?: () => void;
   onTransfer?: () => void;
   onDelete?: () => void;
   // Pops the record graph out into its own dialog (closing this sheet).
@@ -285,6 +295,12 @@ export function PatientDetail({
             >
               <ArrowLeftRight className="size-4" />
               {t("patients.transfer.action")}
+            </Button>
+          )}
+          {onScribe && (
+            <Button onClick={onScribe} size="sm" type="button" variant="outline">
+              <Mic className="size-4" />
+              {t("scribe.recordVisit")}
             </Button>
           )}
           {onEdit && (

@@ -41,6 +41,14 @@ const ALLOWED_MIME = new Set([
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/vnd.ms-excel",
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  // Ambient visit-scribe recordings (stored as a patient attachment so they're
+  // auditable). Voice Opus/AAC stays well under the 15 MB cap for a long visit.
+  "audio/webm",
+  "audio/ogg",
+  "audio/mp4",
+  "audio/mpeg",
+  "audio/wav",
+  "audio/x-m4a",
 ]);
 
 // Disk storage under UPLOAD_DIR/<orgId>/, keyed by a random id so original

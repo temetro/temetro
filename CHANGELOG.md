@@ -7,6 +7,22 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-07-03
+
+### Added
+- **Ambient AI visit scribe** — a **Record visit** action on the patient sheet turns a
+  clinician↔patient conversation into a draft **SOAP** encounter note. Record with the
+  microphone (`MediaRecorder`, stored as an auditable patient attachment) or paste a
+  transcript; the backend transcribes via the user's **OpenAI (Whisper)** or **Gemini**
+  key, de-identifies the transcript + patient context through **Veil**, and the model
+  drafts a structured note that the clinician **reviews and edits before saving** — the
+  same write-approval gate as the chat agent. New `POST /api/scribe/{transcribe,draft,save}`
+  (`backend/src/routes/scribe.ts`, `services/ai/transcribe.ts`), a `veil.redactText()`
+  free-text redactor, and an `appendEncounter` service that adds one note without touching
+  the rest of the record. Gated by `patient:write` + the clinic AI policy (reception and
+  disabled-AI accounts don't see it). New `scribe` locale namespace across all five
+  languages. Drafting also works with local Ollama from a pasted transcript.
+
 ## [0.3.0] — 2026-07-02
 
 ### Added

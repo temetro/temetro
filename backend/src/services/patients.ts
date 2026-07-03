@@ -570,6 +570,46 @@ export async function appendLabs(
   return getPatient(orgId, fileNumber);
 }
 
+// Append a single encounter (visit note) without touching the rest of the
+// record — used by the ambient AI scribe, which drafts one note at a time and
+// must not go through updatePatient's wholesale child replacement. Position
+// continues after the current max so the new note sorts last.
+export async function appendEncounter(
+  orgId: string,
+  fileNumber: string,
+  entry: Encounter,
+): Promise<Patient | null> {
+  const inserted = await db.transaction(async (tx) => {
+    const [existing] = await tx
+      .select({ id: patients.id })
+      .from(patients)
+      .where(
+        and(
+          eq(patients.organizationId, orgId),
+          eq(patients.fileNumber, fileNumber),
+        ),
+      );
+    if (!existing) return false;
+
+    const [pos] = await tx
+      .select({ max: sql<number>`coalesce(max(${encounters.position}), -1)` })
+      .from(encounters)
+      .where(eq(encounters.patientId, existing.id));
+    await tx.insert(encounters).values({
+      patientId: existing.id,
+      position: (pos?.max ?? -1) + 1,
+      ...entry,
+    });
+    await tx
+      .update(patients)
+      .set({ updatedAt: new Date() })
+      .where(eq(patients.id, existing.id));
+    return true;
+  });
+  if (!inserted) return null;
+  return getPatient(orgId, fileNumber);
+}
+
 // Remove a single lab result from a patient, identified by its
 // name/value/takenAt (the frontend has no row id). Scoped to the org via the
 // owning patient. Returns the reloaded patient, or null when the chart is gone.

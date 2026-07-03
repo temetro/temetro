@@ -7,6 +7,7 @@ import { AiBadge } from "@/components/ai-badge";
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
 import { RecordGraph } from "@/components/graph/record-graph";
 import { PatientDetail } from "@/components/patients/patient-detail";
+import { ScribeDialog } from "@/components/patients/scribe-dialog";
 import { TransferPatientDialog } from "@/components/patients/transfer-patient-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -28,6 +29,7 @@ import { type Appointment, listAppointments } from "@/lib/appointments";
 import { type Invoice, listInvoices } from "@/lib/invoices";
 import { deletePatient, getPatient, type Patient } from "@/lib/patients";
 import { listPrescriptions, type Prescription } from "@/lib/prescriptions";
+import { useAiAccess } from "@/lib/ai-policy";
 import { hasClinicalAccess, useActiveRole } from "@/lib/roles";
 import { notify } from "@/lib/toast";
 
@@ -76,9 +78,14 @@ export function PatientDetailSheet({
   // Deleting a chart is destructive — only offer it once we know the role is
   // a full clinician (patient:delete), never optimistically.
   const canDelete = role != null && hasClinicalAccess(role);
+  // The ambient scribe writes a clinical note, so it needs full clinical write
+  // access AND the clinic's AI must be enabled for this member.
+  const { allowed: aiAllowed } = useAiAccess();
+  const canScribe = role != null && hasClinicalAccess(role) && aiAllowed;
   const [patient, setPatient] = useState<Patient | null>(null);
   const [status, setStatus] = useState<Status>("loading");
   const [editOpen, setEditOpen] = useState(false);
+  const [scribeOpen, setScribeOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   // Graph popped out of the sheet into its own dialog (the sheet closes first).
@@ -171,6 +178,7 @@ export function PatientDetailSheet({
                   setEditKey((k) => k + 1);
                   setEditOpen(true);
                 }}
+                onScribe={canScribe ? () => setScribeOpen(true) : undefined}
                 onOpenGraph={() => {
                   onOpenChange(false);
                   setGraphOpen(true);
@@ -193,6 +201,15 @@ export function PatientDetailSheet({
           onOpenChange={setEditOpen}
           onSaved={(updated) => setPatient(updated)}
           open={editOpen}
+          patient={patient}
+        />
+      )}
+
+      {patient && (
+        <ScribeDialog
+          onOpenChange={setScribeOpen}
+          onSaved={(updated) => setPatient(updated)}
+          open={scribeOpen}
           patient={patient}
         />
       )}

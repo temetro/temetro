@@ -1,4 +1,48 @@
 {
+  "scribe": {
+    "recordVisit": "Besuch aufnehmen",
+    "title": "Besuchs-Schreiber",
+    "subtitle": "Nehmen Sie einen Besuch für {{name}} auf oder fügen Sie ihn ein und prüfen Sie die entworfene Notiz vor dem Speichern.",
+    "tabs": {
+      "record": "Aufnehmen",
+      "paste": "Transkript einfügen"
+    },
+    "record": {
+      "start": "Aufnahme starten",
+      "stop": "Stopp",
+      "ready": "Aufnahme bereit ({{duration}})",
+      "discard": "Verwerfen"
+    },
+    "paste": {
+      "placeholder": "Besuchstranskript hier einfügen…"
+    },
+    "visitType": {
+      "label": "Besuchsart (optional)",
+      "placeholder": "z. B. Nachsorge"
+    },
+    "consent": "Die Audioaufnahme wird in der Patientenakte gespeichert. Bei Nutzung eines externen KI-Anbieters verlässt die Aufnahme zur Transkription die Klinik — Veil kann Sprache nicht schwärzen, daher wird nur die entworfene Notiz anonymisiert.",
+    "generate": "Notiz entwerfen",
+    "processing": "In Arbeit…",
+    "cancel": "Abbrechen",
+    "review": {
+      "type": "Besuchsart",
+      "date": "Datum",
+      "summary": "Notiz",
+      "provider": "Behandler: {{provider}}",
+      "veil": "Über Veil anonymisiert vor {{provider}}.",
+      "back": "Zurück",
+      "save": "In Akte speichern"
+    },
+    "saved": {
+      "title": "Besuchsnotiz gespeichert"
+    },
+    "errors": {
+      "mic": "Kein Zugriff auf das Mikrofon. Prüfen Sie die Browser-Berechtigungen oder fügen Sie ein Transkript ein.",
+      "noRecording": "Nehmen Sie zuerst den Besuch auf oder wechseln Sie zum Einfügen-Tab.",
+      "empty": "Das Transkript ist leer.",
+      "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut."
+    }
+  },
   "common": {
     "appName": "temetro",
     "email": "E-Mail",

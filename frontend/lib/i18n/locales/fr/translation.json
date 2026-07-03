@@ -1,4 +1,48 @@
 {
+  "scribe": {
+    "recordVisit": "Enregistrer la visite",
+    "title": "Scribe de visite",
+    "subtitle": "Enregistrez ou collez une visite pour {{name}}, puis vérifiez la note rédigée avant de l'enregistrer.",
+    "tabs": {
+      "record": "Enregistrer",
+      "paste": "Coller la transcription"
+    },
+    "record": {
+      "start": "Démarrer l'enregistrement",
+      "stop": "Arrêter",
+      "ready": "Enregistrement prêt ({{duration}})",
+      "discard": "Supprimer"
+    },
+    "paste": {
+      "placeholder": "Collez la transcription de la visite ici…"
+    },
+    "visitType": {
+      "label": "Type de visite (facultatif)",
+      "placeholder": "ex. Suivi"
+    },
+    "consent": "L'audio est enregistré dans le dossier du patient. Si vous utilisez un fournisseur d'IA externe, l'enregistrement quitte la clinique pour être transcrit — Veil ne peut pas expurger la parole, seule la note rédigée est dépersonnalisée.",
+    "generate": "Rédiger la note",
+    "processing": "En cours…",
+    "cancel": "Annuler",
+    "review": {
+      "type": "Type de visite",
+      "date": "Date",
+      "summary": "Note",
+      "provider": "Praticien : {{provider}}",
+      "veil": "Dépersonnalisé via Veil avant {{provider}}.",
+      "back": "Retour",
+      "save": "Enregistrer dans le dossier"
+    },
+    "saved": {
+      "title": "Note de visite enregistrée"
+    },
+    "errors": {
+      "mic": "Impossible d'accéder au microphone. Vérifiez les autorisations du navigateur ou collez une transcription.",
+      "noRecording": "Enregistrez d'abord la visite, ou passez à l'onglet coller.",
+      "empty": "La transcription est vide.",
+      "generic": "Une erreur s'est produite. Veuillez réessayer."
+    }
+  },
   "common": {
     "appName": "temetro",
     "email": "E-mail",
