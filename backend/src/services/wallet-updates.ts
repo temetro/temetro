@@ -144,7 +144,11 @@ export async function toEvent(row: UpdateRow): Promise<WalletUpdateEvent> {
 
 // Every unresolved update for a wallet — re-sent on each authenticated connect
 // so an offline device eventually receives what it missed.
+// Pending updates a wallet missed, scoped to one clinic — the relay delivers a
+// `wallet:online` over that clinic's own hub connection, so a clinic only ever
+// re-sends its *own* updates (never another clinic's).
 export async function pendingUpdatesForWallet(
+  orgId: string,
   walletNumber: string,
 ): Promise<UpdateRow[]> {
   return db
@@ -152,6 +156,7 @@ export async function pendingUpdatesForWallet(
     .from(walletRecordUpdates)
     .where(
       and(
+        eq(walletRecordUpdates.organizationId, orgId),
         eq(walletRecordUpdates.walletNumber, walletNumber),
         isNull(walletRecordUpdates.resolvedAt),
       ),

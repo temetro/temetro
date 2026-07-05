@@ -1976,6 +1976,20 @@
         "errorTitle": "Could not add member"
       }
     },
+    "network": {
+      "title": "Temetro Network",
+      "description": "The Temetro Network relay lets patients' wallet apps connect to your clinic to share and approve records — end-to-end encrypted, with your clinic identified by its signing key.",
+      "toggleLabel": "Join Temetro Network",
+      "toggleDesc": "When on, this clinic connects to the relay so you can import records from patient apps and push updates to their wallets.",
+      "statusConnected": "Connected",
+      "statusOff": "Off",
+      "joinedTitle": "Joined the Temetro Network",
+      "joinedBody": "Patient wallet apps can now connect to this clinic.",
+      "leftTitle": "Left the Temetro Network",
+      "leftBody": "This clinic is no longer connected to the relay.",
+      "errorTitle": "Couldn't update network access",
+      "error": "Please try again."
+    },
     "signing": {
       "keyTitle": "Signing key",
       "active": "Active",

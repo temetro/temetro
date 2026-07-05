@@ -38,3 +38,21 @@ export async function rotateSigningKey(): Promise<SigningKey> {
 export async function listSignedRecords(): Promise<SharedRecord[]> {
   return apiFetch<SharedRecord[]>("/api/signing/records");
 }
+
+// Whether this clinic has joined the Temetro Network relay (patient-wallet
+// sharing rides it). Readable by any clinician.
+export async function getNetworkEnabled(): Promise<boolean> {
+  const { enabled } = await apiFetch<{ enabled: boolean }>(
+    "/api/signing/network",
+  );
+  return enabled;
+}
+
+// Join or leave the Temetro Network (owner/admin only). Returns the new state.
+export async function setNetworkEnabled(enabled: boolean): Promise<boolean> {
+  const res = await apiFetch<{ enabled: boolean }>("/api/signing/network", {
+    method: "PUT",
+    body: JSON.stringify({ enabled }),
+  });
+  return res.enabled;
+}

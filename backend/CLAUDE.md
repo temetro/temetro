@@ -61,12 +61,17 @@ No test runner is configured. Verify by running the stack (`docker compose up`) 
   in `index.ts`; the handshake reuses Better Auth's `getSession`. Other modules push via
   `emitToUser` / `emitToConversation` (no direct socket import, so no circular deps).
 - **Patient-wallet relay** is **no longer hosted here.** Devices connect to the standalone **Temetro
-  Network** service (`~/Desktop/Temetro-network`, see root `CLAUDE.md`). This backend connects to it
-  as a `/hub` client in **`src/services/relay-client.ts`**; `emitToWallet` (realtime.ts) delegates to
-  its `sendToWallet`, and device responses (`wallet:share-response` / `wallet:update-response` /
-  `wallet:revoke`) + `wallet:online` replay are handled there, calling the same `wallet-share` /
-  `wallet-updates` services the old `/wallet` namespace did. Configure with `RELAY_URL` +
-  `RELAY_TOKEN`.
+  Network** service (`~/Desktop/Temetro-network`, see root `CLAUDE.md`), which is **multi-clinic**.
+  This backend connects to it as a `/hub` client in **`src/services/relay-client.ts`**, keeping **one
+  authenticated connection per network-enabled org** (`hubs` map keyed by `orgId`). Each org
+  authenticates by signing the relay's `hub:challenge` with its clinic signing key
+  (`signWithClinicKey`) — no shared `RELAY_TOKEN` needed (it's now optional/legacy, only for a
+  private relay). `emitToWallet(orgId, …)` (realtime.ts) delegates to `sendToWallet(orgId, …)`, and
+  device responses (`wallet:share-response` / `wallet:update-response` / `wallet:revoke`) +
+  `wallet:online` replay are handled per-org there, calling the same `wallet-share` /
+  `wallet-updates` services the old `/wallet` namespace did. A clinic opts in via **"Join Temetro
+  Network"** (Settings → Signing → `PUT /api/signing/network`, `clinic_signing_keys.network_enabled`);
+  `connectOrg`/`disconnectOrg` open/close its connection, and wallet routes 409 when it's off.
 - **`src/lib/email.ts`** — `sendEmail` logs links to the console when SMTP is unset.
 
 ## Gotchas / conventions

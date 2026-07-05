@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { organization } from "./auth.js";
 
@@ -16,6 +16,11 @@ export const clinicSigningKeys = pgTable("clinic_signing_keys", {
   fingerprint: text("fingerprint").notNull(),
   // Encrypted (lib/crypto.ts) hex of the Ed25519 private key.
   privateKeyEnc: text("private_key_enc").notNull(),
+  // Whether this clinic has joined the Temetro Network relay ("Join Temetro
+  // Network" in Settings → Signing). Off by default: only when enabled does the
+  // backend open this clinic's relay hub connection and expose wallet features.
+  // The relay identity *is* this signing key, so the flag lives on the same row.
+  networkEnabled: boolean("network_enabled").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   rotatedAt: timestamp("rotated_at"),
 });

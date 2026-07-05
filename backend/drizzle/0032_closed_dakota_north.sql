@@ -1,0 +1,1 @@
+ALTER TABLE "clinic_signing_keys" ADD COLUMN "network_enabled" boolean DEFAULT false NOT NULL;

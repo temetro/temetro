@@ -19,12 +19,25 @@ import { emitToWallet } from "../realtime.js";
 import { recordActivity } from "../services/activity.js";
 import * as patientService from "../services/patients.js";
 import { awaitQuickTunnelUrl } from "../services/relay-url.js";
+import { getNetworkEnabled } from "../services/signing.js";
 import * as walletShare from "../services/wallet-share.js";
 import * as walletUpdates from "../services/wallet-updates.js";
 
 export const patientsWalletRouter = Router();
 
 patientsWalletRouter.use(requireAuth, requireOrg);
+
+// Wallet sharing rides the Temetro Network relay, which a clinic must opt into
+// ("Join Temetro Network" in Settings → Signing). Guard the actions that need a
+// live relay connection so a disabled clinic gets a clear message, not silence.
+async function requireNetwork(orgId: string): Promise<void> {
+  if (!(await getNetworkEnabled(orgId))) {
+    throw new HttpError(
+      409,
+      "This clinic hasn't joined the Temetro Network. Enable it in Settings → Signing to share with patient wallets.",
+    );
+  }
+}
 
 // The device-reachable URL the patient's app should connect to (baked into the
 // QR). Devices connect to the standalone Temetro Network relay — the same relay
@@ -97,6 +110,7 @@ patientsWalletRouter.post(
   requirePermission({ patient: ["write"] }),
   async (req, res, next) => {
     try {
+      await requireNetwork(req.organizationId!);
       const input = requestSchema.parse(req.body);
       const { view, ephemeralPubKey } = await walletShare.createShareRequest(
         req.organizationId!,
@@ -109,7 +123,7 @@ patientsWalletRouter.post(
         .select({ name: organization.name })
         .from(organization)
         .where(eq(organization.id, req.organizationId!));
-      emitToWallet(input.walletNumber, "wallet:share-request", {
+      emitToWallet(req.organizationId!, input.walletNumber, "wallet:share-request", {
         requestId: view.id,
         clinicName: org?.name ?? "A clinic",
         requestedBy: req.user!.name,
@@ -176,6 +190,7 @@ patientsWalletRouter.post(
   requirePermission({ patient: ["write"] }),
   async (req, res, next) => {
     try {
+      await requireNetwork(req.organizationId!);
       const input = pushSchema.parse(req.body);
       const row = await walletUpdates.createRecordUpdate(
         req.organizationId!,
@@ -184,7 +199,7 @@ patientsWalletRouter.post(
         input.changes,
       );
       const event = await walletUpdates.toEvent(row);
-      emitToWallet(row.walletNumber, "wallet:update-request", event);
+      emitToWallet(req.organizationId!, row.walletNumber, "wallet:update-request", event);
       await recordActivity({
         orgId: req.organizationId!,
         actor: { id: req.user!.id, name: req.user!.name },

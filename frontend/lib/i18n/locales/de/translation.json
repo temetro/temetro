@@ -1976,6 +1976,20 @@
         "errorTitle": "Mitglied konnte nicht hinzugefügt werden"
       }
     },
+    "network": {
+      "title": "Temetro-Netzwerk",
+      "description": "Das Temetro-Netzwerk-Relay ermöglicht es den Wallet-Apps der Patienten, sich mit Ihrer Praxis zu verbinden, um Akten zu teilen und zu genehmigen — Ende-zu-Ende-verschlüsselt, wobei Ihre Praxis über ihren Signierschlüssel identifiziert wird.",
+      "toggleLabel": "Temetro-Netzwerk beitreten",
+      "toggleDesc": "Wenn aktiviert, verbindet sich diese Praxis mit dem Relay, sodass Sie Akten aus Patienten-Apps importieren und Aktualisierungen an deren Wallets senden können.",
+      "statusConnected": "Verbunden",
+      "statusOff": "Aus",
+      "joinedTitle": "Temetro-Netzwerk beigetreten",
+      "joinedBody": "Wallet-Apps der Patienten können sich jetzt mit dieser Praxis verbinden.",
+      "leftTitle": "Temetro-Netzwerk verlassen",
+      "leftBody": "Diese Praxis ist nicht mehr mit dem Relay verbunden.",
+      "errorTitle": "Netzwerkzugriff konnte nicht aktualisiert werden",
+      "error": "Bitte versuchen Sie es erneut."
+    },
     "signing": {
       "keyTitle": "Signierschlüssel",
       "active": "Aktiv",

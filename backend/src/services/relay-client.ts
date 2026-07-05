@@ -4,58 +4,121 @@
 //
 // This backend was previously the device-facing Socket.io server itself (the
 // `/wallet` namespace in realtime.ts). Now it is a *client* of the relay's
-// privileged `/hub` namespace: it pushes messages to devices via `sendToWallet`
-// and handles their responses here, calling the same wallet service functions
-// the old socket handlers did. Sealed bundles are decrypted here (we hold the
-// ephemeral key); the relay only ever forwards ciphertext.
+// `/hub` namespace: it pushes messages to devices via `sendToWallet` and handles
+// their responses here, calling the same wallet service functions the old socket
+// handlers did. Sealed bundles are decrypted here (we hold the ephemeral key);
+// the relay only ever forwards ciphertext.
+//
+// The relay is **multi-clinic**: each clinic (organization) authenticates to
+// `/hub` with its own Ed25519 signing key (a per-clinic identity, not a shared
+// password), and the relay routes each device response back only to the clinic
+// that originated the request. So this backend keeps **one hub connection per
+// network-enabled org**, opened when the org joins the network ("Join Temetro
+// Network" in Settings → Signing) and torn down when it leaves.
 
 import { io as connect, type Socket } from "socket.io-client";
 
 import { env } from "../env.js";
+import { networkEnabledOrgs, signWithClinicKey } from "./signing.js";
 import * as walletShare from "./wallet-share.js";
 import * as walletUpdates from "./wallet-updates.js";
 
-let hub: Socket | null = null;
+// One authenticated hub connection per network-enabled organization.
+const hubs = new Map<string, Socket>();
 
 type Ack = (response: { ok: boolean; [key: string]: unknown }) => void;
 
-// Push an end-to-end-encrypted message to a patient wallet device via the relay
-// (which forwards it to the room keyed by wallet number). Mirrors the old
-// in-process `emitToWallet`. A no-op if the relay is not connected yet — the
+// Push an end-to-end-encrypted message to a patient wallet device via the given
+// clinic's relay connection (the relay forwards it to the room keyed by wallet
+// number). A no-op if the clinic isn't on the network / not connected yet — the
 // device replays anything it missed on its next connect (see `wallet:online`).
 export function sendToWallet(
+  orgId: string,
   walletNumber: string,
   event: string,
   data: unknown,
 ): void {
-  hub?.emit("wallet:send", { walletNumber, event, data });
+  hubs.get(orgId)?.emit("wallet:send", { walletNumber, event, data });
 }
 
-export function initRelayClient(): void {
-  hub = connect(`${env.RELAY_URL}/hub`, {
-    auth: { token: env.RELAY_TOKEN },
+// Open (and authenticate) a hub connection for a clinic, if not already open.
+// Idempotent — safe to call on startup and again when an org joins the network.
+export async function connectOrg(orgId: string): Promise<void> {
+  if (hubs.has(orgId)) return;
+
+  const hub = connect(`${env.RELAY_URL}/hub`, {
     transports: ["websocket"],
     reconnection: true,
     reconnectionDelayMax: 10_000,
   });
+  hubs.set(orgId, hub);
+  registerHubHandlers(orgId, hub);
+}
 
-  hub.on("connect", () => {
-    console.log(`Connected to Temetro Network relay at ${env.RELAY_URL}`);
+// Leave the network for a clinic: close and forget its hub connection.
+export function disconnectOrg(orgId: string): void {
+  const hub = hubs.get(orgId);
+  if (!hub) return;
+  hub.disconnect();
+  hubs.delete(orgId);
+}
+
+// Open a hub connection for every clinic already on the network. Called once at
+// startup; runtime joins/leaves go through connectOrg/disconnectOrg.
+export async function initRelayClient(): Promise<void> {
+  try {
+    const orgs = await networkEnabledOrgs();
+    await Promise.all(orgs.map((orgId) => connectOrg(orgId)));
+  } catch (err) {
+    console.warn(`Temetro Network: failed to open hub connections: ${(err as Error).message}`);
+  }
+}
+
+// Wire up auth + device-response handlers for one clinic's hub socket.
+function registerHubHandlers(orgId: string, hub: Socket): void {
+  // Authenticate by signing the relay's challenge with this clinic's signing
+  // key. `clinicId` is that key's public half (hex), which is how the relay
+  // identifies and routes to this clinic.
+  hub.on("hub:challenge", async (payload: { challenge?: string }) => {
+    const challenge = String(payload?.challenge ?? "");
+    if (!challenge) return;
+    try {
+      const { signature, publicKey } = await signWithClinicKey(
+        orgId,
+        new TextEncoder().encode(challenge),
+      );
+      hub.emit(
+        "hub:auth",
+        // `token` is only meaningful for a private relay (optional shared gate);
+        // an empty value is ignored by an open relay.
+        { clinicId: publicKey, signature, token: env.RELAY_TOKEN || undefined },
+        (ack: { ok?: boolean } | undefined) => {
+          if (ack?.ok) {
+            console.log(`Temetro Network: clinic ${orgId} authenticated on the relay`);
+          } else {
+            console.warn(`Temetro Network: relay rejected clinic ${orgId}`);
+          }
+        },
+      );
+    } catch (err) {
+      console.warn(`Temetro Network: failed to sign relay challenge for ${orgId}: ${(err as Error).message}`);
+    }
   });
+
   hub.on("connect_error", (err) => {
-    console.warn(`Temetro Network relay unreachable (${env.RELAY_URL}): ${err.message}`);
+    console.warn(`Temetro Network relay unreachable (${env.RELAY_URL}) for ${orgId}: ${err.message}`);
   });
 
   // A device authenticated on the relay — flush any record updates it missed
-  // while offline (the relay forwards each back to it). Mirrors the replay the
-  // old /wallet namespace did on connect.
+  // while offline (scoped to this clinic; the relay only delivers this to
+  // clinics with pending work for the wallet).
   hub.on("wallet:online", async (payload: { walletNumber?: string }) => {
     const walletNumber = String(payload?.walletNumber ?? "");
     if (!walletNumber) return;
     try {
-      const rows = await walletUpdates.pendingUpdatesForWallet(walletNumber);
+      const rows = await walletUpdates.pendingUpdatesForWallet(orgId, walletNumber);
       for (const row of rows) {
-        sendToWallet(walletNumber, "wallet:update-request", await walletUpdates.toEvent(row));
+        sendToWallet(orgId, walletNumber, "wallet:update-request", await walletUpdates.toEvent(row));
         await walletUpdates.markDelivered(row.id);
       }
     } catch {

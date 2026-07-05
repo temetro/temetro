@@ -225,6 +225,13 @@
       "when": 1783117115021,
       "tag": "0031_stiff_gateway",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1783263738631,
+      "tag": "0032_closed_dakota_north",
+      "breakpoints": true
     }
   ]
 }

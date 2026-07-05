@@ -7,6 +7,28 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-07-05
+
+### Added
+- **Multi-clinic Temetro Network.** The relay now serves many self-hosted clinics at once. Each
+  clinic authenticates to the `/hub` namespace by **signing a challenge with its own Ed25519 clinic
+  signing key** (`services/signing.ts`) — a per-clinic identity, not a shared password — and the
+  relay routes every device response back to only the clinic that originated the request (keyed by
+  `requestId`), so clinics never see each other's traffic. `wallet:online` is fanned out only to
+  clinics with pending work for that wallet.
+- **"Join Temetro Network" opt-in.** A per-clinic toggle in **Settings → Signing** (backed by
+  `clinic_signing_keys.network_enabled`, `GET`/`PUT /api/signing/network`, owner/admin only). Off by
+  default; enabling opens the clinic's relay connection, disabling tears it down. Wallet
+  import/push endpoints return **409** while a clinic hasn't joined. Localised in all five languages.
+
+### Changed
+- **The backend keeps one authenticated relay connection per network-enabled org**
+  (`services/relay-client.ts` — `connectOrg`/`disconnectOrg`, a `hubs` map keyed by `orgId`), instead
+  of a single shared-token connection. `emitToWallet`/`sendToWallet` now take an `orgId`, and the
+  offline-flush (`pendingUpdatesForWallet`) is org-scoped.
+- **`RELAY_TOKEN` is now optional/legacy.** Clinics authenticate with their signing key, so an open
+  relay needs no shared secret; `RELAY_TOKEN` only gates an optional *private* relay.
+
 ## [0.7.0] — 2026-07-05
 
 ### Added

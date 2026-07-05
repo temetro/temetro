@@ -1976,6 +1976,20 @@
         "errorTitle": "Impossible d'ajouter le membre"
       }
     },
+    "network": {
+      "title": "Réseau Temetro",
+      "description": "Le relais Réseau Temetro permet aux applications portefeuille des patients de se connecter à votre clinique pour partager et approuver des dossiers — chiffrés de bout en bout, votre clinique étant identifiée par sa clé de signature.",
+      "toggleLabel": "Rejoindre le Réseau Temetro",
+      "toggleDesc": "Une fois activé, cette clinique se connecte au relais pour importer des dossiers depuis les applications des patients et envoyer des mises à jour vers leurs portefeuilles.",
+      "statusConnected": "Connecté",
+      "statusOff": "Désactivé",
+      "joinedTitle": "Réseau Temetro rejoint",
+      "joinedBody": "Les applications portefeuille des patients peuvent désormais se connecter à cette clinique.",
+      "leftTitle": "Réseau Temetro quitté",
+      "leftBody": "Cette clinique n'est plus connectée au relais.",
+      "errorTitle": "Impossible de mettre à jour l'accès au réseau",
+      "error": "Veuillez réessayer."
+    },
     "signing": {
       "keyTitle": "Clé de signature",
       "active": "Active",

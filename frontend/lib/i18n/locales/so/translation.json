@@ -1976,6 +1976,20 @@
         "errorTitle": "Xubinta lama ku dari karin"
       }
     },
+    "network": {
+      "title": "Shabakadda Temetro",
+      "description": "Gudbiyaha Shabakadda Temetro wuxuu u oggolaanayaa abaabulka boorsada bukaannada inay ku xidhaan rugtaada si ay u wadaagaan oo u ansixiyaan diiwaannada — sir gaba-gabo ah, iyadoo rugtaada lagu aqoonsado furaheeda saxiixa.",
+      "toggleLabel": "Ku biir Shabakadda Temetro",
+      "toggleDesc": "Marka la shido, rugtan waxay ku xidhmaysaa gudbiyaha si aad u soo dejiso diiwaannada abaabulka bukaannada oo aad cusboonaysiin ugu dirto boorsadooda.",
+      "statusConnected": "La xidhiidhay",
+      "statusOff": "Daminaan",
+      "joinedTitle": "Waxaad ku biirtay Shabakadda Temetro",
+      "joinedBody": "Abaabulka boorsada bukaannada hadda way ku xidhmi karaan rugtan.",
+      "leftTitle": "Waxaad ka baxday Shabakadda Temetro",
+      "leftBody": "Rugtan hadda kuma xidhna gudbiyaha.",
+      "errorTitle": "Lama cusboonaysiin karin gelitaanka shabakadda",
+      "error": "Fadlan isku day mar kale."
+    },
     "signing": {
       "keyTitle": "Furaha saxiixa",
       "active": "Firfircoon",

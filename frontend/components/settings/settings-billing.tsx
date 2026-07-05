@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   CopyField,
   SettingsCard,
@@ -13,9 +14,11 @@ import {
   whiteButton,
 } from "@/components/settings/settings-parts";
 import {
+  getNetworkEnabled,
   getSigningKey,
   listSignedRecords,
   rotateSigningKey,
+  setNetworkEnabled,
   type SharedRecord,
   type SigningKey,
 } from "@/lib/signing";
@@ -38,6 +41,8 @@ export function SigningPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rotating, setRotating] = useState(false);
+  const [networkOn, setNetworkOn] = useState(false);
+  const [networkSaving, setNetworkSaving] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -45,12 +50,14 @@ export function SigningPanel() {
       getSigningKey(),
       listSignedRecords().catch(() => []),
       listWalletUpdates().catch(() => []),
+      getNetworkEnabled().catch(() => false),
     ])
-      .then(([k, r, u]) => {
+      .then(([k, r, u, n]) => {
         if (!active) return;
         setKey(k);
         setRecords(r);
         setUpdates(u);
+        setNetworkOn(n);
         setError(null);
       })
       .catch(() => {
@@ -80,6 +87,32 @@ export function SigningPanel() {
       );
     } finally {
       setRotating(false);
+    }
+  };
+
+  const toggleNetwork = async (next: boolean) => {
+    setNetworkSaving(true);
+    // Optimistic — revert on failure.
+    setNetworkOn(next);
+    try {
+      const saved = await setNetworkEnabled(next);
+      setNetworkOn(saved);
+      notify.success(
+        next
+          ? t("settings.network.joinedTitle")
+          : t("settings.network.leftTitle"),
+        next
+          ? t("settings.network.joinedBody")
+          : t("settings.network.leftBody"),
+      );
+    } catch {
+      setNetworkOn(!next);
+      notify.error(
+        t("settings.network.errorTitle"),
+        t("settings.network.error"),
+      );
+    } finally {
+      setNetworkSaving(false);
     }
   };
 
@@ -136,6 +169,41 @@ export function SigningPanel() {
           ) : null}
         </div>
       </SettingsCard>
+
+      <SettingsSection
+        description={t("settings.network.description")}
+        title={t("settings.network.title")}
+      >
+        <SettingsCard className="flex items-center justify-between gap-4 p-5">
+          <div className="min-w-0 space-y-0.5">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium">
+                {t("settings.network.toggleLabel")}
+              </p>
+              <Badge
+                className={cn(
+                  networkOn
+                    ? "bg-emerald-500/15 text-emerald-400"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
+                {networkOn
+                  ? t("settings.network.statusConnected")
+                  : t("settings.network.statusOff")}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t("settings.network.toggleDesc")}
+            </p>
+          </div>
+          <Switch
+            aria-label={t("settings.network.toggleLabel")}
+            checked={networkOn}
+            disabled={loading || networkSaving}
+            onCheckedChange={toggleNetwork}
+          />
+        </SettingsCard>
+      </SettingsSection>
 
       <SettingsSection
         description={t("settings.signing.identityDescription")}

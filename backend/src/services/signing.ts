@@ -74,6 +74,40 @@ export async function rotateKey(orgId: string): Promise<SigningKeyView> {
   return mintKey(orgId, true);
 }
 
+// Whether this clinic has joined the Temetro Network relay. Defaults to `false`
+// when the clinic has no signing key yet (it hasn't opted in).
+export async function getNetworkEnabled(orgId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ networkEnabled: clinicSigningKeys.networkEnabled })
+    .from(clinicSigningKeys)
+    .where(eq(clinicSigningKeys.organizationId, orgId));
+  return row?.networkEnabled ?? false;
+}
+
+// Org ids of every clinic currently on the network — used at startup to open a
+// relay hub connection for each.
+export async function networkEnabledOrgs(): Promise<string[]> {
+  const rows = await db
+    .select({ organizationId: clinicSigningKeys.organizationId })
+    .from(clinicSigningKeys)
+    .where(eq(clinicSigningKeys.networkEnabled, true));
+  return rows.map((r) => r.organizationId);
+}
+
+// Join or leave the Temetro Network. Ensures the clinic has a signing key first
+// (the relay authenticates with it), then flips the flag. Returns the new state.
+export async function setNetworkEnabled(
+  orgId: string,
+  enabled: boolean,
+): Promise<boolean> {
+  await getOrCreateKey(orgId);
+  await db
+    .update(clinicSigningKeys)
+    .set({ networkEnabled: enabled })
+    .where(eq(clinicSigningKeys.organizationId, orgId));
+  return enabled;
+}
+
 // Sign a message with the clinic's signing key (creating one if needed). Returns
 // the signature + public key so a verifier can check provenance.
 export async function signWithClinicKey(

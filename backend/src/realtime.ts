@@ -46,11 +46,12 @@ export function emitToConversation(
 // push over the relay's /hub namespace (see services/relay-client.ts). The
 // relay only ever forwards ciphertext — it cannot read the record bundle.
 export function emitToWallet(
+  orgId: string,
   walletNumber: string,
   event: string,
   data: unknown,
 ): void {
-  sendToWallet(walletNumber, event, data);
+  sendToWallet(orgId, walletNumber, event, data);
 }
 
 type Ack = (response: { ok: boolean; [key: string]: unknown }) => void;
