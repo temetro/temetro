@@ -60,6 +60,13 @@ No test runner is configured. Verify by running the stack (`docker compose up`) 
 - **Real-time** lives in **`src/realtime.ts`** — a Socket.io server attached to the same HTTP server
   in `index.ts`; the handshake reuses Better Auth's `getSession`. Other modules push via
   `emitToUser` / `emitToConversation` (no direct socket import, so no circular deps).
+- **Patient-wallet relay** is **no longer hosted here.** Devices connect to the standalone **Temetro
+  Network** service (`~/Desktop/Temetro-network`, see root `CLAUDE.md`). This backend connects to it
+  as a `/hub` client in **`src/services/relay-client.ts`**; `emitToWallet` (realtime.ts) delegates to
+  its `sendToWallet`, and device responses (`wallet:share-response` / `wallet:update-response` /
+  `wallet:revoke`) + `wallet:online` replay are handled there, calling the same `wallet-share` /
+  `wallet-updates` services the old `/wallet` namespace did. Configure with `RELAY_URL` +
+  `RELAY_TOKEN`.
 - **`src/lib/email.ts`** — `sendEmail` logs links to the console when SMTP is unset.
 
 ## Gotchas / conventions

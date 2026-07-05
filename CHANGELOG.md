@@ -7,6 +7,27 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-07-05
+
+### Added
+- **Temetro Network** — a standalone, high-performance **relay** (Rust + Axum + socketioxide) that
+  connects the backend to patient wallet apps, in its own repo
+  ([github.com/temetro/temetro-network](https://github.com/temetro/temetro-network)) and deployable
+  on Railway. It replaces the flaky Cloudflare quick-tunnel that used to expose the backend's
+  embedded `/wallet` Socket.io namespace to phones. The relay is a **dumb, stateless pipe**: a
+  `/wallet` namespace for devices (challenge/Ed25519-signature auth, room keyed by wallet number)
+  and a `RELAY_TOKEN`-authenticated `/hub` namespace for the backend. It forwards sealed ciphertext
+  verbatim, keeps no database, and its only crypto is verifying a device's auth signature (proven
+  byte-for-byte compatible with `wallet-crypto.ts`).
+
+### Changed
+- **The backend is now a client of the relay, not the wallet server.** The `/wallet` Socket.io
+  namespace was removed from `src/realtime.ts`; a new `src/services/relay-client.ts` connects to the
+  relay's `/hub` (`emitToWallet` delegates to its `sendToWallet`), handles device responses
+  (`wallet:share-response` / `wallet:update-response` / `wallet:revoke`) and flushes missed updates on
+  `wallet:online` — calling the same `wallet-share` / `wallet-updates` services as before. New
+  `RELAY_URL` + `RELAY_TOKEN` env vars; the wallet-import QR now points at `RELAY_URL`.
+
 ## [0.6.0] — 2026-07-04
 
 ### Added

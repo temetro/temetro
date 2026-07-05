@@ -27,12 +27,13 @@ repository (published as `temetro`).
 > "Patient wallet app" below) and an end-to-end **encrypted share / patient-approval** flow:
 > clinics hold a real **Ed25519 signing key** (Settings → Signing, `backend/src/services/signing.ts`),
 > and "Import from a patient app" on the Patients page relays an encrypted request to the wallet over
-> a **`/wallet` Socket.io namespace**, the patient approves on their phone, and the sealed record is
-> imported (with optional **temporary share + auto-delete**). See `backend/src/routes/{signing,patients-wallet}.ts`.
+> the **Temetro Network** relay (see below), the patient approves on their phone, and the sealed record
+> is imported (with optional **temporary share + auto-delete**). Clinic→wallet **record-update push**
+> and **QR pairing** are built too. See `backend/src/routes/{signing,patients-wallet}.ts`.
 >
-> **Still vision, not built:** clinic→wallet push of signed record updates, in-app record editing,
-> QR pairing, and cryptographic time-boxing of temporary shares. The AI chat is still **mock replies**.
-> Email verification is wired but currently **not enforced** at sign-in (see `backend/CLAUDE.md`).
+> **Still vision, not built:** in-app record editing and cryptographic time-boxing of temporary
+> shares. The AI chat is still **mock replies**. Email verification is wired but currently **not
+> enforced** at sign-in (see `backend/CLAUDE.md`).
 
 ## Patient wallet app (sibling repo `~/Desktop/temetro-app`)
 
@@ -46,6 +47,28 @@ backend relay. The crypto wire format mirrors `backend/src/lib/wallet-crypto.ts`
 here means keys + data live on the patient's device and the relay only ever forwards ciphertext — it
 is **not** a literal blockchain (records are off-chain, which is also what lets a temporary share be
 deleted). Commit/push that app inside its own repo, separately from this one.
+
+## Temetro Network (sibling repo/folder `~/Desktop/Temetro-network`)
+
+The **relay** that connects this backend to patient wallet apps. It is its **own git repo** on the
+Desktop (folder `~/Desktop/Temetro-network`, pushed to `github.com/temetro/temetro-network`), **not**
+in this monorepo — a standalone **Rust + Axum + socketioxide** service meant to run always-on (e.g.
+on **Railway**). It replaces the old flaky Cloudflare quick-tunnel that used to expose the backend's
+embedded `/wallet` Socket.io namespace to phones.
+
+It is a **dumb, stateless pipe**: two Socket.io namespaces — `/wallet` for devices
+(challenge/Ed25519-signature auth, room keyed by wallet number) and `/hub` for this backend
+(`RELAY_TOKEN`-authenticated). Devices and the backend both connect to it; it **forwards sealed
+ciphertext verbatim** and never opens bundles or touches a database. Its only crypto is verifying a
+device's auth signature (mirrors `backend/src/lib/wallet-crypto.ts`). The backend connects to it as a
+`/hub` client via `backend/src/services/relay-client.ts` (its `sendToWallet` is what `emitToWallet`
+now calls); configure with `RELAY_URL` + `RELAY_TOKEN`. Commit/push that service inside its own repo,
+separately from this one.
+
+> **Note:** in this sandbox the `~/Desktop/Temetro-network` folder blocks directory enumeration
+> (`ls`/`getcwd`/git inside it return EPERM) though plain file writes work. Develop/build/commit it
+> in an accessible copy and mirror the tree in with `tar`; drive git there via
+> `GIT_DIR`/`GIT_WORK_TREE` from an accessible cwd.
 
 ## Layout
 

@@ -36,6 +36,7 @@ import { staffRouter } from "./routes/staff.js";
 import { networkRouter } from "./routes/network.js";
 import { tasksRouter } from "./routes/tasks.js";
 import { versionRouter } from "./routes/version.js";
+import { initRelayClient } from "./services/relay-client.js";
 import { beginQuickTunnelDiscovery } from "./services/relay-url.js";
 import { sweepExpiredShares } from "./services/wallet-share.js";
 
@@ -123,6 +124,11 @@ app.use(errorHandler);
 const server = createServer(app);
 initRealtime(server);
 
+// Connect to the Temetro Network relay (the device-facing hub). Patient phones
+// no longer connect to this backend directly — they connect to the relay, and
+// we push to / receive from them over its /hub namespace.
+initRelayClient();
+
 // Sweep expired temporary patient-wallet shares (auto-delete) every 5 minutes.
 const SHARE_SWEEP_INTERVAL = 5 * 60 * 1000;
 setInterval(() => {
@@ -154,7 +160,7 @@ server.listen(env.PORT, () => {
   console.log(`  • portal:   /api/portal  (public clinic kiosk)`);
   console.log(`  • fhir:     /fhir  (read-only FHIR R4 server, API-key auth)`);
   console.log(`  • signing:  /api/signing  (Ed25519 clinic key)`);
-  console.log(`  • wallet:   /api/patients/wallet  (+ /wallet socket relay)`);
+  console.log(`  • wallet:   /api/patients/wallet  (via Temetro Network relay: ${env.RELAY_URL})`);
 });
 
 // Dockerized off-network testing: learn our public Cloudflare quick-tunnel URL

@@ -27,9 +27,12 @@ export const patientsWalletRouter = Router();
 patientsWalletRouter.use(requireAuth, requireOrg);
 
 // The device-reachable URL the patient's app should connect to (baked into the
-// QR). Prefer an explicit PUBLIC_RELAY_URL; otherwise derive it from the request
-// host so that opening the web app over the LAN yields a reachable LAN URL.
+// QR). Devices connect to the standalone Temetro Network relay — the same relay
+// this backend is hubbed to — so RELAY_URL is the canonical answer. The legacy
+// PUBLIC_RELAY_URL / cloudflared / request-host fallbacks remain for pre-relay
+// self-hosting.
 async function resolveRelayUrl(req: Request): Promise<string> {
+  if (env.RELAY_URL) return env.RELAY_URL;
   if (env.PUBLIC_RELAY_URL) return env.PUBLIC_RELAY_URL;
   // A cloudflared quick tunnel (`npm run docker:tunnel`). Wait briefly for it to
   // become reachable so the QR never carries a not-yet-live URL.

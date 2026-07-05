@@ -28,6 +28,13 @@ const schema = z.object({
   // Overrides the version reported by GET /api/version. Normally derived from
   // package.json; the release pipeline can pin it explicitly.
   APP_VERSION: z.string().optional(),
+  // Temetro Network relay (github.com/temetro/temetro-network). Both this
+  // backend and patient phones connect to it; it routes the encrypted wallet
+  // messages between them. RELAY_URL is the relay's public URL (also baked into
+  // the QR a patient scans); RELAY_TOKEN is the shared secret this backend
+  // presents on the relay's /hub namespace (must match the relay's RELAY_TOKEN).
+  RELAY_URL: z.string().min(1).default("http://localhost:8080"),
+  RELAY_TOKEN: z.string().default(""),
   // Public, device-reachable URL of this backend's wallet relay, baked into the
   // QR a patient scans. Optional — when unset we derive it from the request host
   // (so opening the web app over the LAN yields a reachable LAN URL).
@@ -79,6 +86,11 @@ if (env.NODE_ENV === "production") {
       "❌ AI_CREDENTIALS_KEY is unset in production. Generate one: openssl rand -base64 32",
     );
     process.exit(1);
+  }
+  if (!env.RELAY_TOKEN) {
+    console.warn(
+      "⚠️  RELAY_TOKEN is unset in production — the Temetro Network /hub connection is unauthenticated. Set a shared secret: openssl rand -base64 32",
+    );
   }
 }
 

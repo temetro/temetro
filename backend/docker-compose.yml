@@ -68,6 +68,11 @@ services:
       BETTER_AUTH_URL: http://localhost:4000
       FRONTEND_URL: http://localhost:3000
       PORT: "4000"
+      # Temetro Network relay (github.com/temetro/temetro-network). Set RELAY_URL
+      # to your deployed relay's public URL and RELAY_TOKEN to the shared secret
+      # you configured on it — both are required for patient-wallet import.
+      RELAY_URL: ${RELAY_URL:-}
+      RELAY_TOKEN: ${RELAY_TOKEN:-}
       NODE_ENV: production
       # Uploaded patient/lab files live here, on the temetro_uploads volume.
       UPLOAD_DIR: /var/lib/temetro/uploads
