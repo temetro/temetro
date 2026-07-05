@@ -310,6 +310,7 @@
       "expiredTitle": "Anfrage abgelaufen",
       "expiredBody": "Die Anfrage ist abgelaufen, bevor der Patient geantwortet hat.",
       "invalidWallet": "Das sieht nicht nach einer gültigen Wallet-Nummer aus.",
+      "networkOff": "Treten Sie zuerst dem Temetro-Netzwerk bei (Einstellungen → Signierung), um mit Patienten-Apps zu teilen.",
       "errorTitle": "Wallet nicht erreichbar",
       "error": "Bitte prüfen Sie die Wallet-Nummer und versuchen Sie es erneut.",
       "savedTitle": "Patient importiert",

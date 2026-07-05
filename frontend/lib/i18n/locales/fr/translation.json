@@ -310,6 +310,7 @@
       "expiredTitle": "Demande expirée",
       "expiredBody": "La demande a expiré avant que le patient ne réponde.",
       "invalidWallet": "Cela ne ressemble pas à un numéro de portefeuille valide.",
+      "networkOff": "Rejoignez d'abord le Réseau Temetro (Paramètres → Signature) pour partager avec les applications des patients.",
       "errorTitle": "Impossible de joindre le portefeuille",
       "error": "Veuillez vérifier le numéro de portefeuille et réessayer.",
       "savedTitle": "Patient importé",

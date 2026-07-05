@@ -41,6 +41,13 @@ export function sendToWallet(
   hubs.get(orgId)?.emit("wallet:send", { walletNumber, event, data });
 }
 
+// Tell the relay to expect a device response for `requestId` and route it back
+// to this clinic — used by **QR pairing**, where there's no wallet number to
+// `wallet:send` to yet, so nothing would otherwise register the request.
+export function expectResponse(orgId: string, requestId: string): void {
+  hubs.get(orgId)?.emit("hub:expect", { requestId });
+}
+
 // Open (and authenticate) a hub connection for a clinic, if not already open.
 // Idempotent — safe to call on startup and again when an org joins the network.
 export async function connectOrg(orgId: string): Promise<void> {
@@ -92,11 +99,21 @@ function registerHubHandlers(orgId: string, hub: Socket): void {
         // `token` is only meaningful for a private relay (optional shared gate);
         // an empty value is ignored by an open relay.
         { clinicId: publicKey, signature, token: env.RELAY_TOKEN || undefined },
-        (ack: { ok?: boolean } | undefined) => {
-          if (ack?.ok) {
-            console.log(`Temetro Network: clinic ${orgId} authenticated on the relay`);
-          } else {
+        async (ack: { ok?: boolean } | undefined) => {
+          if (!ack?.ok) {
             console.warn(`Temetro Network: relay rejected clinic ${orgId}`);
+            return;
+          }
+          console.log(`Temetro Network: clinic ${orgId} authenticated on the relay`);
+          // The relay keeps routing state in memory, so re-register this clinic's
+          // still-pending requests — restores QR-pairing / share routing after a
+          // relay restart or a reconnect.
+          try {
+            for (const requestId of await walletShare.pendingRequestIds(orgId)) {
+              expectResponse(orgId, requestId);
+            }
+          } catch {
+            /* best-effort */
           }
         },
       );

@@ -17,6 +17,7 @@ import {
 } from "../middleware/auth.js";
 import { emitToWallet } from "../realtime.js";
 import { recordActivity } from "../services/activity.js";
+import { expectResponse } from "../services/relay-client.js";
 import * as patientService from "../services/patients.js";
 import { awaitQuickTunnelUrl } from "../services/relay-url.js";
 import { getNetworkEnabled } from "../services/signing.js";
@@ -84,6 +85,7 @@ patientsWalletRouter.post(
   requirePermission({ patient: ["write"] }),
   async (req, res, next) => {
     try {
+      await requireNetwork(req.organizationId!);
       const input = pairSchema.parse(req.body);
       const { view, ephemeralPubKey } = await walletShare.createPairingRequest(
         req.organizationId!,
@@ -91,6 +93,9 @@ patientsWalletRouter.post(
         input.mode,
         input.durationHours,
       );
+      // No wallet number to `wallet:send` to yet, so pre-register the request id
+      // with the relay so the scanning device's response routes back to us.
+      expectResponse(req.organizationId!, view.id);
       res.status(201).json({
         ...view,
         ephemeralPubKey,

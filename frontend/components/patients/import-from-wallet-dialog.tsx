@@ -141,6 +141,8 @@ export function ImportFromWalletDialog({
     } catch (err) {
       if (err instanceof ApiError && err.status === 400) {
         setError(t("patients.importApp.invalidWallet"));
+      } else if (err instanceof ApiError && err.status === 409) {
+        setError(t("patients.importApp.networkOff"));
       } else {
         setError(t("patients.importApp.error"));
       }
@@ -171,8 +173,12 @@ export function ImportFromWalletDialog({
       setPairUri(`temetro-pair:?${params.toString()}`);
       setRequest(pairing);
       setPhase("waiting");
-    } catch {
-      setError(t("patients.importApp.error"));
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setError(t("patients.importApp.networkOff"));
+      } else {
+        setError(t("patients.importApp.error"));
+      }
       setPhase("error");
     }
   };

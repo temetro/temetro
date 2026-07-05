@@ -137,6 +137,22 @@ export async function listShareRequests(
   return rows.map(toView);
 }
 
+// Ids of this clinic's still-pending share/pairing requests. Used to re-register
+// them with the relay when the clinic's hub (re)connects (the relay keeps
+// routing state in memory, so it's lost on a relay restart / redeploy).
+export async function pendingRequestIds(orgId: string): Promise<string[]> {
+  const rows = await db
+    .select({ id: walletShareRequests.id })
+    .from(walletShareRequests)
+    .where(
+      and(
+        eq(walletShareRequests.organizationId, orgId),
+        eq(walletShareRequests.status, "pending"),
+      ),
+    );
+  return rows.map((r) => r.id);
+}
+
 // Apply a response relayed back from the patient's device. On approval we
 // decrypt the sealed bundle with the request's ephemeral private key and verify
 // the wallet's Ed25519 signature over it (provenance: it really came from that

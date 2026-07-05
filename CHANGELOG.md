@@ -7,7 +7,17 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
-## [0.8.0] — 2026-07-05
+## [0.8.1] — 2026-07-05
+
+### Fixed
+- **QR "scan to connect" pairing** was broken by the multi-clinic relay routing (v0.8.0): pairing
+  has no wallet number, so the clinic never sent a `wallet:send` to register the request, and the
+  relay rejected the scanning device's response as "unknown or expired". The clinic now
+  **pre-registers** the pairing request with the relay (a new `hub:expect { requestId }` event on
+  `POST /api/patients/wallet/pair`), so the device's response routes back correctly. On hub
+  (re)connect the backend re-registers its still-pending requests, so routing also survives a relay
+  restart. `POST /pair` now also requires the clinic to have joined the network (clear 409 instead of
+  a dead QR), surfaced in the import dialog.
 
 ### Added
 - **Multi-clinic Temetro Network.** The relay now serves many self-hosted clinics at once. Each

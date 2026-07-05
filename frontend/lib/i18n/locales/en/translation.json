@@ -310,6 +310,7 @@
       "expiredTitle": "Request expired",
       "expiredBody": "The request timed out before the patient responded.",
       "invalidWallet": "That doesn't look like a valid wallet number.",
+      "networkOff": "Join the Temetro Network first (Settings → Signing) to share with patient apps.",
       "errorTitle": "Couldn't reach the wallet",
       "error": "Please check the wallet number and try again.",
       "savedTitle": "Patient imported",
