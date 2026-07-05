@@ -7,7 +7,20 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
-## [0.8.1] — 2026-07-05
+## [0.8.2] — 2026-07-05
+
+### Fixed
+- **`RELAY_URL` now defaults to the hosted relay** (`https://network.temetro.com`) instead of
+  `http://localhost:8080`. The old default silently failed for anyone who joined the network without
+  explicitly setting `RELAY_URL` — the backend's hub connection could never reach the relay (inside
+  Docker `localhost` is the container itself), so it never authenticated and QR pairing generated a
+  QR pointing at an unreachable `localhost`. Self-hosters running their own relay still override
+  `RELAY_URL`. Updated `.env.example` accordingly.
+
+### Changed
+- Generating a pairing QR (`POST /api/patients/wallet/pair`) now ensures the clinic's relay hub is
+  connected before pre-registering the request, so the routing is set up even if the connection was
+  opened lazily.
 
 ### Fixed
 - **QR "scan to connect" pairing** was broken by the multi-clinic relay routing (v0.8.0): pairing

@@ -35,7 +35,11 @@ const schema = z.object({
   // its own Ed25519 signing key, so no shared secret is needed. RELAY_TOKEN is
   // now *optional/legacy* — set it only for a private relay that also gates on a
   // shared token (must then match the relay's RELAY_TOKEN).
-  RELAY_URL: z.string().min(1).default("http://localhost:8080"),
+  //
+  // Defaults to the hosted relay so "Join Temetro Network" works out of the box;
+  // override only when running your own relay. (A `localhost` default silently
+  // fails inside Docker, where localhost is the container itself.)
+  RELAY_URL: z.string().min(1).default("https://network.temetro.com"),
   RELAY_TOKEN: z.string().default(""),
   // Public, device-reachable URL of this backend's wallet relay, baked into the
   // QR a patient scans. Optional — when unset we derive it from the request host

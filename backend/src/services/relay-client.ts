@@ -49,7 +49,9 @@ export function expectResponse(orgId: string, requestId: string): void {
 }
 
 // Open (and authenticate) a hub connection for a clinic, if not already open.
-// Idempotent — safe to call on startup and again when an org joins the network.
+// Idempotent — safe to call on startup, when an org joins the network, and
+// before generating a pairing QR. The socket auto-reconnects on its own, so an
+// existing entry is left as-is.
 export async function connectOrg(orgId: string): Promise<void> {
   if (hubs.has(orgId)) return;
 

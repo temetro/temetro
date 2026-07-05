@@ -17,7 +17,7 @@ import {
 } from "../middleware/auth.js";
 import { emitToWallet } from "../realtime.js";
 import { recordActivity } from "../services/activity.js";
-import { expectResponse } from "../services/relay-client.js";
+import { connectOrg, expectResponse } from "../services/relay-client.js";
 import * as patientService from "../services/patients.js";
 import { awaitQuickTunnelUrl } from "../services/relay-url.js";
 import { getNetworkEnabled } from "../services/signing.js";
@@ -95,6 +95,9 @@ patientsWalletRouter.post(
       );
       // No wallet number to `wallet:send` to yet, so pre-register the request id
       // with the relay so the scanning device's response routes back to us.
+      // Ensure the hub is (re)connected first; if it's still mid-handshake the
+      // on-auth re-registration of pending requests will catch this one.
+      await connectOrg(req.organizationId!);
       expectResponse(req.organizationId!, view.id);
       res.status(201).json({
         ...view,
