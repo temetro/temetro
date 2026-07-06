@@ -104,11 +104,17 @@ white/6%), so layered surfaces stay close in lightness.
 
 ## i18n
 
-`i18next` + `react-i18next` (config in `lib/i18n/config.ts`, English resources in
-`lib/i18n/locales/en/translation.json`). `components/i18n-provider.tsx` wraps the app in
+`i18next` + `react-i18next` (config in `lib/i18n/config.ts`, resources in
+`lib/i18n/locales/<lng>/translation.json`). `components/i18n-provider.tsx` wraps the app in
 `app/layout.tsx`. Use `const { t } = useTranslation()` + nested keys (e.g. `t("auth.login.title")`)
 in **client** components. To add a language, drop a `locales/<lng>/translation.json` and register it
 in `resources`/`supportedLngs` in `config.ts`.
+
+> **Translate into EVERY locale, not just English.** The app ships multiple languages
+> (`lib/i18n/locales/`: currently `en`, `de`, `fr`, `ar`, `so`). Whenever you add or rename a
+> translation key, add it to **all** `locales/*/translation.json` files with a real translation for
+> each language (not the English string copied over) — leaving a key in only `en/` ships a broken UI
+> in the others. Keep the nested structure identical across every locale file.
 
 **Coverage:** essentially all user-facing strings are now keyed (every app page + its dialogs/sheets,
 auth pages, settings panels, the sidebar/user menu, chat input, patient cards/detail/form, messages,

@@ -243,6 +243,8 @@ export function PatientFormDialog({
   // per-doctor visibility), not free text. `providerId` is the selected user id.
   const [providers, setProviders] = useState<Provider[]>([]);
   const [providerId, setProviderId] = useState(patient?.primaryProviderId ?? "");
+  const [phone, setPhone] = useState(patient?.phone ?? "");
+  const [bloodType, setBloodType] = useState(patient?.bloodType ?? "");
   const [bp, setBp] = useState(patient?.vitals.bp ?? "");
   const [hr, setHr] = useState(patient?.vitals.hr ?? "");
   const [temp, setTemp] = useState(patient?.vitals.temp ?? "");
@@ -310,6 +312,8 @@ export function PatientFormDialog({
       primaryProviderId: providerId || null,
       status,
       initials: initialsFromName(name),
+      phone: phone.trim(),
+      bloodType,
       allergies: allergies.filter((a) => a.substance.trim()),
       alerts: patient?.alerts ?? [],
       medications: medications.filter((m) => m.name.trim()),
@@ -514,6 +518,31 @@ export function PatientFormDialog({
                 ))}
               </select>
             </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={t("patientForm.phone")}>
+                <Input
+                  inputMode="tel"
+                  onChange={(event) => setPhone(event.target.value)}
+                  placeholder={t("patientForm.phonePlaceholder")}
+                  value={phone}
+                />
+              </Field>
+              <Field label={t("patientForm.bloodType")}>
+                <select
+                  className={controlClass}
+                  onChange={(event) => setBloodType(event.target.value)}
+                  value={bloodType}
+                >
+                  <option value="">{t("patientForm.bloodTypeUnknown")}</option>
+                  {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((bt) => (
+                    <option key={bt} value={bt}>
+                      {bt}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
 
             {showClinical && (
               <>

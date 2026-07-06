@@ -36,6 +36,11 @@ export const patients = pgTable(
     pcp: text("pcp").notNull(),
     status: text("status").$type<PatientStatus>().notNull(),
     initials: text("initials").notNull(),
+    // Contact + clinical demographics. `phone` is a contact/registration field
+    // (reception may read/write it); `bloodType` is clinical (redacted for the
+    // reception role, like allergies/vitals).
+    phone: text("phone").notNull().default(""),
+    bloodType: text("blood_type").notNull().default(""),
     alerts: jsonb("alerts").$type<string[]>().notNull(),
     vitalsBp: text("vitals_bp").notNull(),
     vitalsHr: text("vitals_hr").notNull(),

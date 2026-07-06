@@ -7,6 +7,24 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-07-06
+
+### Added
+- **Patient blood type & phone number.** The patient record now carries a `bloodType` (e.g. `O+`)
+  and a `phone` number. Both are shown in the record sheet and chat summary card and are editable in
+  the add/edit patient form. `phone` is a demographic/contact field (visible to and editable by the
+  **reception** role); `bloodType` is treated as clinical PHI and is **redacted for reception** (like
+  allergies/vitals). New columns `patients.phone` / `patients.blood_type` (migration `0033`).
+- **Clinic location setting.** A new org-scoped `clinic_settings` table (migration `0034`) stores the
+  clinic's address (address / city / country) plus optional map coordinates (latitude / longitude),
+  set in **Settings → Signing → Clinic location** (owner/admin only). New endpoints
+  `GET /api/clinic/settings` (any clinician) and `PUT /api/clinic/location` (owner/admin). This will
+  be surfaced in the patient wallet app to show a clinic's location.
+
+### Changed
+- New i18n keys for the above are translated into **all** shipped locales (en, de, fr, ar, so), per
+  the coverage rule now documented in `frontend/CLAUDE.md`.
+
 ## [0.8.2] — 2026-07-05
 
 ### Fixed

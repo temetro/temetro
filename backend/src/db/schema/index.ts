@@ -20,6 +20,7 @@ export * from "./integrations.js";
 export * from "./staff-profile.js";
 export * from "./meetings.js";
 export * from "./signing.js";
+export * from "./clinic-settings.js";
 export * from "./wallet-share.js";
 export * from "./wallet-updates.js";
 export * from "./fhir-keys.js";

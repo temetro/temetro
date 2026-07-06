@@ -61,6 +61,8 @@ export type Patient = {
   primaryProviderId?: string | null; // user id of the responsible clinician
   status: PatientStatus;
   initials: string; // for AvatarFallback
+  phone?: string; // contact number (demographic; visible to reception)
+  bloodType?: string; // e.g. "O+"; clinical — redacted for reception
   allergies: Allergy[];
   alerts: string[];
   medications: Medication[];

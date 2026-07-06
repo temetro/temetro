@@ -1,6 +1,6 @@
 {
   "name": "temetro-backend",
-  "version": "0.8.2",
+  "version": "0.9.0",
   "private": true,
   "type": "module",
   "description": "temetro backend — Express + Postgres API with Better Auth (email/password, organizations) and org-scoped patient records.",

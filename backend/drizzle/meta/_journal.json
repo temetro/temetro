@@ -232,6 +232,20 @@
       "when": 1783263738631,
       "tag": "0032_closed_dakota_north",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1783362745730,
+      "tag": "0033_ambitious_reavers",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1783363217049,
+      "tag": "0034_chunky_blacklash",
+      "breakpoints": true
     }
   ]
 }

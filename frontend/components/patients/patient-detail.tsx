@@ -359,6 +359,14 @@ export function PatientDetail({
             label={t("patientCard.summary.openProblems")}
             value={patient.problems.length}
           />
+          <Stat
+            label={t("patientCard.summary.bloodType")}
+            value={patient.bloodType || "—"}
+          />
+          <Stat
+            label={t("patientCard.summary.phone")}
+            value={patient.phone || "—"}
+          />
         </div>
       </Section>
 

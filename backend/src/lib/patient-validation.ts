@@ -105,6 +105,10 @@ export const patientInputSchema = z
     ),
     status: z.enum(["active", "inpatient", "discharged"]).default("active"),
     initials: z.string().trim().max(4).default(""),
+    phone: z.string().trim().max(30).default(""),
+    bloodType: z
+      .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", ""])
+      .default(""),
     allergies: z.array(allergySchema).default([]),
     alerts: z.array(z.string()).default([]),
     medications: z.array(medicationSchema).default([]),

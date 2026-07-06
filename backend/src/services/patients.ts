@@ -53,6 +53,8 @@ function toPatient(row: PatientRow, children: Children): Patient {
     primaryProviderId: row.primaryProviderId,
     status: row.status,
     initials: row.initials,
+    phone: row.phone,
+    bloodType: row.bloodType,
     allergies: children.allergies,
     alerts: row.alerts,
     medications: children.medications,
@@ -82,6 +84,8 @@ const EMPTY_TREND: Trend = { label: "", unit: "", points: [] };
 function redactClinical(patient: Patient): Patient {
   return {
     ...patient,
+    // bloodType is clinical PHI; phone is a demographic/contact field and stays.
+    bloodType: "",
     allergies: [],
     alerts: [],
     medications: [],
@@ -116,6 +120,8 @@ function patientColumns(orgId: string, input: PatientInput, createdBy?: string) 
     primaryProviderId: input.primaryProviderId ?? null,
     status: input.status,
     initials: input.initials,
+    phone: input.phone,
+    bloodType: input.bloodType,
     alerts: input.alerts,
     vitalsBp: input.vitals.bp,
     vitalsHr: input.vitals.hr,
@@ -147,6 +153,8 @@ function demographicColumns(
     primaryProviderId: input.primaryProviderId ?? null,
     status: input.status,
     initials: input.initials,
+    phone: input.phone,
+    bloodType: "",
     source: input.source,
     alerts: [] as string[],
     vitalsBp: "",
@@ -172,6 +180,7 @@ function demographicUpdateColumns(input: PatientInput) {
     primaryProviderId: input.primaryProviderId ?? null,
     status: input.status,
     initials: input.initials,
+    phone: input.phone,
   };
 }
 

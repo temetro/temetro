@@ -243,6 +243,11 @@ function SummaryCard({
               label={t("patientCard.summary.allergies")}
               value={patient.allergies.length || t("patientCard.summary.none")}
             />
+            <Stat
+              label={t("patientCard.summary.bloodType")}
+              value={patient.bloodType || "—"}
+            />
+            <Stat label={t("patientCard.summary.phone")} value={patient.phone || "—"} />
           </div>
           <AlertBadges alerts={patient.alerts} />
           {onEdit ? (
