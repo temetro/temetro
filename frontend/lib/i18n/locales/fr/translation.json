@@ -2013,7 +2013,11 @@
       "savedBody": "L'emplacement de votre clinique a été mis à jour.",
       "invalidCoords": "La latitude et la longitude doivent être des nombres.",
       "errorTitle": "Impossible d'enregistrer l'emplacement",
-      "error": "Veuillez réessayer."
+      "error": "Veuillez réessayer.",
+      "useMyLocation": "Utiliser ma position actuelle",
+      "locating": "Localisation…",
+      "geoUnsupported": "La localisation n'est pas disponible sur cet appareil.",
+      "geoError": "Impossible d'obtenir votre position. Vérifiez les autorisations et réessayez."
     },
     "signing": {
       "keyTitle": "Clé de signature",
@@ -2125,6 +2129,16 @@
       "savedBody": "Votre configuration d'IA a été mise à jour.",
       "saveFailedTitle": "Impossible d'enregistrer",
       "saveFailedBody": "L'enregistrement de vos paramètres d'IA a échoué. Veuillez réessayer."
+    },
+    "portal": {
+      "title": "Portail patient",
+      "description": "Partagez le portail de réservation public de votre clinique avec les patients — ils peuvent voir vos médecins et prendre rendez-vous.",
+      "linkLabel": "Lien du portail",
+      "linkDescription": "La page publique que les patients ouvrent pour réserver avec votre clinique.",
+      "open": "Ouvrir le portail",
+      "showQr": "Afficher le QR code",
+      "qrTitle": "QR du portail patient",
+      "qrDescription": "Les patients le scannent pour ouvrir le portail de votre clinique — ou le scannent dans l'application Temetro pour réserver."
     }
   },
   "portal": {

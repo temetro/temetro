@@ -2013,7 +2013,11 @@
       "savedBody": "Goobta rugtaada waa la cusboonaysiiyay.",
       "invalidCoords": "Latitude iyo longitude waa inay noqdaan tirooyin.",
       "errorTitle": "Lama kaydin karin goobta",
-      "error": "Fadlan mar kale isku day."
+      "error": "Fadlan mar kale isku day.",
+      "useMyLocation": "Isticmaal goobtayda hadda",
+      "locating": "Waa la helayaa goobta…",
+      "geoUnsupported": "Goobta laguma heli karo qalabkan.",
+      "geoError": "Lama heli karin goobtaada. Hubi oggolaanshaha oo isku day mar kale."
     },
     "signing": {
       "keyTitle": "Furaha saxiixa",
@@ -2125,6 +2129,16 @@
       "savedBody": "Qaabaynta AI-gaaga waa la cusbooneysiiyay.",
       "saveFailedTitle": "Lama kaydin karin",
       "saveFailedBody": "Kaydinta dejinta AI waa fashilantay. Fadlan isku day mar kale."
+    },
+    "portal": {
+      "title": "Boggaga Bukaanka",
+      "description": "La wadaag bukaannada boggaga ballanqaadka guud ee rugtaada — waxay arki karaan dhakhtarradaada oo ballan qaadan karaan.",
+      "linkLabel": "Linkiga boggaga",
+      "linkDescription": "Bogga guud ee bukaannadu furaan si ay ballan ugu qaataan rugtaada.",
+      "open": "Fur boggaga",
+      "showQr": "Muuji koodhka QR",
+      "qrTitle": "Koodhka QR ee Boggaga Bukaanka",
+      "qrDescription": "Bukaannadu waxay tan sawiraan si ay u furaan boggaga rugtaada — ama ku sawir abka Temetro wallet si aad ballan u qaadato."
     }
   },
   "portal": {

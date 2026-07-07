@@ -14,6 +14,7 @@ import {
   whiteButton,
 } from "@/components/settings/settings-parts";
 import { ClinicLocationSection } from "@/components/settings/settings-location";
+import { PatientPortalSection } from "@/components/settings/settings-portal";
 import {
   getNetworkEnabled,
   getSigningKey,
@@ -205,6 +206,8 @@ export function SigningPanel() {
           />
         </SettingsCard>
       </SettingsSection>
+
+      <PatientPortalSection />
 
       <ClinicLocationSection />
 

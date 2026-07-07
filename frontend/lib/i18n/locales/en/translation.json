@@ -2013,7 +2013,11 @@
       "savedBody": "Your clinic location has been updated.",
       "invalidCoords": "Latitude and longitude must be numbers.",
       "errorTitle": "Couldn't save location",
-      "error": "Please try again."
+      "error": "Please try again.",
+      "useMyLocation": "Use my current location",
+      "locating": "Locating…",
+      "geoUnsupported": "Location isn't available on this device.",
+      "geoError": "Couldn't get your location. Check permissions and try again."
     },
     "signing": {
       "keyTitle": "Signing key",
@@ -2125,6 +2129,16 @@
       "savedBody": "Your AI configuration has been updated.",
       "saveFailedTitle": "Could not save",
       "saveFailedBody": "Saving your AI settings failed. Please try again."
+    },
+    "portal": {
+      "title": "Patient Portal",
+      "description": "Share your clinic's public booking portal with patients — they can view your doctors and book appointments.",
+      "linkLabel": "Portal link",
+      "linkDescription": "The public page patients open to book with your clinic.",
+      "open": "Open portal",
+      "showQr": "Show QR code",
+      "qrTitle": "Patient Portal QR",
+      "qrDescription": "Patients scan this to open your clinic's portal — or scan it in the Temetro wallet app to book."
     }
   },
   "portal": {

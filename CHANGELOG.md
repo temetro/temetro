@@ -7,6 +7,35 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.10.0] — 2026-07-07
+
+### Added
+- **Patient Portal doctor picker & availability.** The portal now lists the clinic's doctors and
+  books against a chosen provider, showing only free slots. New public endpoints
+  `GET /api/portal/:clinic/doctors` and `GET /api/portal/:clinic/availability?provider=&date=`
+  (display-safe fields only), and `POST /api/portal/:clinic/appointments` accepts an optional
+  `provider` (`backend/src/routes/portal.ts`). The existing 409 conflict check stays authoritative.
+- **Patient Portal links in Settings.** Settings → Signing → Patient Portal adds **open**, **copy
+  link**, and **QR code** actions (`components/settings/settings-portal.tsx`); the QR carries the
+  backend base (`?api=`) so the patient wallet app can book natively when it scans it.
+- **Clinic location "Use my current location".** The location editor fills map coordinates from the
+  browser's geolocation (`components/settings/settings-location.tsx`).
+- **Wallet app native Patient Portal.** Scanning a clinic's portal QR opens a native booking screen
+  (doctor list → free-slot picker → confirm) in the patient wallet app.
+
+### Fixed
+- **Arabic (RTL) layout.** The sidebar now anchors to the **right** for RTL locales and the toggle
+  switch mirrors correctly, instead of leaving the shell misaligned
+  (`components/sidebar-02/app-sidebar.tsx`, `components/ui/switch.tsx`).
+- **Wallet app:** record-card **bottom sheet no longer freezes** the app (dropped the per-frame
+  animated blur overlay for HeroUI's built-in overlay); **Reset wallet** now confirms in a native
+  HeroUI dialog with Liquid Glass actions; fixed the **white edge flash** on screen transitions in
+  dark mode; the home/onboarding/register **logo** is now the Temetro mark.
+
+### Changed
+- New i18n keys (`settings.portal.*`, geolocation strings) are translated into **all** shipped
+  locales (en, de, fr, ar, so).
+
 ## [0.9.0] — 2026-07-06
 
 ### Added

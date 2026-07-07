@@ -2013,7 +2013,11 @@
       "savedBody": "Der Standort Ihrer Klinik wurde aktualisiert.",
       "invalidCoords": "Breiten- und Längengrad müssen Zahlen sein.",
       "errorTitle": "Standort konnte nicht gespeichert werden",
-      "error": "Bitte versuchen Sie es erneut."
+      "error": "Bitte versuchen Sie es erneut.",
+      "useMyLocation": "Aktuellen Standort verwenden",
+      "locating": "Standort wird ermittelt …",
+      "geoUnsupported": "Standort ist auf diesem Gerät nicht verfügbar.",
+      "geoError": "Standort konnte nicht ermittelt werden. Bitte Berechtigungen prüfen und erneut versuchen."
     },
     "signing": {
       "keyTitle": "Signierschlüssel",
@@ -2125,6 +2129,16 @@
       "savedBody": "Ihre KI-Konfiguration wurde aktualisiert.",
       "saveFailedTitle": "Speichern fehlgeschlagen",
       "saveFailedBody": "Das Speichern Ihrer KI-Einstellungen ist fehlgeschlagen. Bitte versuchen Sie es erneut."
+    },
+    "portal": {
+      "title": "Patientenportal",
+      "description": "Teilen Sie das öffentliche Buchungsportal Ihrer Klinik mit Patienten – sie können Ihre Ärzte sehen und Termine buchen.",
+      "linkLabel": "Portal-Link",
+      "linkDescription": "Die öffentliche Seite, die Patienten zum Buchen bei Ihrer Klinik öffnen.",
+      "open": "Portal öffnen",
+      "showQr": "QR-Code anzeigen",
+      "qrTitle": "Patientenportal-QR",
+      "qrDescription": "Patienten scannen dies, um das Portal Ihrer Klinik zu öffnen – oder scannen es in der Temetro-Wallet-App, um zu buchen."
     }
   },
   "portal": {

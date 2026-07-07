@@ -1,9 +1,10 @@
-import { eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { Router, type Request } from "express";
 import { z } from "zod";
 
 import { db } from "../db/index.js";
-import { organization } from "../db/schema/auth.js";
+import { member, organization, user } from "../db/schema/auth.js";
+import { staffProfile } from "../db/schema/staff-profile.js";
 import { appointmentInputSchema } from "../lib/appointment-validation.js";
 import { HttpError } from "../lib/http-error.js";
 import { initialsFromName } from "../lib/initials.js";
@@ -11,6 +12,10 @@ import { patientInputSchema } from "../lib/patient-validation.js";
 import { recordActivity } from "../services/activity.js";
 import { createAppointment, listAppointments } from "../services/appointments.js";
 import { createPatient, getPatient } from "../services/patients.js";
+
+// Clinical-capable roles that can be a patient's provider (mirrors
+// staff.ts PROVIDER_ROLES). Department roles (reception, pharmacy, lab) excluded.
+const PROVIDER_ROLES = ["owner", "admin", "doctor", "member"] as const;
 
 // Public, unauthenticated kiosk API for a clinic's Patient Portal (an iPad in the
 // waiting room). Scoped by the clinic slug in the URL — there is no session.
@@ -45,12 +50,76 @@ portalRouter.get("/:clinic", async (req, res, next) => {
   }
 });
 
+// GET /api/portal/:clinic/doctors — public list of the clinic's providers so a
+// patient can pick who to see. Returns only display-safe fields (name +
+// specialty); no ids, emails, or usernames leave this unauthenticated surface.
+portalRouter.get("/:clinic/doctors", async (req, res, next) => {
+  try {
+    const clinic = await resolveClinic(req);
+    const rows = await db
+      .select({ name: user.name, specialty: staffProfile.specialty })
+      .from(member)
+      .innerJoin(user, eq(user.id, member.userId))
+      .leftJoin(
+        staffProfile,
+        and(
+          eq(staffProfile.userId, member.userId),
+          eq(staffProfile.organizationId, member.organizationId),
+        ),
+      )
+      .where(
+        and(
+          eq(member.organizationId, clinic.id),
+          inArray(member.role, PROVIDER_ROLES as unknown as string[]),
+        ),
+      )
+      .orderBy(asc(user.name));
+    res.json(rows.map((r) => ({ name: r.name, specialty: r.specialty ?? null })));
+  } catch (err) {
+    next(err);
+  }
+});
+
+const availabilitySchema = z.object({
+  provider: z.string().trim().max(200).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD."),
+});
+
+// GET /api/portal/:clinic/availability?provider=&date= — the taken time slots
+// for a provider on a given day, so the kiosk can render only free slots. The
+// filter mirrors the booking conflict check (an empty-provider appointment
+// blocks the slot clinic-wide). Booking still re-checks server-side (409).
+portalRouter.get("/:clinic/availability", async (req, res, next) => {
+  try {
+    const clinic = await resolveClinic(req);
+    const q = availabilitySchema.parse({
+      provider: req.query.provider,
+      date: req.query.date,
+    });
+    const provider = q.provider ?? "";
+    const taken = (await listAppointments(clinic.id))
+      .filter(
+        (a) =>
+          a.status !== "cancelled" &&
+          a.date === q.date &&
+          (!provider || !a.provider || a.provider === provider),
+      )
+      .map((a) => a.time);
+    res.json({ date: q.date, provider, taken: [...new Set(taken)].sort() });
+  } catch (err) {
+    next(err);
+  }
+});
+
 const bookingSchema = z.object({
   fileNumber: z.string().trim().min(1, "A file number is required.").max(64),
   name: z.string().trim().min(1, "Your name is required.").max(200),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD."),
   time: z.string().regex(/^\d{2}:\d{2}$/, "Time must be HH:mm."),
   type: z.string().trim().max(120).optional(),
+  // Chosen provider (doctor name) from the portal's doctor picker; falls back
+  // to the patient's PCP when omitted.
+  provider: z.string().trim().max(200).optional(),
 });
 
 const newPatientSchema = z.object({
@@ -114,7 +183,7 @@ portalRouter.post("/:clinic/appointments", async (req, res, next) => {
       date: body.date,
       time: body.time,
       type: body.type || "Self-service booking",
-      provider: patient.pcp || "",
+      provider: body.provider || patient.pcp || "",
       status: "confirmed",
       source: "manual",
     });

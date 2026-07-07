@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useAiAccess } from "@/lib/ai-policy";
+import { dirFor } from "@/lib/i18n/config";
 import { useActiveRole, visibleNavItems } from "@/lib/roles";
 import { motion } from "framer-motion";
 import Image from "next/image";
@@ -27,7 +28,10 @@ import { useCallInvites } from "@/components/meetings/use-call-invites";
 
 export function DashboardSidebar() {
   const { state } = useSidebar();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // Anchor the sidebar to the right for RTL locales (Arabic) so the whole shell
+  // mirrors instead of leaving the fixed sidebar pinned physically left.
+  const side = dirFor(i18n.language) === "rtl" ? "right" : "left";
   const role = useActiveRole();
   const { allowed: aiAllowed } = useAiAccess();
   const isCollapsed = state === "collapsed";
@@ -54,7 +58,7 @@ export function DashboardSidebar() {
   }));
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
+    <Sidebar variant="inset" collapsible="icon" side={side}>
       <SidebarHeader
         className={cn(
           "flex md:pt-3.5",

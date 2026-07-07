@@ -1,5 +1,6 @@
 "use client";
 
+import { LocateFixed } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -36,6 +37,7 @@ export function ClinicLocationSection() {
   const [longitude, setLongitude] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [locating, setLocating] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -59,6 +61,34 @@ export function ClinicLocationSection() {
       active = false;
     };
   }, []);
+
+  // Fill the coordinates from the browser's geolocation (the clinician runs this
+  // on a device at the clinic). Client-only — no backend or map service.
+  const useMyLocation = () => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      notify.error(
+        t("settings.location.errorTitle"),
+        t("settings.location.geoUnsupported"),
+      );
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLatitude(pos.coords.latitude.toFixed(6));
+        setLongitude(pos.coords.longitude.toFixed(6));
+        setLocating(false);
+      },
+      () => {
+        setLocating(false);
+        notify.error(
+          t("settings.location.errorTitle"),
+          t("settings.location.geoError"),
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
 
   const save = async () => {
     const lat = parseCoord(latitude);
@@ -151,7 +181,7 @@ export function ClinicLocationSection() {
         <p className="text-xs text-muted-foreground">
           {t("settings.location.coordinatesHint")}
         </p>
-        <div>
+        <div className="flex flex-wrap gap-2">
           <Button
             className={cn("rounded-lg", whiteButton)}
             disabled={loading || saving}
@@ -161,6 +191,18 @@ export function ClinicLocationSection() {
             {saving
               ? t("settings.location.saving")
               : t("settings.location.save")}
+          </Button>
+          <Button
+            className="rounded-lg"
+            disabled={loading || locating}
+            onClick={useMyLocation}
+            type="button"
+            variant="outline"
+          >
+            <LocateFixed className="size-4" />
+            {locating
+              ? t("settings.location.locating")
+              : t("settings.location.useMyLocation")}
           </Button>
         </div>
       </SettingsCard>
