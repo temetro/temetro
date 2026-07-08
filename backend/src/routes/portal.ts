@@ -5,6 +5,7 @@ import { z } from "zod";
 import { db } from "../db/index.js";
 import { member, organization, user } from "../db/schema/auth.js";
 import { staffProfile } from "../db/schema/staff-profile.js";
+import { env } from "../env.js";
 import { appointmentInputSchema } from "../lib/appointment-validation.js";
 import { HttpError } from "../lib/http-error.js";
 import { initialsFromName } from "../lib/initials.js";
@@ -12,6 +13,7 @@ import { patientInputSchema } from "../lib/patient-validation.js";
 import { recordActivity } from "../services/activity.js";
 import { createAppointment, listAppointments } from "../services/appointments.js";
 import { createPatient, getPatient } from "../services/patients.js";
+import { getOrCreateKey } from "../services/signing.js";
 
 // Clinical-capable roles that can be a patient's provider (mirrors
 // staff.ts PROVIDER_ROLES). Department roles (reception, pharmacy, lab) excluded.
@@ -45,6 +47,27 @@ portalRouter.get("/:clinic", async (req, res, next) => {
   try {
     const clinic = await resolveClinic(req);
     res.json({ name: clinic.name });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/portal/:clinic/link — the relay-based pairing descriptor the wallet
+// app scans to talk to this clinic over the Temetro Network: the clinic's
+// signing public key (the relay's routing id) + the relay URL. Both values are
+// non-secret (the signing key is the clinic's public identity). This is what
+// makes the Patient Portal QR reachable from a real phone — it no longer bakes
+// in a localhost API URL.
+portalRouter.get("/:clinic/link", async (req, res, next) => {
+  try {
+    const clinic = await resolveClinic(req);
+    const key = await getOrCreateKey(clinic.id);
+    res.json({
+      clinicId: key.publicKey,
+      relay: env.RELAY_URL,
+      slug: String(req.params.clinic ?? "").trim(),
+      name: clinic.name,
+    });
   } catch (err) {
     next(err);
   }

@@ -3,6 +3,7 @@ import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { organization } from "../db/schema/auth.js";
+import { patients } from "../db/schema/patients.js";
 import { walletRecordUpdates } from "../db/schema/wallet-updates.js";
 import { walletShareRequests } from "../db/schema/wallet-share.js";
 import { HttpError } from "../lib/http-error.js";
@@ -70,6 +71,22 @@ export async function walletNumberForPatient(
   orgId: string,
   fileNumber: string,
 ): Promise<string | null> {
+  // Preferred: the wallet number the patient linked from the Patient Portal
+  // (stored directly on the file). Falls back to a permanent, approved,
+  // committed share for records imported the older way.
+  const [linked] = await db
+    .select({ walletNumber: patients.walletNumber })
+    .from(patients)
+    .where(
+      and(
+        eq(patients.organizationId, orgId),
+        eq(patients.fileNumber, fileNumber),
+        isNotNull(patients.walletNumber),
+      ),
+    )
+    .limit(1);
+  if (linked?.walletNumber) return linked.walletNumber;
+
   const [row] = await db
     .select({ walletNumber: walletShareRequests.walletNumber })
     .from(walletShareRequests)

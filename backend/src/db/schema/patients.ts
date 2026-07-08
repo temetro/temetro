@@ -64,6 +64,10 @@ export const patients = pgTable(
     // and passes, a scheduled sweep hard-deletes the row (services/wallet-share).
     shareOrigin: text("share_origin").$type<"wallet">(),
     shareExpiresAt: timestamp("share_expires_at"),
+    // The patient's wallet number (tmw_…) once they link their wallet from the
+    // Patient Portal. Lets clinic→wallet pushes and portal actions resolve to
+    // this file directly (services/portal.ts, wallet-updates.ts). Nullable.
+    walletNumber: text("wallet_number"),
     createdBy: text("created_by").references(() => user.id, {
       onDelete: "set null",
     }),

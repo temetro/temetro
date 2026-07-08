@@ -246,6 +246,13 @@
       "when": 1783363217049,
       "tag": "0034_chunky_blacklash",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1783530491321,
+      "tag": "0035_slippery_retro_girl",
+      "breakpoints": true
     }
   ]
 }

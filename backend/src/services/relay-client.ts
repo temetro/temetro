@@ -19,6 +19,8 @@
 import { io as connect, type Socket } from "socket.io-client";
 
 import { env } from "../env.js";
+import { HttpError } from "../lib/http-error.js";
+import { handlePortalRequest } from "./portal.js";
 import { networkEnabledOrgs, signWithClinicKey } from "./signing.js";
 import * as walletShare from "./wallet-share.js";
 import * as walletUpdates from "./wallet-updates.js";
@@ -197,6 +199,34 @@ function registerHubHandlers(orgId: string, hub: Socket): void {
         ack?.({ ok: !!view });
       } catch (err) {
         ack?.({ ok: false, error: (err as Error).message });
+      }
+    },
+  );
+
+  // A wallet app made a Patient Portal request over the relay (book, view
+  // results, link, …). The relay forwards it here with the device's verified
+  // wallet number; we run the same portal logic the web kiosk uses and ack the
+  // result back down the relay to the device.
+  hub.on(
+    "portal:request",
+    async (
+      payload: {
+        action?: string;
+        payload?: Record<string, unknown>;
+        walletNumber?: string;
+      },
+      ack?: Ack,
+    ) => {
+      try {
+        const data = await handlePortalRequest(orgId, {
+          action: String(payload?.action ?? ""),
+          payload: payload?.payload ?? {},
+          walletNumber: String(payload?.walletNumber ?? ""),
+        });
+        ack?.({ ok: true, data });
+      } catch (err) {
+        const status = err instanceof HttpError ? err.status : 500;
+        ack?.({ ok: false, error: (err as Error).message, status });
       }
     },
   );
