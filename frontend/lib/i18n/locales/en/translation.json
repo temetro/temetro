@@ -2152,7 +2152,15 @@
       "bookTitle": "Book an appointment",
       "bookDesc": "Schedule a visit with your care team.",
       "resultsTitle": "View my results",
-      "resultsDesc": "Check upcoming visits and whether results are ready."
+      "resultsDesc": "Check upcoming visits and whether results are ready.",
+      "walletTitle": "Link my wallet",
+      "walletDesc": "Use the temetro app to book and view results yourself."
+    },
+    "wallet": {
+      "title": "Link your wallet",
+      "subtitle": "Scan this code with the temetro wallet app to connect it to this clinic.",
+      "error": "Couldn't load the pairing code. Please ask the front desk.",
+      "hint": "After linking, you can book appointments and view results from your phone."
     },
     "field": {
       "name": "Full name",

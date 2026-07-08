@@ -1,7 +1,7 @@
 "use client";
 
 import { ExternalLink, QrCode } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import QRCodeSvg from "react-qr-code";
 
@@ -21,24 +21,42 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { authClient } from "@/lib/auth-client";
-import { resolveBackendUrl } from "@/lib/backend-url";
+import { getPortalLink, portalPairingUri } from "@/lib/portal";
 import { cn } from "@/lib/utils";
 
 // Patient Portal section (Settings → Signing): surfaces the clinic's public
 // portal link so patients can open it, copy it, or scan a QR. The portal lives
-// at /portal/<org-slug>; the QR also carries the backend base (`?api=`) so the
-// patient wallet app can reach the JSON API when it scans the same code.
+// at /portal/<org-slug>. The QR encodes a `temetro-portal:` pairing URI (relay
+// URL + clinic signing key) — the wallet app scans it and talks to this clinic
+// over the Temetro Network relay, so it works from a real phone (no localhost).
 export function PatientPortalSection() {
   const { t } = useTranslation();
   const { data: activeOrg } = authClient.useActiveOrganization();
   const [qrOpen, setQrOpen] = useState(false);
+  const [qrUri, setQrUri] = useState("");
 
   const slug = activeOrg?.slug;
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const portalUrl = slug ? `${origin}/portal/${slug}` : "";
-  const qrUrl = slug
-    ? `${portalUrl}?api=${encodeURIComponent(resolveBackendUrl())}`
-    : "";
+
+  // Fetch the relay-based pairing descriptor for the QR (non-secret).
+  useEffect(() => {
+    if (!slug) {
+      setQrUri("");
+      return;
+    }
+    let active = true;
+    getPortalLink(slug)
+      .then((link) => {
+        if (active) setQrUri(portalPairingUri(link));
+      })
+      .catch(() => {
+        if (active) setQrUri("");
+      });
+    return () => {
+      active = false;
+    };
+  }, [slug]);
 
   return (
     <SettingsSection
@@ -63,7 +81,7 @@ export function PatientPortalSection() {
           </Button>
           <Button
             className="rounded-lg"
-            disabled={!qrUrl}
+            disabled={!qrUri}
             onClick={() => setQrOpen(true)}
             type="button"
             variant="outline"
@@ -83,9 +101,9 @@ export function PatientPortalSection() {
             </DialogDescription>
           </DialogHeader>
           <DialogPanel className="flex flex-col items-center gap-3 pb-2">
-            {qrUrl ? (
+            {qrUri ? (
               <div className="rounded-2xl bg-white p-4">
-                <QRCodeSvg value={qrUrl} size={220} />
+                <QRCodeSvg value={qrUri} size={220} />
               </div>
             ) : null}
             <p className="break-all text-center text-sm text-muted-foreground">

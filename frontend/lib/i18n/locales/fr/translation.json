@@ -2152,7 +2152,15 @@
       "bookTitle": "Prendre un rendez-vous",
       "bookDesc": "Planifiez une visite avec votre équipe soignante.",
       "resultsTitle": "Voir mes résultats",
-      "resultsDesc": "Consultez les prochaines visites et si les résultats sont prêts."
+      "resultsDesc": "Consultez les prochaines visites et si les résultats sont prêts.",
+      "walletTitle": "Lier mon portefeuille",
+      "walletDesc": "Utilisez l'application temetro pour réserver et voir vos résultats vous-même."
+    },
+    "wallet": {
+      "title": "Lier votre portefeuille",
+      "subtitle": "Scannez ce code avec l'application portefeuille temetro pour la connecter à cette clinique.",
+      "error": "Impossible de charger le code d'association. Veuillez demander à l'accueil.",
+      "hint": "Une fois lié, vous pourrez prendre rendez-vous et consulter vos résultats depuis votre téléphone."
     },
     "field": {
       "name": "Nom complet",

@@ -8,9 +8,11 @@ import {
   ChevronRight,
   FlaskConical,
   Loader2,
+  Smartphone,
 } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import QRCodeSvg from "react-qr-code";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,13 +27,15 @@ import {
   bookPortalAppointment,
   createPortalPatient,
   getPortalClinic,
+  getPortalLink,
   lookupPortalResults,
+  portalPairingUri,
   type PortalBookingResult,
   type PortalResults,
 } from "@/lib/portal";
 import { cn } from "@/lib/utils";
 
-type Step = "choose" | "book" | "results";
+type Step = "choose" | "book" | "results" | "wallet";
 
 const todayKey = () => new Date().toISOString().slice(0, 10);
 
@@ -93,6 +97,8 @@ export function PortalKiosk({ clinic }: { clinic: string }) {
         <ChooseStep onPick={setStep} />
       ) : step === "book" ? (
         <BookStep clinic={clinic} onBack={() => setStep("choose")} />
+      ) : step === "wallet" ? (
+        <WalletStep clinic={clinic} onBack={() => setStep("choose")} />
       ) : (
         <ResultsStep clinic={clinic} onBack={() => setStep("choose")} />
       )}
@@ -116,6 +122,12 @@ function ChooseStep({ onPick }: { onPick: (step: Step) => void }) {
         icon: <FlaskConical className="size-7" />,
         title: t("portal.choose.resultsTitle"),
         desc: t("portal.choose.resultsDesc"),
+      },
+      {
+        step: "wallet",
+        icon: <Smartphone className="size-7" />,
+        title: t("portal.choose.walletTitle"),
+        desc: t("portal.choose.walletDesc"),
       },
     ];
   return (
@@ -154,6 +166,47 @@ function BackButton({ onBack }: { onBack: () => void }) {
       <ArrowLeft className="size-4 rtl:rotate-180" />
       {t("portal.back")}
     </button>
+  );
+}
+
+// Show a QR the patient scans with the temetro wallet app to link it to this
+// clinic over the Temetro Network relay. After linking, the app can book
+// appointments and view/download results itself, syncing back to the clinic.
+function WalletStep({ clinic, onBack }: { clinic: string; onBack: () => void }) {
+  const { t } = useTranslation();
+  const [uri, setUri] = useState<string | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getPortalLink(clinic)
+      .then((link) => active && setUri(portalPairingUri(link)))
+      .catch(() => active && setError(true));
+    return () => {
+      active = false;
+    };
+  }, [clinic]);
+
+  return (
+    <div className="flex w-full flex-col items-center gap-5">
+      <BackButton onBack={onBack} />
+      <h2 className="font-semibold text-xl">{t("portal.wallet.title")}</h2>
+      <p className="max-w-md text-center text-muted-foreground text-sm">
+        {t("portal.wallet.subtitle")}
+      </p>
+      {uri ? (
+        <div className="rounded-2xl bg-white p-4">
+          <QRCodeSvg value={uri} size={232} />
+        </div>
+      ) : error ? (
+        <p className="text-destructive text-sm">{t("portal.wallet.error")}</p>
+      ) : (
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      )}
+      <p className="max-w-md text-center text-muted-foreground text-xs">
+        {t("portal.wallet.hint")}
+      </p>
+    </div>
   );
 }
 

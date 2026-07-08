@@ -65,6 +65,30 @@ export function getPortalClinic(clinic: string): Promise<PortalClinic> {
   return portalFetch<PortalClinic>(`/${encodeURIComponent(clinic)}`);
 }
 
+// The relay-based pairing descriptor the wallet app scans: the clinic's signing
+// public key (relay routing id) + the relay URL. Non-secret values.
+export type PortalLink = {
+  clinicId: string;
+  relay: string;
+  slug: string;
+  name: string;
+};
+
+export function getPortalLink(clinic: string): Promise<PortalLink> {
+  return portalFetch<PortalLink>(`/${encodeURIComponent(clinic)}/link`);
+}
+
+// Build the `temetro-portal:` URI the wallet app scans to reach this clinic over
+// the Temetro Network relay (no localhost API URL — works from a real phone).
+export function portalPairingUri(link: PortalLink): string {
+  const params = new URLSearchParams({
+    relay: link.relay,
+    clinic: link.clinicId,
+    slug: link.slug,
+  });
+  return `temetro-portal:?${params.toString()}`;
+}
+
 export type PortalNewPatient = {
   name: string;
   sex?: string;

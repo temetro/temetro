@@ -2152,7 +2152,15 @@
       "bookTitle": "Einen Termin buchen",
       "bookDesc": "Vereinbaren Sie einen Besuch bei Ihrem Behandlungsteam.",
       "resultsTitle": "Meine Ergebnisse ansehen",
-      "resultsDesc": "Prüfen Sie bevorstehende Besuche und ob Ergebnisse bereit sind."
+      "resultsDesc": "Prüfen Sie bevorstehende Besuche und ob Ergebnisse bereit sind.",
+      "walletTitle": "Wallet verknüpfen",
+      "walletDesc": "Nutzen Sie die temetro-App, um selbst zu buchen und Ergebnisse zu sehen."
+    },
+    "wallet": {
+      "title": "Wallet verknüpfen",
+      "subtitle": "Scannen Sie diesen Code mit der temetro-Wallet-App, um sie mit dieser Klinik zu verbinden.",
+      "error": "Der Kopplungscode konnte nicht geladen werden. Bitte fragen Sie an der Rezeption.",
+      "hint": "Nach der Verknüpfung können Sie Termine buchen und Ergebnisse auf Ihrem Telefon ansehen."
     },
     "field": {
       "name": "Vollständiger Name",

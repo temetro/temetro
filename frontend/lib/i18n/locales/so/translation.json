@@ -2152,7 +2152,15 @@
       "bookTitle": "Ballan qabso",
       "bookDesc": "Qorshee booqasho kooxdaada daryeelka.",
       "resultsTitle": "Eeg natiijooyinkayga",
-      "resultsDesc": "Hubi booqashooyinka soo socda iyo haddii natiijooyinku diyaar yihiin."
+      "resultsDesc": "Hubi booqashooyinka soo socda iyo haddii natiijooyinku diyaar yihiin.",
+      "walletTitle": " Isku xir walletkayga",
+      "walletDesc": "Isticmaal abka temetro si aad adigu u ballansato oo aad u aragto natiijooyinka."
+    },
+    "wallet": {
+      "title": "Isku xir walletkaaga",
+      "subtitle": "Ku sawir koodhkan abka wallet-ka temetro si aad ugu xidho rugtan caafimaad.",
+      "error": "Lama soo rari karin koodhka isku xirka. Fadlan weydii miiska hore.",
+      "hint": "Kadib xirka, waxaad ballan ka samaysan kartaa oo natiijooyinka ka arki kartaa taleefankaaga."
     },
     "field": {
       "name": "Magaca oo dhan",
