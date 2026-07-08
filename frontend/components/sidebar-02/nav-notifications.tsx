@@ -15,6 +15,7 @@ import {
   MenuSeparator,
   MenuTrigger,
 } from "@/components/ui/menu";
+import { dirFor } from "@/lib/i18n/config";
 import { markNotificationRead, notificationHref } from "@/lib/notifications";
 import { useNotifications } from "@/lib/use-notifications";
 
@@ -30,9 +31,11 @@ function relativeTime(iso: string): string {
 }
 
 export function NotificationsPopover() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const { items, unread, markAllRead } = useNotifications();
+  // Open toward the content side; flips to the left under RTL.
+  const popupSide = dirFor(i18n.language) === "rtl" ? "left" : "right";
 
   return (
     <Menu
@@ -58,7 +61,7 @@ export function NotificationsPopover() {
           </span>
         )}
       </MenuTrigger>
-      <MenuPopup side="right" className="my-6 w-80">
+      <MenuPopup side={popupSide} className="my-6 w-80">
         <MenuGroup>
           <MenuGroupLabel>{t("nav.notifications")}</MenuGroupLabel>
         </MenuGroup>

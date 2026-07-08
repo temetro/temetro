@@ -2017,7 +2017,8 @@
       "useMyLocation": "Aktuellen Standort verwenden",
       "locating": "Standort wird ermittelt …",
       "geoUnsupported": "Standort ist auf diesem Gerät nicht verfügbar.",
-      "geoError": "Standort konnte nicht ermittelt werden. Bitte Berechtigungen prüfen und erneut versuchen."
+      "geoError": "Standort konnte nicht ermittelt werden. Bitte Berechtigungen prüfen und erneut versuchen.",
+      "geoPartial": "Koordinaten eingetragen – bitte Adressdetails manuell ergänzen."
     },
     "signing": {
       "keyTitle": "Signierschlüssel",

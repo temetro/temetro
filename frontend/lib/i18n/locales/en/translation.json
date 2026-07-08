@@ -2017,7 +2017,8 @@
       "useMyLocation": "Use my current location",
       "locating": "Locating…",
       "geoUnsupported": "Location isn't available on this device.",
-      "geoError": "Couldn't get your location. Check permissions and try again."
+      "geoError": "Couldn't get your location. Check permissions and try again.",
+      "geoPartial": "Filled the coordinates — please add the address details manually."
     },
     "signing": {
       "keyTitle": "Signing key",

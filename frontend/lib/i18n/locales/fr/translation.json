@@ -2017,7 +2017,8 @@
       "useMyLocation": "Utiliser ma position actuelle",
       "locating": "Localisation…",
       "geoUnsupported": "La localisation n'est pas disponible sur cet appareil.",
-      "geoError": "Impossible d'obtenir votre position. Vérifiez les autorisations et réessayez."
+      "geoError": "Impossible d'obtenir votre position. Vérifiez les autorisations et réessayez.",
+      "geoPartial": "Coordonnées renseignées — veuillez ajouter l'adresse manuellement."
     },
     "signing": {
       "keyTitle": "Clé de signature",

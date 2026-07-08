@@ -14,6 +14,7 @@ import {
 } from "@/components/settings/settings-parts";
 import { cn } from "@/lib/utils";
 import { getClinicSettings, saveClinicLocation } from "@/lib/clinic";
+import { reverseGeocode } from "@/lib/geocode";
 import { notify } from "@/lib/toast";
 
 // Parse a coordinate input into a number or null (empty ⇒ null). Returns
@@ -29,7 +30,7 @@ function parseCoord(value: string): number | null | false {
 // Persists the clinic's address + optional map coordinates so the wallet app can
 // display the clinic location later.
 export function ClinicLocationSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("");
@@ -62,8 +63,10 @@ export function ClinicLocationSection() {
     };
   }, []);
 
-  // Fill the coordinates from the browser's geolocation (the clinician runs this
-  // on a device at the clinic). Client-only — no backend or map service.
+  // Fill the location from the browser's geolocation (the clinician runs this on
+  // a device at the clinic): sets the coordinates, then reverse-geocodes them to
+  // also fill address / city / country. The address lookup is best-effort — on
+  // failure we keep the coordinates and just tell the user to fill the rest.
   const useMyLocation = () => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
       notify.error(
@@ -74,10 +77,23 @@ export function ClinicLocationSection() {
     }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLatitude(pos.coords.latitude.toFixed(6));
-        setLongitude(pos.coords.longitude.toFixed(6));
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setLatitude(lat.toFixed(6));
+        setLongitude(lng.toFixed(6));
+        const place = await reverseGeocode(lat, lng, i18n.language);
         setLocating(false);
+        if (place) {
+          if (place.address) setAddress(place.address);
+          if (place.city) setCity(place.city);
+          if (place.country) setCountry(place.country);
+        } else {
+          notify.info(
+            t("settings.location.savedTitle"),
+            t("settings.location.geoPartial"),
+          );
+        }
       },
       () => {
         setLocating(false);

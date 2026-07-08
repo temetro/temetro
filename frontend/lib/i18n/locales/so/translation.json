@@ -2017,7 +2017,8 @@
       "useMyLocation": "Isticmaal goobtayda hadda",
       "locating": "Waa la helayaa goobta…",
       "geoUnsupported": "Goobta laguma heli karo qalabkan.",
-      "geoError": "Lama heli karin goobtaada. Hubi oggolaanshaha oo isku day mar kale."
+      "geoError": "Lama heli karin goobtaada. Hubi oggolaanshaha oo isku day mar kale.",
+      "geoPartial": "Isudhigyada waa la buuxiyay — fadlan gacanta ku gali faahfaahinta ciwaanka."
     },
     "signing": {
       "keyTitle": "Furaha saxiixa",
