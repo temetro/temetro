@@ -7,6 +7,33 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.11.0] — 2026-07-09
+
+### Added
+- **Patient Portal over the Temetro Network relay + wallet linking.** The wallet app now reaches a
+  clinic's Patient Portal through the relay instead of a direct HTTP API, so it works from a real
+  phone. New `services/portal.ts` (clinic info, doctors, availability, wallet linking, conflict-aware
+  booking, results, downloadable lab files) runs behind a `portal:request` hub handler
+  (`backend/src/services/relay-client.ts`). A new nullable `patients.wallet_number` column stores the
+  link, and `walletNumberForPatient` resolves through it so clinic→wallet pushes work after a portal
+  link (not only after a permanent share). `GET /api/portal/:clinic/link` returns the relay-based
+  pairing descriptor (clinic signing key + relay URL).
+- **Portal "Link my wallet" option.** The Patient Portal kiosk adds a third card that shows a QR the
+  wallet app scans to link over the relay (`components/portal/portal-kiosk.tsx`).
+- **Appointments & invoices reach the wallet.** Clinic→wallet pushes now include the patient's
+  appointments and invoices in the sealed bundle, so they show up in the wallet app.
+- **Clinic location reverse-geocoding.** "Use my current location" now fills address / city /
+  country (OpenStreetMap Nominatim), not just latitude / longitude (`lib/geocode.ts`).
+
+### Fixed
+- **Patient Portal QR was unreachable from a phone.** Settings → Signing now encodes a
+  `temetro-portal:` pairing URI (relay URL + clinic signing key) instead of a `localhost` API URL, so
+  the wallet app can actually connect (`components/settings/settings-portal.tsx`).
+- **Arabic (RTL) sidebar.** The collapse arrow and notification bell now stack **above** the nav
+  icons instead of being pinned to the opposite edge; the toggle glyph mirrors and the notifications
+  popover opens toward the content side (`components/sidebar-02/app-sidebar.tsx`,
+  `components/ui/sidebar.tsx`, `components/sidebar-02/nav-notifications.tsx`).
+
 ## [0.10.0] — 2026-07-07
 
 ### Added
