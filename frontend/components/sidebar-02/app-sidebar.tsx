@@ -31,8 +31,7 @@ export function DashboardSidebar() {
   const { t, i18n } = useTranslation();
   // Anchor the sidebar to the right for RTL locales (Arabic) so the whole shell
   // mirrors instead of leaving the fixed sidebar pinned physically left.
-  const isRtl = dirFor(i18n.language) === "rtl";
-  const side = isRtl ? "right" : "left";
+  const side = dirFor(i18n.language) === "rtl" ? "right" : "left";
   const role = useActiveRole();
   const { allowed: aiAllowed } = useAiAccess();
   const isCollapsed = state === "collapsed";
@@ -65,11 +64,7 @@ export function DashboardSidebar() {
           "flex md:pt-3.5",
           isCollapsed
             ? "flex-row items-center justify-between gap-y-4 md:flex-col md:items-start md:justify-start"
-            : "flex-row items-center justify-between",
-          // RTL (Arabic): stack the logo and the toggle/bell controls into a
-          // right-aligned column so the collapse arrow sits ABOVE the nav icons
-          // instead of being pinned to the opposite (left) edge.
-          isRtl && !isCollapsed && "flex-col items-end justify-start gap-y-3"
+            : "flex-row items-center justify-between"
         )}
       >
         <Tooltip>
