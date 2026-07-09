@@ -293,23 +293,6 @@ export function ProfilePanel() {
         </div>
       </SettingsSection>
 
-      {/* Future features — intentionally not wired to persistence yet. */}
-      <SettingsSection
-        description={t("settings.profile.featuresDescription")}
-        title={t("settings.profile.features")}
-      >
-        <div className="space-y-3">
-          <ToggleRow
-            description={t("settings.profile.notif.patientStorageDesc")}
-            title={t("settings.profile.notif.patientStorage")}
-          />
-          <ToggleRow
-            description={t("settings.profile.notif.requireSignedDesc")}
-            title={t("settings.profile.notif.requireSigned")}
-          />
-        </div>
-      </SettingsSection>
-
       <SettingsSection
         description={t("settings.profile.dangerZoneDescription")}
         title={t("settings.profile.dangerZone")}

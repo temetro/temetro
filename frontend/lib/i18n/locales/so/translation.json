@@ -466,6 +466,7 @@
       "fileNumber": "Faylka #{{number}}",
       "change": "Beddel",
       "issued": "La bixiyay",
+      "backdate": "Taariikh hore",
       "due": "Taariikhda la sugayo",
       "status": "Xaalad",
       "notes": "Qoraallo",
@@ -1826,8 +1827,6 @@
       "patientNotificationsDescription": "Iimaylada loo diro bukaannada oo ku saabsan diiwaannadooda, natiijooyinka, iyo ansixinta la sugayo",
       "accountNotifications": "Ogeysiisyada akoonka",
       "accountNotificationsDescription": "Ogeysiisyada laguu soo diro oo ku saabsan bukaannadaada iyo kooxda daryeelka",
-      "features": "Astaamaha",
-      "featuresDescription": "Maaree astaamaha alpha & beta ee akoonkaaga",
       "dangerZone": "Aagga khatarta",
       "dangerZoneDescription": "Ficillo aan dib loo celin karin oo akoonkaaga",
       "deleteAccount": "Tirtir akoonka",
@@ -1866,11 +1865,7 @@
         "pendingApprovals": "Ansixinta la sugayo",
         "pendingApprovalsDesc": "I ogeysii marka bukaan ansixiyo ama diido isbeddel la sugayo",
         "recordsShared": "Diiwaanno la ila wadaagay",
-        "recordsSharedDesc": "I ogeysii marka bukaan diiwaan ila wadaago",
-        "patientStorage": "Kaydka bukaanka (beta)",
-        "patientStorageDesc": "Ku qor diiwaannada qalabka gaarka ah ee bukaanka halkii xogtaada",
-        "requireSigned": "U baahan diiwaanno la saxiixay",
-        "requireSignedDesc": "U baahan saxiix isbeddel kasta oo aad ku sameyso diiwaanka bukaanka"
+        "recordsSharedDesc": "I ogeysii marka bukaan diiwaan ila wadaago"
       }
     },
     "careTeam": {

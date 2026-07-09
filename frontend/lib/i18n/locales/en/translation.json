@@ -466,6 +466,7 @@
       "fileNumber": "File #{{number}}",
       "change": "Change",
       "issued": "Issued",
+      "backdate": "Back-date",
       "due": "Due date",
       "status": "Status",
       "notes": "Notes",
@@ -1826,8 +1827,6 @@
       "patientNotificationsDescription": "Emails sent to patients about their records, results, and pending approvals",
       "accountNotifications": "Account notifications",
       "accountNotificationsDescription": "Notifications sent to you about your patients and the care team",
-      "features": "Features",
-      "featuresDescription": "Manage alpha & beta features for your account",
       "dangerZone": "Danger Zone",
       "dangerZoneDescription": "Irreversible actions for your account",
       "deleteAccount": "Delete account",
@@ -1866,11 +1865,7 @@
         "pendingApprovals": "Pending approvals",
         "pendingApprovalsDesc": "Notify me when a patient approves or rejects a pending change",
         "recordsShared": "Records shared with me",
-        "recordsSharedDesc": "Notify me when a patient shares a record with me",
-        "patientStorage": "Patient-owned storage (beta)",
-        "patientStorageDesc": "Write records to the patient's own device instead of your database",
-        "requireSigned": "Require signed records",
-        "requireSignedDesc": "Require a signature on every change you make to a patient record"
+        "recordsSharedDesc": "Notify me when a patient shares a record with me"
       }
     },
     "careTeam": {

@@ -482,6 +482,7 @@
       "fileNumber": "ملف رقم {{number}}",
       "change": "تغيير",
       "issued": "تاريخ الإصدار",
+      "backdate": "تأريخ رجعي",
       "due": "تاريخ الاستحقاق",
       "status": "الحالة",
       "notes": "ملاحظات",
@@ -1846,8 +1847,6 @@
       "patientNotificationsDescription": "رسائل تُرسل إلى المرضى بشأن سجلاتهم ونتائجهم والموافقات المعلّقة",
       "accountNotifications": "إشعارات الحساب",
       "accountNotificationsDescription": "إشعارات تُرسل إليك بشأن مرضاك وفريق الرعاية",
-      "features": "الميزات",
-      "featuresDescription": "أدر ميزات alpha و beta لحسابك",
       "dangerZone": "منطقة الخطر",
       "dangerZoneDescription": "إجراءات لا رجعة فيها لحسابك",
       "deleteAccount": "حذف الحساب",
@@ -1886,11 +1885,7 @@
         "pendingApprovals": "الموافقات المعلّقة",
         "pendingApprovalsDesc": "أبلغني عند موافقة مريض على تغيير معلّق أو رفضه",
         "recordsShared": "سجلات شُوركت معي",
-        "recordsSharedDesc": "أبلغني عند مشاركة مريض سجلًا معي",
-        "patientStorage": "تخزين مملوك للمريض (beta)",
-        "patientStorageDesc": "اكتب السجلات على جهاز المريض الخاص بدلًا من قاعدة بياناتك",
-        "requireSigned": "طلب سجلات موقّعة",
-        "requireSignedDesc": "طلب توقيع على كل تغيير تجريه على سجل مريض"
+        "recordsSharedDesc": "أبلغني عند مشاركة مريض سجلًا معي"
       }
     },
     "careTeam": {

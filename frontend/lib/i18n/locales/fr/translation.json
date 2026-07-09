@@ -466,6 +466,7 @@
       "fileNumber": "Dossier n° {{number}}",
       "change": "Changer",
       "issued": "Émise",
+      "backdate": "Antidater",
       "due": "Date d'échéance",
       "status": "Statut",
       "notes": "Notes",
@@ -1826,8 +1827,6 @@
       "patientNotificationsDescription": "E-mails envoyés aux patients à propos de leurs dossiers, résultats et approbations en attente",
       "accountNotifications": "Notifications du compte",
       "accountNotificationsDescription": "Notifications qui vous sont envoyées à propos de vos patients et de l'équipe soignante",
-      "features": "Fonctionnalités",
-      "featuresDescription": "Gérez les fonctionnalités alpha & bêta de votre compte",
       "dangerZone": "Zone de danger",
       "dangerZoneDescription": "Actions irréversibles pour votre compte",
       "deleteAccount": "Supprimer le compte",
@@ -1866,11 +1865,7 @@
         "pendingApprovals": "Approbations en attente",
         "pendingApprovalsDesc": "Me notifier lorsqu'un patient approuve ou rejette une modification en attente",
         "recordsShared": "Dossiers partagés avec moi",
-        "recordsSharedDesc": "Me notifier lorsqu'un patient partage un dossier avec moi",
-        "patientStorage": "Stockage appartenant au patient (bêta)",
-        "patientStorageDesc": "Écrivez les dossiers sur l'appareil du patient plutôt que dans votre base de données",
-        "requireSigned": "Exiger des dossiers signés",
-        "requireSignedDesc": "Exiger une signature sur chaque modification que vous apportez à un dossier patient"
+        "recordsSharedDesc": "Me notifier lorsqu'un patient partage un dossier avec moi"
       }
     },
     "careTeam": {

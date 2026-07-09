@@ -59,12 +59,23 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
+// Local start-of-day, used to disable days strictly before today.
+const startOfToday = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
 function DatePicker({
   value,
   onChange,
+  allowPast = true,
 }: {
   value: Date;
   onChange: (d: Date) => void;
+  // When false, days before today are disabled (used for the issue date unless
+  // the clinician opts into back-dating an older invoice).
+  allowPast?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -87,6 +98,7 @@ function DatePicker({
       />
       <PopoverPopup>
         <Calendar
+          disabled={allowPast ? undefined : { before: startOfToday() }}
           mode="single"
           onSelect={(d) => {
             if (d) {
@@ -131,6 +143,9 @@ export function InvoiceFormDialog({
       : null;
 
   const [issuedAt, setIssuedAt] = useState<Date>(() => new Date());
+  // Off by default: the issue date can't be back-dated unless the clinician
+  // opts in (for recording an older, pre-existing invoice).
+  const [allowBackdate, setAllowBackdate] = useState(false);
   const [hasDue, setHasDue] = useState(false);
   const [dueAt, setDueAt] = useState<Date>(() => new Date());
   const [status, setStatus] = useState<InvoiceStatus>("draft");
@@ -143,6 +158,8 @@ export function InvoiceFormDialog({
     if (!open) return;
     if (mode === "edit" && invoice) {
       setIssuedAt(new Date(`${invoice.issuedAt}T00:00:00`));
+      // Existing invoices legitimately carry past issue dates.
+      setAllowBackdate(true);
       setHasDue(Boolean(invoice.dueAt));
       setDueAt(new Date(`${invoice.dueAt ?? invoice.issuedAt}T00:00:00`));
       setStatus(invoice.status);
@@ -153,6 +170,7 @@ export function InvoiceFormDialog({
     } else {
       setSelected(null);
       setIssuedAt(new Date());
+      setAllowBackdate(false);
       setHasDue(false);
       setDueAt(new Date());
       setStatus("draft");
@@ -310,9 +328,24 @@ export function InvoiceFormDialog({
             </Field>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label={t("invoices.dialog.issued")}>
-                <DatePicker onChange={setIssuedAt} value={issuedAt} />
-              </Field>
+              <div className="flex flex-col gap-1.5">
+                <span className="flex items-center justify-between gap-2 text-muted-foreground text-xs">
+                  {t("invoices.dialog.issued")}
+                  <label className="flex items-center gap-1 text-[11px]">
+                    <input
+                      checked={allowBackdate}
+                      onChange={(e) => setAllowBackdate(e.target.checked)}
+                      type="checkbox"
+                    />
+                    {t("invoices.dialog.backdate")}
+                  </label>
+                </span>
+                <DatePicker
+                  allowPast={allowBackdate}
+                  onChange={setIssuedAt}
+                  value={issuedAt}
+                />
+              </div>
               <div className="flex flex-col gap-1.5">
                 <span className="flex items-center justify-between text-muted-foreground text-xs">
                   {t("invoices.dialog.due")}

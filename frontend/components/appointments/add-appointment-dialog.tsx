@@ -51,6 +51,14 @@ const TYPES = [
 const controlClass =
   "h-9 w-full rounded-3xl border border-transparent bg-input/50 px-3 text-sm text-foreground outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30";
 
+// Local start-of-day so the calendar can disable days strictly before today
+// (appointments can't be scheduled in the past).
+const startOfToday = () => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5">
@@ -251,6 +259,7 @@ export function AddAppointmentDialog({
                   />
                   <PopoverPopup>
                     <Calendar
+                      disabled={{ before: startOfToday() }}
                       mode="single"
                       onSelect={(d) => {
                         if (d) {

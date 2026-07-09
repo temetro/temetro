@@ -466,6 +466,7 @@
       "fileNumber": "Aktennr. {{number}}",
       "change": "Ändern",
       "issued": "Ausgestellt",
+      "backdate": "Rückdatieren",
       "due": "Fälligkeitsdatum",
       "status": "Status",
       "notes": "Notizen",
@@ -1826,8 +1827,6 @@
       "patientNotificationsDescription": "E-Mails an Patienten über ihre Datensätze, Ergebnisse und ausstehenden Genehmigungen",
       "accountNotifications": "Kontobenachrichtigungen",
       "accountNotificationsDescription": "Benachrichtigungen an Sie über Ihre Patienten und das Behandlungsteam",
-      "features": "Funktionen",
-      "featuresDescription": "Verwalten Sie Alpha- und Beta-Funktionen für Ihr Konto",
       "dangerZone": "Gefahrenzone",
       "dangerZoneDescription": "Unumkehrbare Aktionen für Ihr Konto",
       "deleteAccount": "Konto löschen",
@@ -1866,11 +1865,7 @@
         "pendingApprovals": "Ausstehende Genehmigungen",
         "pendingApprovalsDesc": "Benachrichtigen Sie mich, wenn ein Patient eine ausstehende Änderung genehmigt oder ablehnt",
         "recordsShared": "Mit mir geteilte Datensätze",
-        "recordsSharedDesc": "Benachrichtigen Sie mich, wenn ein Patient einen Datensatz mit mir teilt",
-        "patientStorage": "Patienteneigener Speicher (Beta)",
-        "patientStorageDesc": "Schreiben Sie Datensätze auf das eigene Gerät des Patienten statt in Ihre Datenbank",
-        "requireSigned": "Signierte Datensätze erforderlich",
-        "requireSignedDesc": "Erfordern Sie eine Signatur für jede Änderung, die Sie an einer Patientenakte vornehmen"
+        "recordsSharedDesc": "Benachrichtigen Sie mich, wenn ein Patient einen Datensatz mit mir teilt"
       }
     },
     "careTeam": {
