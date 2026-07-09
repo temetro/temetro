@@ -30,7 +30,6 @@ import { getPatient } from "./patients.js";
 
 // Clinical-capable roles that can be a patient's provider (mirrors portal.ts).
 const PROVIDER_ROLES = ["owner", "admin", "doctor", "member"] as const;
-const norm = (s: string) => s.trim().toLowerCase();
 
 export type PortalDoctor = { name: string; specialty: string | null };
 
@@ -87,35 +86,31 @@ export async function getAvailability(
 
 // --- wallet linkage ---------------------------------------------------------
 
-// Save a wallet number onto a patient file after verifying the patient's
-// identity (name + file number, like the kiosk). Once linked, clinic→wallet
-// pushes and portal actions resolve to this file directly.
+// Confirm the wallet link for a device. The wallet is identified purely by its
+// relay-verified wallet number — the clinic attaches that number to the patient
+// file ahead of time (via "Import from a patient app" / QR pairing, which sets
+// `patients.walletNumber`), so the device never types a name or file number.
+// Resolves the linked file, or a friendly 404 when the clinic hasn't paired yet.
 export async function linkWallet(
   orgId: string,
   walletNumber: string,
-  fileNumber: string,
-  name: string,
 ): Promise<{ fileNumber: string; name: string }> {
-  const patient = await getPatient(orgId, fileNumber);
-  if (!patient || norm(patient.name) !== norm(name)) {
+  if (!walletNumber) {
+    throw new HttpError(400, "Missing wallet identity.");
+  }
+  const fileNumber = await fileNumberForWallet(orgId, walletNumber);
+  if (!fileNumber) {
     throw new HttpError(
       404,
-      "We couldn't find a record matching that name and file number.",
+      "This wallet isn't paired with a record at this clinic yet. Ask the front desk to add your wallet number, then try again.",
     );
   }
-  await db
-    .update(patients)
-    .set({ walletNumber })
-    .where(
-      and(
-        eq(patients.organizationId, orgId),
-        eq(patients.fileNumber, patient.fileNumber),
-      ),
-    );
+  const patient = await getPatient(orgId, fileNumber);
+  if (!patient) throw new HttpError(404, "Linked record not found.");
   await recordActivity({
     orgId,
     actor: { id: "", name: patient.name },
-    action: `Patient portal — ${patient.name} linked a wallet`,
+    action: `Patient portal — ${patient.name} confirmed their wallet link`,
     entityType: "patient",
     entityId: patient.fileNumber,
   });
@@ -277,7 +272,7 @@ export async function handlePortalRequest(
     case "availability":
       return getAvailability(orgId, s("provider"), s("date"));
     case "link":
-      return linkWallet(orgId, walletNumber, s("fileNumber"), s("name"));
+      return linkWallet(orgId, walletNumber);
     case "book":
       return bookForWallet(orgId, walletNumber, {
         date: s("date"),
