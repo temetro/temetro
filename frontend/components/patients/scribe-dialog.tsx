@@ -29,6 +29,11 @@ import type { Encounter, Patient } from "@/lib/patients";
 import { draftNote, saveNote, transcribeRecording } from "@/lib/scribe";
 import { notify } from "@/lib/toast";
 import { ApiError } from "@/lib/api-client";
+import { useWalletSync } from "@/components/wallet/use-wallet-sync";
+import {
+  DialogStepper,
+  WalletSyncStep,
+} from "@/components/wallet/wallet-sync-step";
 
 type Phase = "input" | "processing" | "review";
 type InputTab = "record" | "paste";
@@ -76,6 +81,9 @@ export function ScribeDialog({
   const [draft, setDraft] = useState<Encounter | null>(null);
   const [veilNote, setVeilNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [walletStep, setWalletStep] = useState(false);
+
+  const sync = useWalletSync(patient.fileNumber);
 
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -105,6 +113,8 @@ export function ScribeDialog({
     setDraft(null);
     setVeilNote(null);
     setError(null);
+    setWalletStep(false);
+    sync.reset();
     chunksRef.current = [];
     blobRef.current = null;
   };
@@ -223,7 +233,12 @@ export function ScribeDialog({
       const updated = await saveNote(patient.fileNumber, draft);
       notify.success(t("scribe.saved.title"), patient.name);
       onSaved(updated);
-      handleOpenChange(false);
+      if (sync.linked) {
+        setPhase("review");
+        setWalletStep(true);
+      } else {
+        handleOpenChange(false);
+      }
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : t("scribe.errors.generic"),
@@ -245,8 +260,20 @@ export function ScribeDialog({
           <DialogDescription>
             {t("scribe.subtitle", { name: patient.name })}
           </DialogDescription>
+          {sync.linked && (
+            <DialogStepper step={walletStep ? "wallet" : "form"} />
+          )}
         </DialogHeader>
 
+        {walletStep ? (
+          <WalletSyncStep
+            onDone={() => handleOpenChange(false)}
+            patientName={patient.name}
+            summary={t("walletSync.summary.note")}
+            sync={sync}
+          />
+        ) : (
+          <>
         <DialogPanel className="min-h-0 flex-1 overflow-y-auto">
           {phase === "review" && draft ? (
             <div className="flex flex-col gap-4">
@@ -430,6 +457,8 @@ export function ScribeDialog({
             </>
           )}
         </DialogFooter>
+          </>
+        )}
       </DialogPopup>
     </Dialog>
   );

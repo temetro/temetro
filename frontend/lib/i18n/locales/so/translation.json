@@ -2196,5 +2196,26 @@
       "lookupAnother": "Raadi mid kale",
       "errorGeneric": "Diiwaankaaga lama helin. Fadlan hubi faahfaahintaada ama ka codso miiska hore."
     }
+  },
+  "walletSync": {
+    "step1": "Faahfaahin",
+    "step2": "La socodsii walletka",
+    "prompt": "Ma u dirtaa walletka {{name}}?",
+    "promptBody": "Bukaankan wuxuu isticmaalaa abka walletka. Dir isbeddelkan si loogu socodsiiyo taleefankooda — waxay ku ansixin doonaan aaladdooda.",
+    "changesLabel": "Wixii isbeddelay",
+    "skip": "Hadda maya",
+    "send": "U dir walletka",
+    "done": "Dhammaystiran",
+    "errors": {
+      "generic": "Cusboonaysiinta lama diri karin. Fadlan mar kale isku day."
+    },
+    "summary": {
+      "invoiceCreated": "Qaansheeg cusub {{number}}",
+      "invoiceUpdated": "Qaansheeg {{number}} la cusboonaysiiyay",
+      "appointment": "Ballan cusub {{date}} saacadda {{time}}",
+      "prescription": "Rijeeto cusub: {{drug}}",
+      "demographics": "Xogta bukaanka la cusboonaysiiyay",
+      "note": "Qoraal caafimaad cusub"
+    }
   }
 }

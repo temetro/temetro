@@ -35,6 +35,11 @@ import {
 } from "@/lib/invoices";
 import { listPatients, type Patient } from "@/lib/patients";
 import { notify } from "@/lib/toast";
+import { useWalletSync } from "@/components/wallet/use-wallet-sync";
+import {
+  DialogStepper,
+  WalletSyncStep,
+} from "@/components/wallet/wallet-sync-step";
 
 const STATUSES: InvoiceStatus[] = ["draft", "sent", "paid", "void"];
 
@@ -152,6 +157,19 @@ export function InvoiceFormDialog({
   const [notes, setNotes] = useState("");
   const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([emptyLine()]);
   const [busy, setBusy] = useState(false);
+  const [step, setStep] = useState<"form" | "wallet">("form");
+  const [walletSummary, setWalletSummary] = useState("");
+
+  const activePatient = fixedPatient ?? selected;
+  const sync = useWalletSync(activePatient?.fileNumber ?? null);
+
+  const handleOpenChange = (next: boolean) => {
+    if (!next) {
+      setStep("form");
+      sync.reset();
+    }
+    onOpenChange(next);
+  };
 
   // Seed the form when opening.
   useEffect(() => {
@@ -254,7 +272,16 @@ export function InvoiceFormDialog({
             })
           : await createInvoice(payload);
       onSaved(saved);
-      onOpenChange(false);
+      if (sync.linked) {
+        setWalletSummary(
+          mode === "edit"
+            ? t("walletSync.summary.invoiceUpdated", { number: saved.number })
+            : t("walletSync.summary.invoiceCreated", { number: saved.number }),
+        );
+        setStep("wallet");
+      } else {
+        onOpenChange(false);
+      }
     } catch {
       notify.error(t("invoices.addFailedTitle"), t("invoices.addFailedBody"));
     } finally {
@@ -263,8 +290,8 @@ export function InvoiceFormDialog({
   };
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogPopup className="sm:max-w-lg">
+    <Dialog onOpenChange={handleOpenChange} open={open}>
+      <DialogPopup className="flex max-h-[85dvh] flex-col sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {mode === "edit"
@@ -274,8 +301,17 @@ export function InvoiceFormDialog({
           <DialogDescription>
             {t("invoices.dialog.description")}
           </DialogDescription>
+          {sync.linked && <DialogStepper step={step} />}
         </DialogHeader>
 
+        {step === "wallet" ? (
+          <WalletSyncStep
+            onDone={() => handleOpenChange(false)}
+            patientName={activePatient?.name ?? ""}
+            summary={walletSummary}
+            sync={sync}
+          />
+        ) : (
         <form className="contents" onSubmit={submit}>
           <DialogPanel className="flex flex-col gap-4">
             <Field label={t("invoices.dialog.patient")}>
@@ -478,6 +514,7 @@ export function InvoiceFormDialog({
             </Button>
           </DialogFooter>
         </form>
+        )}
       </DialogPopup>
     </Dialog>
   );

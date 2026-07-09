@@ -38,6 +38,11 @@ import { uploadAttachment } from "@/lib/attachments";
 import { hasClinicalAccess, useActiveRole } from "@/lib/roles";
 import { listProviders, type Provider } from "@/lib/staff";
 import { notify } from "@/lib/toast";
+import { useWalletSync } from "@/components/wallet/use-wallet-sync";
+import {
+  DialogStepper,
+  WalletSyncStep,
+} from "@/components/wallet/wallet-sync-step";
 
 type PatientFormDialogProps = {
   open: boolean;
@@ -233,6 +238,19 @@ export function PatientFormDialog({
   const [fileNumber, setFileNumber] = useState(() =>
     isEdit && patient ? patient.fileNumber : generateFileNumber()
   );
+  const [step, setStep] = useState<"form" | "wallet">("form");
+
+  // Only edits to an existing (non-review) record can sync to a wallet — a newly
+  // created patient has no wallet, and review mode stages an import.
+  const sync = useWalletSync(isEdit && !isReview ? fileNumber : null);
+
+  const handleOpenChange = (o: boolean) => {
+    onOpenChange(o);
+    if (!o) {
+      setStep("form");
+      sync.reset();
+    }
+  };
   const [name, setName] = useState(patient?.name ?? "");
   const [age, setAge] = useState(patient ? String(patient.age) : "");
   const [sex, setSex] = useState<Patient["sex"]>(patient?.sex ?? "F");
@@ -378,6 +396,10 @@ export function PatientFormDialog({
           t("patientForm.updatedTitle"),
           t("patientForm.updatedBody", { name: saved.name }),
         );
+        if (sync.linked) {
+          setStep("wallet");
+          return;
+        }
       } else {
         onCreated?.(saved.fileNumber);
         notify.success(
@@ -400,8 +422,8 @@ export function PatientFormDialog({
   };
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogPopup className="max-h-[85dvh] sm:max-w-lg">
+    <Dialog onOpenChange={handleOpenChange} open={open}>
+      <DialogPopup className="flex max-h-[85dvh] flex-col sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
             {isReview
@@ -419,8 +441,17 @@ export function PatientFormDialog({
                   })
                 : t("patientForm.createDescription")}
           </DialogDescription>
+          {sync.linked && <DialogStepper step={step} />}
         </DialogHeader>
 
+        {step === "wallet" ? (
+          <WalletSyncStep
+            onDone={() => handleOpenChange(false)}
+            patientName={name.trim()}
+            summary={t("walletSync.summary.demographics")}
+            sync={sync}
+          />
+        ) : (
         <form className="contents" onSubmit={handleSubmit}>
           <DialogPanel
             scrollFade={false}
@@ -769,6 +800,7 @@ export function PatientFormDialog({
             </Button>
           </DialogFooter>
         </form>
+        )}
       </DialogPopup>
     </Dialog>
   );

@@ -2196,5 +2196,26 @@
       "lookupAnother": "Look up another",
       "errorGeneric": "Couldn't find your record. Please check your details or ask the front desk."
     }
+  },
+  "walletSync": {
+    "step1": "Details",
+    "step2": "Sync to wallet",
+    "prompt": "Send to {{name}}'s wallet?",
+    "promptBody": "This patient uses the wallet app. Send this change so it syncs to their phone — they approve it on their device.",
+    "changesLabel": "What changed",
+    "skip": "Not now",
+    "send": "Send to wallet",
+    "done": "Done",
+    "errors": {
+      "generic": "Couldn't send the update. Please try again."
+    },
+    "summary": {
+      "invoiceCreated": "New invoice {{number}}",
+      "invoiceUpdated": "Updated invoice {{number}}",
+      "appointment": "New appointment on {{date}} at {{time}}",
+      "prescription": "New prescription: {{drug}}",
+      "demographics": "Demographics updated",
+      "note": "New clinical note"
+    }
   }
 }

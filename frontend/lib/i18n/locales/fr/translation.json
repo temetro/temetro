@@ -2196,5 +2196,26 @@
       "lookupAnother": "Rechercher un autre",
       "errorGeneric": "Impossible de trouver votre dossier. Veuillez vérifier vos informations ou demander à l'accueil."
     }
+  },
+  "walletSync": {
+    "step1": "Détails",
+    "step2": "Synchroniser au portefeuille",
+    "prompt": "Envoyer au portefeuille de {{name}} ?",
+    "promptBody": "Ce patient utilise l'application portefeuille. Envoyez cette modification pour la synchroniser sur son téléphone — il l'approuvera sur son appareil.",
+    "changesLabel": "Ce qui a changé",
+    "skip": "Plus tard",
+    "send": "Envoyer au portefeuille",
+    "done": "Terminé",
+    "errors": {
+      "generic": "Impossible d'envoyer la mise à jour. Veuillez réessayer."
+    },
+    "summary": {
+      "invoiceCreated": "Nouvelle facture {{number}}",
+      "invoiceUpdated": "Facture {{number}} mise à jour",
+      "appointment": "Nouveau rendez-vous le {{date}} à {{time}}",
+      "prescription": "Nouvelle ordonnance : {{drug}}",
+      "demographics": "Données démographiques mises à jour",
+      "note": "Nouvelle note clinique"
+    }
   }
 }

@@ -2196,5 +2196,26 @@
       "lookupAnother": "Weitere nachschlagen",
       "errorGeneric": "Ihre Akte konnte nicht gefunden werden. Bitte prüfen Sie Ihre Angaben oder wenden Sie sich an die Rezeption."
     }
+  },
+  "walletSync": {
+    "step1": "Details",
+    "step2": "Mit Wallet abgleichen",
+    "prompt": "An {{name}}s Wallet senden?",
+    "promptBody": "Diese Person nutzt die Wallet-App. Senden Sie diese Änderung, damit sie auf das Gerät übertragen wird — die Bestätigung erfolgt auf dem Telefon.",
+    "changesLabel": "Was sich geändert hat",
+    "skip": "Jetzt nicht",
+    "send": "An Wallet senden",
+    "done": "Fertig",
+    "errors": {
+      "generic": "Aktualisierung konnte nicht gesendet werden. Bitte erneut versuchen."
+    },
+    "summary": {
+      "invoiceCreated": "Neue Rechnung {{number}}",
+      "invoiceUpdated": "Rechnung {{number}} aktualisiert",
+      "appointment": "Neuer Termin am {{date}} um {{time}}",
+      "prescription": "Neues Rezept: {{drug}}",
+      "demographics": "Stammdaten aktualisiert",
+      "note": "Neue klinische Notiz"
+    }
   }
 }

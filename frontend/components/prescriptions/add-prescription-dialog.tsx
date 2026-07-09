@@ -29,6 +29,11 @@ import { type InventoryItem, listInventory } from "@/lib/inventory";
 import { listPatients, type Patient } from "@/lib/patients";
 import { notify } from "@/lib/toast";
 import { cn } from "@/lib/utils";
+import { useWalletSync } from "@/components/wallet/use-wallet-sync";
+import {
+  DialogStepper,
+  WalletSyncStep,
+} from "@/components/wallet/wallet-sync-step";
 
 export type NewPrescription = {
   fileNumber: string;
@@ -132,7 +137,7 @@ export function AddPrescriptionDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (rx: NewPrescription) => void;
+  onAdd: (rx: NewPrescription) => void | Promise<void>;
 }) {
   const { t } = useTranslation();
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -151,6 +156,19 @@ export function AddPrescriptionDialog({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [step, setStep] = useState<"form" | "wallet">("form");
+  const [walletSummary, setWalletSummary] = useState("");
+
+  const sync = useWalletSync(selected?.fileNumber ?? null);
+
+  const handleOpenChange = (o: boolean) => {
+    onOpenChange(o);
+    if (!o) {
+      reset();
+      setStep("form");
+      sync.reset();
+    }
+  };
 
   // Load patients + inventory lazily when the dialog opens (for the quick
   // searches). Inventory backs the medication combobox; it still accepts free
@@ -279,7 +297,7 @@ export function AddPrescriptionDialog({
     setNotes("");
   };
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!selected) {
       notify.error(
@@ -312,7 +330,7 @@ export function AddPrescriptionDialog({
       );
       return;
     }
-    onAdd({
+    await onAdd({
       fileNumber: selected.fileNumber,
       name: selected.name,
       initials: selected.initials,
@@ -328,26 +346,36 @@ export function AddPrescriptionDialog({
       t("prescriptions.dialog.addedTitle"),
       `${medication.trim()} · ${selected.name}`,
     );
-    reset();
-    onOpenChange(false);
+    if (sync.linked) {
+      setWalletSummary(
+        t("walletSync.summary.prescription", { drug: medication.trim() }),
+      );
+      setStep("wallet");
+    } else {
+      reset();
+      onOpenChange(false);
+    }
   };
 
   return (
-    <Dialog
-      onOpenChange={(o) => {
-        onOpenChange(o);
-        if (!o) reset();
-      }}
-      open={open}
-    >
-      <DialogPopup className="sm:max-w-md">
+    <Dialog onOpenChange={handleOpenChange} open={open}>
+      <DialogPopup className="flex max-h-[85dvh] flex-col sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("prescriptions.dialog.title")}</DialogTitle>
           <DialogDescription>
             {t("prescriptions.dialog.description")}
           </DialogDescription>
+          {sync.linked && <DialogStepper step={step} />}
         </DialogHeader>
 
+        {step === "wallet" ? (
+          <WalletSyncStep
+            onDone={() => handleOpenChange(false)}
+            patientName={selected?.name ?? ""}
+            summary={walletSummary}
+            sync={sync}
+          />
+        ) : (
         <form className="contents" onSubmit={submit}>
           <DialogPanel className="flex flex-col gap-4">
             <Field label={t("prescriptions.dialog.patient")}>
@@ -616,6 +644,7 @@ export function AddPrescriptionDialog({
             </Button>
           </DialogFooter>
         </form>
+        )}
       </DialogPopup>
     </Dialog>
   );

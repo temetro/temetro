@@ -23,6 +23,11 @@ import { Popover, PopoverPopup, PopoverTrigger } from "@/components/ui/popover";
 import { listPatients, type Patient } from "@/lib/patients";
 import { listProviders, type Provider } from "@/lib/staff";
 import { notify } from "@/lib/toast";
+import { useWalletSync } from "@/components/wallet/use-wallet-sync";
+import {
+  DialogStepper,
+  WalletSyncStep,
+} from "@/components/wallet/wallet-sync-step";
 
 export type NewAppointment = {
   fileNumber: string;
@@ -78,7 +83,7 @@ export function AddAppointmentDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAdd: (appt: NewAppointment) => void;
+  onAdd: (appt: NewAppointment) => void | Promise<void>;
 }) {
   const { t } = useTranslation();
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -90,6 +95,10 @@ export function AddAppointmentDialog({
   const [type, setType] = useState(TYPES[0]);
   const [provider, setProvider] = useState("");
   const [providerQuery, setProviderQuery] = useState("");
+  const [step, setStep] = useState<"form" | "wallet">("form");
+  const [walletSummary, setWalletSummary] = useState("");
+
+  const sync = useWalletSync(selected?.fileNumber ?? null);
 
   // Load patients + providers lazily when the dialog opens (for the searches).
   useEffect(() => {
@@ -155,7 +164,16 @@ export function AddAppointmentDialog({
     setProviderQuery("");
   };
 
-  const submit = (event: FormEvent) => {
+  const handleOpenChange = (o: boolean) => {
+    onOpenChange(o);
+    if (!o) {
+      reset();
+      setStep("form");
+      sync.reset();
+    }
+  };
+
+  const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!selected) {
       notify.error(
@@ -164,7 +182,7 @@ export function AddAppointmentDialog({
       );
       return;
     }
-    onAdd({
+    await onAdd({
       fileNumber: selected.fileNumber,
       name: selected.name,
       initials: selected.initials,
@@ -177,26 +195,36 @@ export function AddAppointmentDialog({
       t("appointments.dialog.addedTitle"),
       `${selected.name} · ${time}`,
     );
-    reset();
-    onOpenChange(false);
+    if (sync.linked) {
+      setWalletSummary(
+        t("walletSync.summary.appointment", { date: keyOf(date), time }),
+      );
+      setStep("wallet");
+    } else {
+      reset();
+      onOpenChange(false);
+    }
   };
 
   return (
-    <Dialog
-      onOpenChange={(o) => {
-        onOpenChange(o);
-        if (!o) reset();
-      }}
-      open={open}
-    >
-      <DialogPopup className="sm:max-w-md">
+    <Dialog onOpenChange={handleOpenChange} open={open}>
+      <DialogPopup className="flex max-h-[85dvh] flex-col sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t("appointments.dialog.title")}</DialogTitle>
           <DialogDescription>
             {t("appointments.dialog.description")}
           </DialogDescription>
+          {sync.linked && <DialogStepper step={step} />}
         </DialogHeader>
 
+        {step === "wallet" ? (
+          <WalletSyncStep
+            onDone={() => handleOpenChange(false)}
+            patientName={selected?.name ?? ""}
+            summary={walletSummary}
+            sync={sync}
+          />
+        ) : (
         <form className="contents" onSubmit={submit}>
           <DialogPanel className="flex flex-col gap-4">
             <Field label={t("appointments.dialog.patient")}>
@@ -320,6 +348,7 @@ export function AddAppointmentDialog({
             </Button>
           </DialogFooter>
         </form>
+        )}
       </DialogPopup>
     </Dialog>
   );
