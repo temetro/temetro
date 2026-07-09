@@ -7,6 +7,29 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-07-09
+
+### Added
+- **In-dialog "Sync to wallet" stepper.** When a clinician adds or edits a record for a
+  wallet-linked patient — invoice, appointment, prescription, patient demographics, or an AI
+  scribe note — the create/edit dialog shows a two-step stepper: after saving, step 2 offers to
+  push the change to the patient's wallet (reusing `pushWalletUpdate` + approval polling). Shared
+  `useWalletSync` hook and `DialogStepper` / `WalletSyncStep` components under `components/wallet/`.
+  Patients without a linked wallet see the old close-on-save behaviour.
+
+### Changed
+- **Appointment & invoice date pickers block past dates.** The new-appointment date picker disables
+  days before today; the invoice issue-date picker does too, with an opt-in **Back-date** checkbox
+  for recording genuinely older invoices (edit mode keeps existing past dates).
+- **Patient Portal wallet link is identified by wallet number only.** The portal `link` action no
+  longer asks the wallet app for a name + file number — it resolves the file the clinic already
+  paired the wallet number to (`services/portal.ts#linkWallet`), returning a friendly 404 when the
+  wallet isn't paired yet.
+
+### Removed
+- **Stale Settings "Features" section.** Dropped the inert "patient-owned storage" / "require signed
+  records" toggles (and their unused i18n keys) that did nothing.
+
 ## [0.11.0] — 2026-07-09
 
 ### Added
