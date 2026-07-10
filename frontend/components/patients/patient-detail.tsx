@@ -2,12 +2,18 @@
 
 import {
   ArrowLeftRight,
+  CalendarDays,
   FileDown,
+  type LucideIcon,
+  ListTodo,
   Mic,
   Network,
+  NotebookPen,
   Pencil,
+  Pill,
   Send,
   Trash2,
+  UserRound,
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,7 +21,21 @@ import { useTranslation } from "react-i18next";
 import { Sparkline } from "@/components/chat/sparkline";
 import { AttachmentsSection } from "@/components/patients/patient-files";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { type ActivityEntry, listPatientActivity } from "@/lib/activity";
+import {
+  Timeline,
+  TimelineContent,
+  TimelineDate,
+  TimelineHeader,
+  TimelineIndicator,
+  TimelineItem,
+  TimelineSeparator,
+  TimelineTitle,
+} from "@/components/ui/timeline";
+import {
+  type ActivityEntityType,
+  type ActivityEntry,
+  listPatientActivity,
+} from "@/lib/activity";
 import { printPatientSummary } from "@/lib/patient-pdf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -122,8 +142,18 @@ function TrendBlock({ trend }: { trend: Trend }) {
   );
 }
 
+// Which icon marks each kind of audited change on the timeline.
+const historyIcon: Record<ActivityEntityType, LucideIcon> = {
+  appointment: CalendarDays,
+  note: NotebookPen,
+  patient: UserRound,
+  prescription: Pill,
+  task: ListTodo,
+};
+
 // The patient's record history: every audited add/change on this chart, newest
-// first. Reuses the clinic activity log scoped to this file number.
+// first. Reuses the clinic activity log scoped to this file number, laid out as
+// a vertical timeline — who made the change, what happened, and when.
 function RecordHistory({ fileNumber }: { fileNumber: string }) {
   const { t } = useTranslation();
   const [entries, setEntries] = useState<ActivityEntry[] | null>(null);
@@ -152,25 +182,36 @@ function RecordHistory({ fileNumber }: { fileNumber: string }) {
           {t("patientCard.history.empty")}
         </p>
       ) : (
-        <ol className="flex flex-col gap-3">
-          {entries.map((e) => (
-            <li className="flex items-start gap-3" key={e.id}>
-              <Avatar className="mt-0.5 size-7 shrink-0">
-                <AvatarFallback className="text-[11px]">
-                  {e.actorInitials}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex min-w-0 flex-1 flex-col">
-                <span className="text-foreground text-sm">
-                  <span className="font-medium">{e.actorName}</span> {e.action}
-                </span>
-                <span className="text-muted-foreground text-xs">
-                  {new Date(e.createdAt).toLocaleString()}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ol>
+        // Every entry is a past, audited event, so mark them all completed
+        // (filled indicators) by seeding the active step past the last item.
+        <Timeline defaultValue={entries.length}>
+          {entries.map((e, i) => {
+            const Icon = historyIcon[e.entityType] ?? Pencil;
+            return (
+              <TimelineItem
+                className="group-data-[orientation=vertical]/timeline:ms-10"
+                key={e.id}
+                step={i + 1}
+              >
+                <TimelineHeader>
+                  <TimelineSeparator className="group-data-[orientation=vertical]/timeline:-left-7 group-data-[orientation=vertical]/timeline:h-[calc(100%-1.5rem-0.25rem)] group-data-[orientation=vertical]/timeline:translate-y-6.5" />
+                  <TimelineTitle className="mt-0.5">
+                    {e.actorName}
+                  </TimelineTitle>
+                  <TimelineIndicator className="group-data-[orientation=vertical]/timeline:-left-7 flex size-6 items-center justify-center border-none bg-primary/10 text-primary group-data-completed/timeline-item:bg-primary group-data-completed/timeline-item:text-primary-foreground">
+                    <Icon size={14} />
+                  </TimelineIndicator>
+                </TimelineHeader>
+                <TimelineContent>
+                  {e.action}
+                  <TimelineDate className="mt-1 mb-0">
+                    {new Date(e.createdAt).toLocaleString()}
+                  </TimelineDate>
+                </TimelineContent>
+              </TimelineItem>
+            );
+          })}
+        </Timeline>
       )}
     </Section>
   );

@@ -5,57 +5,41 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { DialogFooter, DialogPanel } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import {
+  Stepper,
+  StepperIndicator,
+  StepperItem,
+  StepperSeparator,
+  StepperTitle,
+} from "@/components/ui/stepper";
 
 import type { UseWalletSync } from "./use-wallet-sync";
 
 // Two-step header shown at the top of a dialog when the selected patient has a
-// linked wallet: "Details" → "Sync to wallet".
+// linked wallet: "Details" → "Sync to wallet". Centered so the numbered
+// indicators sit inline with their labels.
 export function DialogStepper({ step }: { step: "form" | "wallet" }) {
   const { t } = useTranslation();
   const steps = [
-    { key: "form", label: t("walletSync.step1") },
-    { key: "wallet", label: t("walletSync.step2") },
-  ] as const;
-  const activeIndex = step === "form" ? 0 : 1;
+    { value: 1, label: t("walletSync.step1") },
+    { value: 2, label: t("walletSync.step2") },
+  ];
+  const activeValue = step === "form" ? 1 : 2;
 
   return (
-    <div className="mt-3 flex items-center gap-2">
-      {steps.map((s, i) => {
-        const done = i < activeIndex;
-        const active = i === activeIndex;
-        return (
-          <div className="flex flex-1 items-center gap-2" key={s.key}>
-            <span
-              className={cn(
-                "flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold transition-colors",
-                done && "bg-primary text-primary-foreground",
-                active && "bg-primary/15 text-primary ring-1 ring-primary/40",
-                !done && !active && "bg-muted text-muted-foreground",
-              )}
-            >
-              {done ? <Check className="size-3" /> : i + 1}
-            </span>
-            <span
-              className={cn(
-                "text-xs font-medium",
-                active || done ? "text-foreground" : "text-muted-foreground",
-              )}
-            >
-              {s.label}
-            </span>
-            {i < steps.length - 1 && (
-              <span
-                className={cn(
-                  "ml-1 h-px flex-1",
-                  done ? "bg-primary/40" : "bg-border",
-                )}
-              />
-            )}
-          </div>
-        );
-      })}
-    </div>
+    <Stepper className="mx-auto mt-3 max-w-sm" value={activeValue}>
+      {steps.map(({ value, label }, i) => (
+        <StepperItem className="not-last:flex-1" key={value} step={value}>
+          <span className="inline-flex items-center gap-2">
+            <StepperIndicator />
+            <StepperTitle className="whitespace-nowrap text-xs">
+              {label}
+            </StepperTitle>
+          </span>
+          {i < steps.length - 1 && <StepperSeparator className="mx-3" />}
+        </StepperItem>
+      ))}
+    </Stepper>
   );
 }
 
