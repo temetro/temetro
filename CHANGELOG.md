@@ -7,6 +7,24 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.12.1] — 2026-07-10
+
+### Changed
+- **Centered wallet-sync stepper.** The in-dialog "Sync to wallet" stepper (`DialogStepper` in
+  `frontend/components/wallet/wallet-sync-step.tsx`) now uses a proper Stepper primitive
+  (`components/ui/stepper.tsx`), so the numbered indicators sit centered inline with their labels
+  instead of the previous left-aligned look.
+- **Record history is now a timeline.** The patient sheet's **Record history** section
+  (`RecordHistory` in `frontend/components/patients/patient-detail.tsx`) renders as a vertical
+  timeline (`components/ui/timeline.tsx`) — who made the change, an entity-type icon, what happened,
+  and when — replacing the flat avatar list.
+
+### Performance
+- **Landing page: defer the 3D globe.** The Temetro Network globe (three.js) on the marketing site
+  now mounts only when its section scrolls near the viewport (IntersectionObserver), instead of on
+  hydration — removing ~730 KB of JS and its main-thread execution from initial page load. (Landing
+  page lives in the sibling `temetro/landing-page` repo.)
+
 ## [0.12.0] — 2026-07-09
 
 ### Added
