@@ -7,6 +7,39 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.13.0] — 2026-07-12
+
+### Added
+- **Prescription date pickers.** The New Prescription dialog's Start/End date now use a proper COSS
+  date picker (`frontend/components/ui/date-picker.tsx`, Popover + Calendar) instead of the raw
+  native date input.
+- **Working profile fields.** Settings → Profile **Specialty** (a Select) and **Professional links**
+  (editable rows) are now wired to persisted preferences — previously they were inert stubs.
+- **Patient filters.** The Patients page gains a status filter (all / active / inpatient /
+  discharged) and its search now also matches conditions and allergies.
+- **Language quick-switch.** A language submenu in the sidebar user menu (alongside Theme), applied
+  immediately with Arabic RTL.
+- **Wallet app — home & settings.** The patient app home screen adds a quick-action row (Share
+  record / My wallet / Notifications) and a recent-activity feed; the settings screen adds an About
+  section (version, docs, blog) and a privacy footer.
+
+### Changed
+- **Record history renders in full.** The patient sheet's Record history replaces the fragile
+  timeline-separator layout with a continuous-rail list, so every audited change shows completely
+  (and mirrors correctly under RTL).
+- **Update banner + AI setup notice.** The "update available" banner now uses the COSS warning Alert
+  and stays bottom-right under Arabic; the "connect an AI provider" notice is a clearer, thinner bar
+  shown above the chat input in active conversations too.
+- **Wallet app — bottom sheets.** Polished the shared sheet building blocks (spacing, radii, close
+  and action affordances).
+
+### Fixed
+- **Blog reachable.** `blog.temetro.com` was returning 502 due to a custom-domain target-port
+  mismatch (Ghost listens on 2368); documented and corrected.
+- **Docs freshness.** Corrected stale `CLAUDE.md` claims (the AI chat is real and `@ai-sdk/react` is
+  installed; the signing/approval flow is built) and reduced the vendored `ai-elements` Base UI
+  type-drift errors.
+
 ## [0.12.1] — 2026-07-10
 
 ### Changed

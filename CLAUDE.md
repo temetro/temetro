@@ -31,9 +31,12 @@ repository (published as `temetro`).
 > is imported (with optional **temporary share + auto-delete**). Clinic→wallet **record-update push**
 > and **QR pairing** are built too. See `backend/src/routes/{signing,patients-wallet}.ts`.
 >
+> **Also built:** the **AI chat is real** — the frontend streams from the backend's tool-using
+> agent (`POST /api/chat`), not mock replies (see `frontend/CLAUDE.md`).
+>
 > **Still vision, not built:** in-app record editing and cryptographic time-boxing of temporary
-> shares. The AI chat is still **mock replies**. Email verification is wired but currently **not
-> enforced** at sign-in (see `backend/CLAUDE.md`).
+> shares. Email verification is wired but currently **not enforced** at sign-in (see
+> `backend/CLAUDE.md`).
 
 ## Patient wallet app (sibling repo `~/Desktop/temetro-app`)
 

@@ -12,8 +12,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `temetro` — an **open-source** clinical "AI middleman" (see the project vision in the root
 `../CLAUDE.md`). This app is the clinician-facing chat UI. It is now **wired to the real
-`../backend/`** for authentication and patient data (no longer a standalone UI-only demo); the AI
-chat replies are **still mocked** (no LLM call yet).
+`../backend/`** for authentication and patient data (no longer a standalone UI-only demo). The AI
+chat is **real**: `components/chat/chat-panel.tsx` streams from the backend's tool-using agent
+(`POST /api/chat`) via `useChat` and renders the record data parts it streams back.
 
 - The chat parses `/patient <file#>` (or a bare `/<file#>`) in `components/chat/chat-panel.tsx` and
   renders the record as a horizontal row of cards (`components/chat/patient-cards.tsx`), with small
@@ -21,7 +22,7 @@ chat replies are **still mocked** (no LLM call yet).
   dialog; the Summary card has an **Edit record** button.
 - Patients can be **created and edited** via the shared `components/chat/patient-form-dialog.tsx`
   (mode `create` | `edit`). The "Add patient" pill in `chat-input.tsx` opens it.
-- Non-command messages still get a mock assistant reply.
+- Non-command messages stream a real reply from the backend agent (`POST /api/chat`).
 
 ### Auth & data (talks to `../backend`)
 
@@ -42,7 +43,8 @@ chat replies are **still mocked** (no LLM call yet).
   `components/settings/settings-care-team.tsx` manages members + invitations.
 - `.env.local` / `.env.example` hold `NEXT_PUBLIC_API_URL`.
 
-The signing / patient-owned-storage / approval features from the root vision are **still not built**.
+The signing / patient-owned-storage / approval features from the root vision **are built** (clinic
+signing key, encrypted share/import, patient approval, clinic→wallet update push, QR pairing).
 
 ## Commands
 
@@ -77,8 +79,8 @@ trailer. See the root `../CLAUDE.md` for the project-wide per-folder commit poli
   `components.json` (baseColor `neutral`).
 - **`components/ai-elements/`** — a large AI-chat primitive library (`PromptInput`, `Conversation`,
   `Message`, `Suggestion`, etc.) typed against **AI SDK v6** (`ai` package: `UIMessage`,
-  `ChatStatus`, `FileUIPart`). Note: `@ai-sdk/react` (`useChat`) is **not installed** — chat state
-  is managed with local React state.
+  `ChatStatus`, `FileUIPart`). `@ai-sdk/react` (`useChat`) **is installed** and drives the live chat
+  (`chat-panel.tsx`) with a custom transport pointed at `POST /api/chat`.
 - **`components/sidebar-02/`** — the dashboard sidebar (`SidebarProvider` / `Sidebar` /
   `SidebarInset` from `components/ui/sidebar.tsx`). `app-sidebar.tsx` holds the nav config (New chat
   · Patients · Settings) + notifications; `team-switcher.tsx` is the `OrgSwitcher` (clinic switch).
