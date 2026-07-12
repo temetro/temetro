@@ -259,7 +259,8 @@
     "createDialogDescription": "Ajoutez une nouvelle clinique et passez-y.",
     "signOutFailed": "Échec de la déconnexion",
     "tryAgain": "Veuillez réessayer.",
-    "signedOut": "Déconnecté"
+    "signedOut": "Déconnecté",
+    "language": "Langue"
   },
   "clinic": {
     "create": "Créer une clinique",
@@ -362,7 +363,9 @@
       "doneTitle": "Patient supprimé",
       "failedTitle": "Impossible de supprimer le patient",
       "failedBody": "Veuillez réessayer."
-    }
+    },
+    "filterStatus": "Filtrer par statut",
+    "allStatuses": "Tous les statuts"
   },
   "appointments": {
     "title": "Rendez-vous & Planning",
@@ -599,7 +602,8 @@
       "removeDates": "Retirer",
       "startDate": "Date de début",
       "endDate": "Date de fin",
-      "addDates": "Ajouter les dates de début/fin"
+      "addDates": "Ajouter les dates de début/fin",
+      "selectDate": "Choisir une date"
     }
   },
   "pharmacy": {
@@ -1866,7 +1870,9 @@
         "pendingApprovalsDesc": "Me notifier lorsqu'un patient approuve ou rejette une modification en attente",
         "recordsShared": "Dossiers partagés avec moi",
         "recordsSharedDesc": "Me notifier lorsqu'un patient partage un dossier avec moi"
-      }
+      },
+      "linkPlaceholder": "https://example.com",
+      "removeLink": "Supprimer le lien"
     },
     "careTeam": {
       "title": "Équipe soignante",

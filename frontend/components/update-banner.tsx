@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { X } from "lucide-react";
+import { ArrowUpCircle, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { Alert, AlertAction, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { getVersionInfo } from "@/lib/version";
 
 const DISMISS_KEY = "temetro:update-dismissed";
@@ -39,28 +41,36 @@ export function UpdateBanner() {
     setLatest(null);
   };
 
+  // Pinned to the physical bottom-right in both LTR and RTL. The user wants it
+  // in the bottom-right corner in Arabic too, so we use physical `right`/`bottom`
+  // rather than the logical `end` (which would flip to the left under RTL).
   return (
-    <div className="fixed end-4 bottom-4 z-50 flex max-w-sm items-start gap-3 rounded-2xl border border-border bg-card px-4 py-3 shadow-lg">
-      <div className="space-y-1.5">
-        <p className="text-sm text-foreground">
+    <div className="fixed right-4 bottom-4 z-50 w-full max-w-sm" dir="auto">
+      <Alert className="bg-card shadow-lg" variant="warning">
+        <ArrowUpCircle />
+        <AlertTitle className="text-foreground">
           {t("settings.version.banner", { version: latest })}
-        </p>
-        <Link
-          className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-          href="/settings?tab=version"
-          onClick={dismiss}
-        >
-          {t("settings.version.bannerUpdate")}
-        </Link>
-      </div>
-      <button
-        aria-label={t("settings.version.bannerDismiss")}
-        className="-me-1 shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        onClick={dismiss}
-        type="button"
-      >
-        <X className="size-4" />
-      </button>
+        </AlertTitle>
+        <AlertAction>
+          <Button
+            render={
+              <Link href="/settings?tab=version" onClick={dismiss} />
+            }
+            size="sm"
+            variant="outline"
+          >
+            {t("settings.version.bannerUpdate")}
+          </Button>
+          <Button
+            aria-label={t("settings.version.bannerDismiss")}
+            onClick={dismiss}
+            size="icon-sm"
+            variant="ghost"
+          >
+            <X className="size-4" />
+          </Button>
+        </AlertAction>
+      </Alert>
     </div>
   );
 }

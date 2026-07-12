@@ -259,7 +259,8 @@
     "createDialogDescription": "Fügen Sie eine neue Klinik hinzu und wechseln Sie zu ihr.",
     "signOutFailed": "Abmeldung fehlgeschlagen",
     "tryAgain": "Bitte versuchen Sie es erneut.",
-    "signedOut": "Abgemeldet"
+    "signedOut": "Abgemeldet",
+    "language": "Sprache"
   },
   "clinic": {
     "create": "Klinik erstellen",
@@ -362,7 +363,9 @@
       "doneTitle": "Patient gelöscht",
       "failedTitle": "Patient konnte nicht gelöscht werden",
       "failedBody": "Bitte versuchen Sie es erneut."
-    }
+    },
+    "filterStatus": "Nach Status filtern",
+    "allStatuses": "Alle Status"
   },
   "appointments": {
     "title": "Termine & Zeitplan",
@@ -599,7 +602,8 @@
       "removeDates": "Entfernen",
       "startDate": "Startdatum",
       "endDate": "Enddatum",
-      "addDates": "Start-/Enddatum hinzufügen"
+      "addDates": "Start-/Enddatum hinzufügen",
+      "selectDate": "Datum wählen"
     }
   },
   "pharmacy": {
@@ -1866,7 +1870,9 @@
         "pendingApprovalsDesc": "Benachrichtigen Sie mich, wenn ein Patient eine ausstehende Änderung genehmigt oder ablehnt",
         "recordsShared": "Mit mir geteilte Datensätze",
         "recordsSharedDesc": "Benachrichtigen Sie mich, wenn ein Patient einen Datensatz mit mir teilt"
-      }
+      },
+      "linkPlaceholder": "https://example.com",
+      "removeLink": "Link entfernen"
     },
     "careTeam": {
       "title": "Behandlungsteam",

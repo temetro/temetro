@@ -13,7 +13,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ListPagination } from "@/components/ui/list-pagination";
+import {
+  Select,
+  SelectItem,
+  SelectPopup,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { listPatients, type Patient } from "@/lib/patients";
+
+type StatusFilter = "all" | Patient["status"];
+const STATUS_FILTERS: StatusFilter[] = [
+  "all",
+  "active",
+  "inpatient",
+  "discharged",
+];
 
 // Rows shown per page on the patients table before paginating.
 const PAGE_SIZE = 10;
@@ -32,6 +47,7 @@ const statusVariant: Record<Patient["status"], BadgeVariant> = {
 export function PatientsView() {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [addOpen, setAddOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   // Bumped on open so the create dialog remounts with a fresh file # / form.
@@ -69,9 +85,18 @@ export function PatientsView() {
   }, []);
 
   const q = query.trim().toLowerCase();
-  const patients = allPatients.filter(
-    (p) => !q || p.name.toLowerCase().includes(q) || p.fileNumber.includes(q)
-  );
+  // Search matches name, MRN, problem/condition labels, and allergy substances;
+  // the status filter narrows to one clinical status.
+  const patients = allPatients.filter((p) => {
+    if (statusFilter !== "all" && p.status !== statusFilter) return false;
+    if (!q) return true;
+    return (
+      p.name.toLowerCase().includes(q) ||
+      p.fileNumber.includes(q) ||
+      p.problems.some((problem) => problem.label.toLowerCase().includes(q)) ||
+      p.allergies.some((a) => a.substance.toLowerCase().includes(q))
+    );
+  });
 
   // Client-side pagination over the filtered list (10/page). Searching resets to
   // the first page (done in the search handler); `page` is clamped at render so a
@@ -133,6 +158,29 @@ export function PatientsView() {
               value={query}
             />
           </div>
+          <Select
+            onValueChange={(value) => {
+              setStatusFilter((value ?? "all") as StatusFilter);
+              setPage(1);
+            }}
+            value={statusFilter}
+          >
+            <SelectTrigger
+              aria-label={t("patients.filterStatus")}
+              className="w-full sm:w-40"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectPopup>
+              {STATUS_FILTERS.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {value === "all"
+                    ? t("patients.allStatuses")
+                    : t(`patients.status.${value}`)}
+                </SelectItem>
+              ))}
+            </SelectPopup>
+          </Select>
           <Button
             className="rounded-3xl"
             onClick={() => setImportOpen(true)}

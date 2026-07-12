@@ -22,16 +22,6 @@ import { Sparkline } from "@/components/chat/sparkline";
 import { AttachmentsSection } from "@/components/patients/patient-files";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
-  Timeline,
-  TimelineContent,
-  TimelineDate,
-  TimelineHeader,
-  TimelineIndicator,
-  TimelineItem,
-  TimelineSeparator,
-  TimelineTitle,
-} from "@/components/ui/timeline";
-import {
   type ActivityEntityType,
   type ActivityEntry,
   listPatientActivity,
@@ -182,36 +172,41 @@ function RecordHistory({ fileNumber }: { fileNumber: string }) {
           {t("patientCard.history.empty")}
         </p>
       ) : (
-        // Every entry is a past, audited event, so mark them all completed
-        // (filled indicators) by seeding the active step past the last item.
-        <Timeline defaultValue={entries.length}>
+        // A plain vertical rail so EVERY audited change renders in full — the
+        // icon column draws a connector that stretches to the next entry, and
+        // the flex layout mirrors correctly under RTL.
+        <ol className="space-y-0">
           {entries.map((e, i) => {
             const Icon = historyIcon[e.entityType] ?? Pencil;
+            const isLast = i === entries.length - 1;
             return (
-              <TimelineItem
-                className="group-data-[orientation=vertical]/timeline:ms-10"
-                key={e.id}
-                step={i + 1}
-              >
-                <TimelineHeader>
-                  <TimelineSeparator className="group-data-[orientation=vertical]/timeline:-left-7 group-data-[orientation=vertical]/timeline:h-[calc(100%-1.5rem-0.25rem)] group-data-[orientation=vertical]/timeline:translate-y-6.5" />
-                  <TimelineTitle className="mt-0.5">
-                    {e.actorName}
-                  </TimelineTitle>
-                  <TimelineIndicator className="group-data-[orientation=vertical]/timeline:-left-7 flex size-6 items-center justify-center border-none bg-primary/10 text-primary group-data-completed/timeline-item:bg-primary group-data-completed/timeline-item:text-primary-foreground">
+              <li className="flex gap-3" key={e.id}>
+                <div className="flex flex-col items-center">
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                     <Icon size={14} />
-                  </TimelineIndicator>
-                </TimelineHeader>
-                <TimelineContent>
-                  {e.action}
-                  <TimelineDate className="mt-1 mb-0">
+                  </span>
+                  {!isLast && (
+                    <span
+                      aria-hidden="true"
+                      className="my-1 w-px flex-1 bg-primary/15"
+                    />
+                  )}
+                </div>
+                <div
+                  className={`min-w-0 flex-1 ${isLast ? "" : "pb-5"}`}
+                >
+                  <p className="font-medium text-foreground text-sm">
+                    {e.actorName}
+                  </p>
+                  <p className="text-muted-foreground text-sm">{e.action}</p>
+                  <time className="mt-0.5 block font-medium text-muted-foreground text-xs">
                     {new Date(e.createdAt).toLocaleString()}
-                  </TimelineDate>
-                </TimelineContent>
-              </TimelineItem>
+                  </time>
+                </div>
+              </li>
             );
           })}
-        </Timeline>
+        </ol>
       )}
     </Section>
   );

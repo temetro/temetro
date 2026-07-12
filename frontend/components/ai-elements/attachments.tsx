@@ -369,15 +369,18 @@ export const AttachmentRemove = ({
 // AttachmentHoverCard - Hover preview
 // ============================================================================
 
-export type AttachmentHoverCardProps = ComponentProps<typeof HoverCard>;
+export type AttachmentHoverCardProps = ComponentProps<typeof HoverCard> & {
+  // Base UI moved hover delay to the Trigger (`delay`); kept here for API
+  // back-compat but no longer forwarded to the Root.
+  openDelay?: number;
+  closeDelay?: number;
+};
 
 export const AttachmentHoverCard = ({
-  openDelay = 0,
-  closeDelay = 0,
+  openDelay,
+  closeDelay,
   ...props
-}: AttachmentHoverCardProps) => (
-  <HoverCard closeDelay={closeDelay} openDelay={openDelay} {...props} />
-);
+}: AttachmentHoverCardProps) => <HoverCard {...props} />;
 
 export type AttachmentHoverCardTriggerProps = ComponentProps<
   typeof HoverCardTrigger

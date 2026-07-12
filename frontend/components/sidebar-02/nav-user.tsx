@@ -4,6 +4,7 @@ import {
   Building2,
   Check,
   ChevronsUpDown,
+  Languages,
   LogOut,
   Moon,
   Plus,
@@ -49,6 +50,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
+import { supportedLanguages } from "@/lib/i18n/config";
+import { persistLanguage } from "@/lib/language";
 import { useActiveRole } from "@/lib/roles";
 import { notify } from "@/lib/toast";
 
@@ -82,7 +85,13 @@ function GitHubIcon({ className }: { className?: string }) {
 // shortcut hint (below Theme) and a clinic switcher submenu (below that) whose
 // popup reveals the active clinic's details on hover.
 export function NavUser() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const activeLang = i18n.resolvedLanguage ?? i18n.language;
+  const changeLanguage = (lng: string) => {
+    if (lng === activeLang) return;
+    void i18n.changeLanguage(lng);
+    void persistLanguage(lng);
+  };
   const { isMobile, state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const router = useRouter();
@@ -196,6 +205,29 @@ export function NavUser() {
                 {isDark ? t("userMenu.dark") : t("userMenu.light")}
               </MenuShortcut>
             </MenuItem>
+
+            {/* Language: quick switch (also available in Settings). Applies
+                immediately and roams via the backend preferences. */}
+            <MenuSub>
+              <MenuSubTrigger>
+                <Languages />
+                <span className="truncate">{t("userMenu.language")}</span>
+              </MenuSubTrigger>
+              <MenuSubPopup className="min-w-44" sideOffset={8}>
+                {supportedLanguages.map((lng) => (
+                  <MenuItem
+                    className="gap-2"
+                    key={lng}
+                    onClick={() => changeLanguage(lng)}
+                  >
+                    <span className="flex-1 truncate">
+                      {t(`settings.profile.language.${lng}`)}
+                    </span>
+                    {lng === activeLang && <Check className="size-4" />}
+                  </MenuItem>
+                ))}
+              </MenuSubPopup>
+            </MenuSub>
 
             {/* Command palette: hint + shortcut, sits below Theme. */}
             <MenuItem onClick={openCommand}>

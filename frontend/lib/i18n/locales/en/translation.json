@@ -259,7 +259,8 @@
     "createDialogDescription": "Add a new clinic and switch to it.",
     "signOutFailed": "Sign out failed",
     "tryAgain": "Please try again.",
-    "signedOut": "Signed out"
+    "signedOut": "Signed out",
+    "language": "Language"
   },
   "clinic": {
     "create": "Create clinic",
@@ -362,7 +363,9 @@
       "doneTitle": "Patient deleted",
       "failedTitle": "Couldn't delete patient",
       "failedBody": "Please try again."
-    }
+    },
+    "filterStatus": "Filter by status",
+    "allStatuses": "All statuses"
   },
   "appointments": {
     "title": "Appointments & Schedule",
@@ -599,7 +602,8 @@
       "removeDates": "Remove",
       "startDate": "Start date",
       "endDate": "End date",
-      "addDates": "Add start/end dates"
+      "addDates": "Add start/end dates",
+      "selectDate": "Select date"
     }
   },
   "pharmacy": {
@@ -1866,7 +1870,9 @@
         "pendingApprovalsDesc": "Notify me when a patient approves or rejects a pending change",
         "recordsShared": "Records shared with me",
         "recordsSharedDesc": "Notify me when a patient shares a record with me"
-      }
+      },
+      "linkPlaceholder": "https://example.com",
+      "removeLink": "Remove link"
     },
     "careTeam": {
       "title": "Care team",

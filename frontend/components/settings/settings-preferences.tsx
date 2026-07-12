@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -26,6 +26,7 @@ import {
 import { authClient } from "@/lib/auth-client";
 import { supportedLanguages } from "@/lib/i18n/config";
 import { persistLanguage } from "@/lib/language";
+import { SPECIALTIES, specialtyLabel } from "@/lib/staff";
 import {
   getSettings,
   saveSettings,
@@ -60,7 +61,20 @@ const DEFAULT_PREFS: UserPreferences = {
   "notif.recordsShared": true,
   clinic: "",
   contactEmail: "",
+  specialty: "",
+  // Professional links stored as a JSON array string (values are boolean|string).
+  links: "",
 };
+
+// Parse the stored `links` preference (a JSON array string) into an array.
+function parseLinks(value: unknown): string[] {
+  try {
+    const parsed = JSON.parse(String(value || "[]"));
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
 
 export function ProfilePanel() {
   const { t, i18n } = useTranslation();
@@ -110,13 +124,23 @@ export function ProfilePanel() {
   const setPref = (key: string, value: boolean | string) =>
     setPrefs((prev) => ({ ...prev, [key]: value }));
 
+  const links = parseLinks(prefs.links);
+  const setLinks = (next: string[]) =>
+    setPref("links", JSON.stringify(next));
+
   const dirty =
     name !== baselineName || JSON.stringify(prefs) !== JSON.stringify(baseline);
 
   const save = async () => {
     setSaving(true);
     try {
-      const saved = await saveSettings(prefs);
+      // Drop blank link rows before persisting.
+      const cleanedLinks = links.map((l) => l.trim()).filter(Boolean);
+      const toSave: UserPreferences = {
+        ...prefs,
+        links: cleanedLinks.length ? JSON.stringify(cleanedLinks) : "",
+      };
+      const saved = await saveSettings(toSave);
       const trimmed = name.trim();
       if (trimmed && trimmed !== baselineName) {
         const { error } = await authClient.updateUser({ name: trimmed });
@@ -182,13 +206,31 @@ export function ProfilePanel() {
 
           <div className="space-y-1.5">
             <FieldLabel>{t("settings.profile.specialty")}</FieldLabel>
-            <button
-              className="flex h-9 w-full items-center justify-between rounded-3xl bg-input/50 px-3 text-sm text-muted-foreground transition-colors hover:bg-input/70"
-              type="button"
+            <Select
+              onValueChange={(value) => setPref("specialty", value ?? "")}
+              value={String(prefs.specialty ?? "")}
             >
-              {t("settings.profile.selectSpecialty")}
-              <ChevronDown className="size-4" />
-            </button>
+              <SelectTrigger>
+                <SelectValue>
+                  {(value: string) =>
+                    value ? (
+                      specialtyLabel(t, value)
+                    ) : (
+                      <span className="text-muted-foreground">
+                        {t("settings.profile.selectSpecialty")}
+                      </span>
+                    )
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectPopup>
+                {SPECIALTIES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {t(`settings.careTeam.specialties.${s}`)}
+                  </SelectItem>
+                ))}
+              </SelectPopup>
+            </Select>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -221,7 +263,43 @@ export function ProfilePanel() {
                 {t("settings.profile.professionalLinksHint")}
               </p>
             </div>
-            <Button className="rounded-lg" size="sm" variant="outline">
+            {links.length > 0 ? (
+              <div className="space-y-2">
+                {links.map((link, index) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: rows are positional
+                  <div className="flex items-center gap-2" key={index}>
+                    <Input
+                      inputMode="url"
+                      onChange={(event) =>
+                        setLinks(
+                          links.map((value, i) =>
+                            i === index ? event.target.value : value,
+                          ),
+                        )
+                      }
+                      placeholder={t("settings.profile.linkPlaceholder")}
+                      value={link}
+                    />
+                    <Button
+                      aria-label={t("settings.profile.removeLink")}
+                      onClick={() =>
+                        setLinks(links.filter((_, i) => i !== index))
+                      }
+                      size="icon-sm"
+                      variant="ghost"
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            <Button
+              className="rounded-lg"
+              onClick={() => setLinks([...links, ""])}
+              size="sm"
+              variant="outline"
+            >
               <Plus className="size-4" />
               {t("settings.profile.addLink")}
             </Button>

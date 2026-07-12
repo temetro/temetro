@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, X } from "lucide-react";
+import { TriangleAlert, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -8,9 +8,12 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { getAiConfig } from "@/lib/ai-settings";
 
-// A single, dismissible heads-up shown above the chat input on a fresh chat when
-// no AI provider is configured yet (no API key, and no local Ollama). It only
-// renders on the empty state, so it naturally disappears once a message is sent.
+// A thin, dismissible warning bar shown flush above the chat input whenever no
+// AI provider is wired up yet — either no API key for any cloud provider, or the
+// app is in local mode with no Ollama endpoint set. Without this, sending a
+// message just fails silently, so the banner spells out the missing setup and
+// links straight to AI settings. Rendered in both the empty and active chat
+// states so a user mid-conversation with no provider still sees why replies fail.
 export function AiSetupNotice() {
   const { t } = useTranslation();
   const [needsSetup, setNeedsSetup] = useState(false);
@@ -40,24 +43,25 @@ export function AiSetupNotice() {
 
   return (
     <div
-      className="flex w-full items-start gap-3 rounded-2xl border border-info/30 bg-info/8 px-4 py-3 text-sm dark:bg-info/12"
+      className="flex w-full items-center gap-2.5 rounded-2xl border border-warning/32 bg-warning/8 px-3.5 py-2 text-sm dark:bg-warning/12"
       role="status"
     >
-      <Sparkles className="mt-0.5 size-4 shrink-0 text-info-foreground" />
-      <div className="flex-1 space-y-0.5">
-        <p className="font-medium text-foreground">
-          {t("chat.setupNotice.title")}
-        </p>
-        <p className="text-muted-foreground">{t("chat.setupNotice.body")}</p>
-        <Button
-          className="mt-1 px-0 text-info-foreground"
-          render={<Link href="/settings?tab=ai" />}
-          size="sm"
-          variant="link"
-        >
-          {t("chat.setupNotice.action")}
-        </Button>
-      </div>
+      <TriangleAlert className="size-4 shrink-0 text-warning" />
+      <p className="min-w-0 flex-1 truncate text-foreground">
+        <span className="font-medium">{t("chat.setupNotice.title")}</span>
+        <span className="text-muted-foreground max-sm:hidden">
+          {" — "}
+          {t("chat.setupNotice.body")}
+        </span>
+      </p>
+      <Button
+        className="shrink-0"
+        render={<Link href="/settings?tab=ai" />}
+        size="sm"
+        variant="outline"
+      >
+        {t("chat.setupNotice.action")}
+      </Button>
       <button
         aria-label={t("chat.setupNotice.dismiss")}
         className="-me-1 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"

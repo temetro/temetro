@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Dialog,
   DialogClose,
@@ -578,19 +579,17 @@ export function AddPrescriptionDialog({
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <Field label={t("prescriptions.dialog.startDate")}>
-                    <input
-                      className={controlClass}
-                      onChange={(event) => setStartDate(event.target.value)}
-                      type="date"
+                    <DatePicker
+                      onChange={setStartDate}
+                      placeholder={t("prescriptions.dialog.selectDate")}
                       value={startDate}
                     />
                   </Field>
                   <Field label={t("prescriptions.dialog.endDate")}>
-                    <input
-                      className={controlClass}
+                    <DatePicker
                       min={startDate || undefined}
-                      onChange={(event) => setEndDate(event.target.value)}
-                      type="date"
+                      onChange={setEndDate}
+                      placeholder={t("prescriptions.dialog.selectDate")}
                       value={endDate}
                     />
                   </Field>

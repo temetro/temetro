@@ -723,8 +723,7 @@ export function ChatPanel() {
           <div className="flex w-full flex-col gap-3">
             {errorAlert}
             {veilGate}
-            {/* One-time setup heads-up — only on the empty state, so it clears
-                itself once the first message is sent. */}
+            {/* Setup heads-up when no AI provider is configured. */}
             <AiSetupNotice />
             {promptInput}
             <Suggestions className="justify-center pt-1">
@@ -761,6 +760,9 @@ export function ChatPanel() {
         {errorAlert}
         {veilGate}
         {queuePanel}
+        {/* Also warn mid-conversation when no AI provider is configured, so
+            failing replies have a visible cause and a fix. */}
+        <AiSetupNotice />
         {promptInput}
       </div>
     </div>

@@ -259,7 +259,8 @@
     "createDialogDescription": "Ku dar rug cusub oo u beddel.",
     "signOutFailed": "Ka-bixitaanka waa fashilmay",
     "tryAgain": "Fadlan isku day mar kale.",
-    "signedOut": "Waa laga baxay"
+    "signedOut": "Waa laga baxay",
+    "language": "Luqadda"
   },
   "clinic": {
     "create": "Samee rug",
@@ -362,7 +363,9 @@
       "doneTitle": "Bukaanka waa la tirtiray",
       "failedTitle": "Bukaanka lama tirtiri karin",
       "failedBody": "Fadlan isku day mar kale."
-    }
+    },
+    "filterStatus": "Ku kala sooc xaaladda",
+    "allStatuses": "Dhammaan xaaladaha"
   },
   "appointments": {
     "title": "Ballamaha & Jadwalka",
@@ -599,7 +602,8 @@
       "removeDates": "Ka saar",
       "startDate": "Taariikhda bilowga",
       "endDate": "Taariikhda dhammaadka",
-      "addDates": "Ku dar taariikhaha bilow/dhammaad"
+      "addDates": "Ku dar taariikhaha bilow/dhammaad",
+      "selectDate": "Dooro taariikhda"
     }
   },
   "pharmacy": {
@@ -1866,7 +1870,9 @@
         "pendingApprovalsDesc": "I ogeysii marka bukaan ansixiyo ama diido isbeddel la sugayo",
         "recordsShared": "Diiwaanno la ila wadaagay",
         "recordsSharedDesc": "I ogeysii marka bukaan diiwaan ila wadaago"
-      }
+      },
+      "linkPlaceholder": "https://example.com",
+      "removeLink": "Ka saar linkiga"
     },
     "careTeam": {
       "title": "Kooxda daryeelka",

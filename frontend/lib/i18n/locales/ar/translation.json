@@ -263,7 +263,8 @@
     "createDialogDescription": "أضف عيادة جديدة وانتقل إليها.",
     "signOutFailed": "فشل تسجيل الخروج",
     "tryAgain": "يرجى المحاولة مرة أخرى.",
-    "signedOut": "تم تسجيل الخروج"
+    "signedOut": "تم تسجيل الخروج",
+    "language": "اللغة"
   },
   "clinic": {
     "create": "إنشاء عيادة",
@@ -374,7 +375,9 @@
       "doneTitle": "تم حذف المريض",
       "failedTitle": "تعذّر حذف المريض",
       "failedBody": "يرجى المحاولة مرة أخرى."
-    }
+    },
+    "filterStatus": "تصفية حسب الحالة",
+    "allStatuses": "كل الحالات"
   },
   "appointments": {
     "title": "المواعيد والجدول",
@@ -615,7 +618,8 @@
       "removeDates": "إزالة",
       "startDate": "تاريخ البدء",
       "endDate": "تاريخ الانتهاء",
-      "addDates": "إضافة تاريخ البدء/الانتهاء"
+      "addDates": "إضافة تاريخ البدء/الانتهاء",
+      "selectDate": "اختر التاريخ"
     }
   },
   "pharmacy": {
@@ -1886,7 +1890,9 @@
         "pendingApprovalsDesc": "أبلغني عند موافقة مريض على تغيير معلّق أو رفضه",
         "recordsShared": "سجلات شُوركت معي",
         "recordsSharedDesc": "أبلغني عند مشاركة مريض سجلًا معي"
-      }
+      },
+      "linkPlaceholder": "https://example.com",
+      "removeLink": "إزالة الرابط"
     },
     "careTeam": {
       "title": "فريق الرعاية",
