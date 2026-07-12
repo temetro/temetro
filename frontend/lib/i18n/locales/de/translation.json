@@ -365,7 +365,8 @@
       "failedBody": "Bitte versuchen Sie es erneut."
     },
     "filterStatus": "Nach Status filtern",
-    "allStatuses": "Alle Status"
+    "allStatuses": "Alle Status",
+    "moreActions": "Weitere Aktionen"
   },
   "appointments": {
     "title": "Termine & Zeitplan",
@@ -1535,7 +1536,8 @@
       "mild": "Leicht",
       "moderate": "Mäßig",
       "severe": "Schwer"
-    }
+    },
+    "moreActions": "Weitere Aktionen"
   },
   "patientForm": {
     "editTitle": "Datensatz bearbeiten",

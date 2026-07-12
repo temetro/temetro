@@ -365,7 +365,8 @@
       "failedBody": "Veuillez réessayer."
     },
     "filterStatus": "Filtrer par statut",
-    "allStatuses": "Tous les statuts"
+    "allStatuses": "Tous les statuts",
+    "moreActions": "Plus d’actions"
   },
   "appointments": {
     "title": "Rendez-vous & Planning",
@@ -1535,7 +1536,8 @@
       "mild": "Légère",
       "moderate": "Modérée",
       "severe": "Sévère"
-    }
+    },
+    "moreActions": "Plus d’actions"
   },
   "patientForm": {
     "editTitle": "Modifier le dossier",

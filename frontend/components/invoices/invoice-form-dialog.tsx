@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import {
   Dialog,
@@ -367,11 +368,14 @@ export function InvoiceFormDialog({
               <div className="flex flex-col gap-1.5">
                 <span className="flex items-center justify-between gap-2 text-muted-foreground text-xs">
                   {t("invoices.dialog.issued")}
-                  <label className="flex items-center gap-1 text-[11px]">
-                    <input
+                  <label
+                    className="flex items-center gap-1.5 text-[11px]"
+                    htmlFor="invoice-backdate"
+                  >
+                    <Checkbox
                       checked={allowBackdate}
-                      onChange={(e) => setAllowBackdate(e.target.checked)}
-                      type="checkbox"
+                      id="invoice-backdate"
+                      onCheckedChange={(checked) => setAllowBackdate(checked)}
                     />
                     {t("invoices.dialog.backdate")}
                   </label>
@@ -385,11 +389,10 @@ export function InvoiceFormDialog({
               <div className="flex flex-col gap-1.5">
                 <span className="flex items-center justify-between text-muted-foreground text-xs">
                   {t("invoices.dialog.due")}
-                  <input
+                  <Checkbox
                     aria-label={t("invoices.dialog.due")}
                     checked={hasDue}
-                    onChange={(e) => setHasDue(e.target.checked)}
-                    type="checkbox"
+                    onCheckedChange={(checked) => setHasDue(checked)}
                   />
                 </span>
                 {hasDue ? (

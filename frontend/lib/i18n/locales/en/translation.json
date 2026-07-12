@@ -365,7 +365,8 @@
       "failedBody": "Please try again."
     },
     "filterStatus": "Filter by status",
-    "allStatuses": "All statuses"
+    "allStatuses": "All statuses",
+    "moreActions": "More actions"
   },
   "appointments": {
     "title": "Appointments & Schedule",
@@ -1535,7 +1536,8 @@
       "mild": "Mild",
       "moderate": "Moderate",
       "severe": "Severe"
-    }
+    },
+    "moreActions": "More actions"
   },
   "patientForm": {
     "editTitle": "Edit record",

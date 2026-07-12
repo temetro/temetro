@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Search, Smartphone } from "lucide-react";
+import { MoreHorizontal, Plus, Search, Smartphone } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -11,8 +11,15 @@ import { ImportFromWalletDialog } from "@/components/patients/import-from-wallet
 import { PatientDetailSheet } from "@/components/patients/patient-detail-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CardFrame } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ListPagination } from "@/components/ui/list-pagination";
+import {
+  Menu,
+  MenuItem,
+  MenuPopup,
+  MenuTrigger,
+} from "@/components/ui/menu";
 import {
   Select,
   SelectItem,
@@ -20,6 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { listPatients, type Patient } from "@/lib/patients";
 
 type StatusFilter = "all" | Patient["status"];
@@ -183,15 +198,6 @@ export function PatientsView() {
           </Select>
           <Button
             className="rounded-3xl"
-            onClick={() => setImportOpen(true)}
-            type="button"
-            variant="outline"
-          >
-            <Smartphone className="size-4" />
-            {t("patients.importFromApp")}
-          </Button>
-          <Button
-            className="rounded-3xl"
             onClick={() => {
               setAddKey((k) => k + 1);
               setAddOpen(true);
@@ -201,58 +207,88 @@ export function PatientsView() {
             <Plus className="size-4" />
             {t("patients.add")}
           </Button>
+          {/* Secondary actions tuck into an overflow menu so the toolbar keeps a
+              single primary CTA. */}
+          <Menu>
+            <MenuTrigger
+              render={
+                <Button
+                  aria-label={t("patients.moreActions")}
+                  className="rounded-full"
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                />
+              }
+            >
+              <MoreHorizontal className="size-4" />
+            </MenuTrigger>
+            <MenuPopup align="end">
+              <MenuItem onClick={() => setImportOpen(true)}>
+                <Smartphone className="size-4" />
+                {t("patients.importFromApp")}
+              </MenuItem>
+            </MenuPopup>
+          </Menu>
         </div>
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-card/30">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-border border-b text-start text-xs text-muted-foreground uppercase">
-              <th className="px-4 py-3 font-medium">{t("patients.columns.name")}</th>
-              <th className="px-4 py-3 font-medium">{t("patients.columns.mrn")}</th>
-              <th className="px-4 py-3 font-medium">
+      <CardFrame className="mt-8 w-full">
+        <Table variant="card">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="ps-4 text-xs uppercase">
+                {t("patients.columns.name")}
+              </TableHead>
+              <TableHead className="text-xs uppercase">
+                {t("patients.columns.mrn")}
+              </TableHead>
+              <TableHead className="text-xs uppercase">
                 {t("patients.columns.ageSex")}
-              </th>
-              <th className="px-4 py-3 font-medium">
+              </TableHead>
+              <TableHead className="text-xs uppercase">
                 {t("patients.columns.status")}
-              </th>
-              <th className="px-4 py-3 font-medium">
+              </TableHead>
+              <TableHead className="text-xs uppercase">
                 {t("patients.columns.lastSeen")}
-              </th>
-              <th className="px-4 py-3 font-medium">
+              </TableHead>
+              <TableHead className="pe-4 text-xs uppercase">
                 {t("patients.columns.allergies")}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {loading ? (
-              <tr>
-                <td
-                  className="px-4 py-10 text-center text-muted-foreground"
+              <TableRow>
+                <TableCell
+                  className="py-10 text-center text-muted-foreground"
                   colSpan={6}
                 >
                   {t("patients.loading")}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : loadError ? (
-              <tr>
-                <td className="px-4 py-10 text-center text-destructive" colSpan={6}>
+              <TableRow>
+                <TableCell
+                  className="py-10 text-center text-destructive"
+                  colSpan={6}
+                >
                   {loadError}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : patients.length === 0 ? (
-              <tr>
-                <td
-                  className="px-4 py-10 text-center text-muted-foreground"
+              <TableRow>
+                <TableCell
+                  className="py-10 text-center text-muted-foreground"
                   colSpan={6}
                 >
                   {t("patients.empty")}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ) : (
               pageRows.map((p) => (
-                <tr
-                  className="cursor-pointer border-border/50 border-b transition-colors last:border-0 hover:bg-accent/50"
+                <TableRow
+                  className="cursor-pointer"
                   key={p.fileNumber}
                   onClick={() => open(p.fileNumber)}
                   onKeyDown={(event) => {
@@ -264,7 +300,7 @@ export function PatientsView() {
                   role="button"
                   tabIndex={0}
                 >
-                  <td className="px-4 py-3 font-medium text-foreground">
+                  <TableCell className="ps-4 py-3 font-medium text-foreground">
                     <span className="flex items-center gap-2">
                       {p.name}
                       <AiBadge source={p.source} />
@@ -274,30 +310,30 @@ export function PatientsView() {
                         </Badge>
                       ) : null}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  </TableCell>
+                  <TableCell className="py-3 text-muted-foreground">
                     {p.fileNumber}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  </TableCell>
+                  <TableCell className="py-3 text-muted-foreground">
                     {p.age} · {p.sex}
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="py-3">
                     <Badge variant={statusVariant[p.status]}>
                       {t(`patients.status.${p.status}`)}
                     </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  </TableCell>
+                  <TableCell className="py-3 text-muted-foreground">
                     {p.encounters[0]?.date ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  </TableCell>
+                  <TableCell className="pe-4 py-3 text-muted-foreground">
                     {p.allergies.length || "—"}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))
             )}
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </CardFrame>
 
       {!loading && !loadError ? (
         <ListPagination

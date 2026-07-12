@@ -377,7 +377,8 @@
       "failedBody": "يرجى المحاولة مرة أخرى."
     },
     "filterStatus": "تصفية حسب الحالة",
-    "allStatuses": "كل الحالات"
+    "allStatuses": "كل الحالات",
+    "moreActions": "إجراءات إضافية"
   },
   "appointments": {
     "title": "المواعيد والجدول",
@@ -1555,7 +1556,8 @@
       "mild": "خفيف",
       "moderate": "متوسط",
       "severe": "شديد"
-    }
+    },
+    "moreActions": "إجراءات إضافية"
   },
   "patientForm": {
     "editTitle": "تعديل السجل",

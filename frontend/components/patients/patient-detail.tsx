@@ -7,6 +7,7 @@ import {
   type LucideIcon,
   ListTodo,
   Mic,
+  MoreHorizontal,
   Network,
   NotebookPen,
   Pencil,
@@ -29,6 +30,13 @@ import {
 import { printPatientSummary } from "@/lib/patient-pdf";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Menu,
+  MenuItem,
+  MenuPopup,
+  MenuSeparator,
+  MenuTrigger,
+} from "@/components/ui/menu";
 import {
   Dialog,
   DialogClose,
@@ -315,63 +323,63 @@ export function PatientDetail({
             )}
           </div>
         </div>
-        {/* Actions — their own wrapping row beneath the identity. */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            onClick={() => printPatientSummary(patient, t)}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <FileDown className="size-4" />
-            {t("patientCard.exportPdf")}
-          </Button>
-          {onTransfer && (
-            <Button
-              onClick={onTransfer}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              <ArrowLeftRight className="size-4" />
-              {t("patients.transfer.action")}
-            </Button>
-          )}
-          {onScribe && (
-            <Button onClick={onScribe} size="sm" type="button" variant="outline">
-              <Mic className="size-4" />
-              {t("scribe.recordVisit")}
-            </Button>
-          )}
+        {/* Actions — one primary (Edit) with the rest tucked into an overflow
+            menu so the header stays uncluttered. */}
+        <div className="flex items-center gap-2">
           {onEdit && (
             <Button onClick={onEdit} size="sm" type="button" variant="outline">
               <Pencil className="size-4" />
               {t("patientCard.edit")}
             </Button>
           )}
-          {onWalletPush && (
-            <Button
-              onClick={onWalletPush}
-              size="sm"
-              type="button"
-              variant="outline"
+          <Menu>
+            <MenuTrigger
+              render={
+                <Button
+                  aria-label={t("patientCard.moreActions")}
+                  className="ms-auto"
+                  size="icon-sm"
+                  type="button"
+                  variant="outline"
+                />
+              }
             >
-              <Send className="size-4" />
-              {t("walletPush.action")}
-            </Button>
-          )}
-          {onDelete && (
-            <Button
-              aria-label={t("patients.delete.action")}
-              className="ms-auto"
-              onClick={onDelete}
-              size="sm"
-              type="button"
-              variant="destructive"
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          )}
+              <MoreHorizontal className="size-4" />
+            </MenuTrigger>
+            <MenuPopup align="end">
+              <MenuItem onClick={() => printPatientSummary(patient, t)}>
+                <FileDown className="size-4" />
+                {t("patientCard.exportPdf")}
+              </MenuItem>
+              {onScribe && (
+                <MenuItem onClick={onScribe}>
+                  <Mic className="size-4" />
+                  {t("scribe.recordVisit")}
+                </MenuItem>
+              )}
+              {onTransfer && (
+                <MenuItem onClick={onTransfer}>
+                  <ArrowLeftRight className="size-4" />
+                  {t("patients.transfer.action")}
+                </MenuItem>
+              )}
+              {onWalletPush && (
+                <MenuItem onClick={onWalletPush}>
+                  <Send className="size-4" />
+                  {t("walletPush.action")}
+                </MenuItem>
+              )}
+              {onDelete && (
+                <>
+                  <MenuSeparator />
+                  <MenuItem onClick={onDelete} variant="destructive">
+                    <Trash2 className="size-4" />
+                    {t("patients.delete.action")}
+                  </MenuItem>
+                </>
+              )}
+            </MenuPopup>
+          </Menu>
         </div>
       </div>
 

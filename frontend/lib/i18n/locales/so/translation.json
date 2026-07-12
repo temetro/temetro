@@ -365,7 +365,8 @@
       "failedBody": "Fadlan isku day mar kale."
     },
     "filterStatus": "Ku kala sooc xaaladda",
-    "allStatuses": "Dhammaan xaaladaha"
+    "allStatuses": "Dhammaan xaaladaha",
+    "moreActions": "Ficillo dheeraad ah"
   },
   "appointments": {
     "title": "Ballamaha & Jadwalka",
@@ -1535,7 +1536,8 @@
       "mild": "Fudud",
       "moderate": "Dhexdhexaad",
       "severe": "Daran"
-    }
+    },
+    "moreActions": "Ficillo dheeraad ah"
   },
   "patientForm": {
     "editTitle": "Wax ka beddel diiwaanka",
