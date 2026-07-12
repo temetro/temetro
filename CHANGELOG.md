@@ -7,6 +7,24 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.13.1] — 2026-07-13
+
+### Changed
+- **New Invoice checkboxes.** The Back-date / Due-date toggles now use the COSS `Checkbox`
+  (`frontend/components/ui/checkbox.tsx`) instead of raw, misshapen native checkboxes.
+- **Patients page toolbar & table.** The list is now a COSS **Table in a `CardFrame`**
+  (`frontend/components/ui/table.tsx`), and the secondary "Import from a patient app" action moved
+  into a `⋯` overflow menu so the toolbar keeps a single primary "Add patient" CTA.
+- **Patient detail sheet header.** The five action buttons plus delete collapse into a primary
+  **Edit** button and a `⋯ More` menu (Download summary, Record visit, Transfer, Push to wallet, and
+  a destructive Delete).
+
+### Wallet app
+- **Home quick actions open sheets.** "Share record" now opens a bottom sheet with a scannable **QR**
+  of the wallet number (`react-native-qrcode-svg`); "My wallet" opens a bottom sheet with copyable
+  wallet number / fingerprint / algorithm; and the duplicate "Notifications" action (the header
+  already has a bell) is replaced with **Scan**.
+
 ## [0.13.0] — 2026-07-12
 
 ### Added

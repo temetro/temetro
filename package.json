@@ -1,6 +1,6 @@
 {
   "name": "temetro",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "private": true,
   "devDependencies": {
     "shadcn": "^4.11.0"
