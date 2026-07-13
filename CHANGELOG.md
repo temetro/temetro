@@ -7,6 +7,42 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.14.0] — 2026-07-13
+
+### Changed
+- **Patients page filter moved to its own row.** The status filter left the toolbar and now sits on a
+  dedicated **"Filter"** row directly above the table, so the header stays a clean title + search +
+  "Add patient" + `⋯` cluster (`frontend/components/patients/patients-view.tsx`).
+- **Patient detail sheet header.** The patient name, status badge, and the `⋯` menu now share one
+  left-aligned row, and the standalone **Edit** button moved to be the first item inside the `⋯` menu
+  (`frontend/components/patients/patient-detail.tsx`).
+- **Settings redesigned with the COSS frame surface.** Every settings section now renders in a
+  `CardFrame` (header + body) via a new `SettingsFrame` part, replacing the flat `SettingsCard` divs
+  (`frontend/components/settings/settings-parts.tsx`, `settings-ai.tsx`).
+
+### Added
+- **AI Mode: Automatic and Off.** Settings → AI gains two modes beyond API / Local: **Automatic**
+  (use a cloud API key when set, else fall back to local Ollama) and **Off** (assistant disabled).
+  Automatic is the new default, so a fresh install shows the setup banner until a provider is wired
+  (`frontend/lib/ai-settings.ts`, `backend/src/services/ai/{config,provider}.ts`, `types/ai.ts`).
+
+### Fixed
+- **AI setup banner now appears when no provider is configured.** Previously the defaulted Ollama URL
+  counted as "configured," so the "connect an AI model" banner never showed; it now reflects the
+  actual mode (`frontend/components/chat/ai-setup-notice.tsx`).
+- **Chat cards no longer silently vanish.** An unrecognized/renamed streamed data part now renders a
+  small placeholder instead of nothing (`frontend/components/chat/chat-panel.tsx`).
+
+### Wallet app
+- **Documents/files reach the wallet.** Clinic record-update pushes now include attachment metadata,
+  which the wallet folds into the record so the **Documents** tile counts them and the Documents
+  screen lists them (`backend/src/services/wallet-updates.ts`, `temetro-app` types + home/documents).
+- **Failed pushes are no longer swallowed.** A record update that fails signature verification or
+  decoding is now logged (and a "couldn't verify" notice is raised) instead of disappearing silently.
+- **i18next translation.** The wallet app now uses `i18next` + `react-i18next` + `expo-localization`
+  (English shipped; other locales can be added later), with the home, record-update inbox, navigation
+  titles, and the visits/prescriptions-adjacent detail screens extracted to translation keys.
+
 ## [0.13.1] — 2026-07-13
 
 ### Changed
