@@ -188,7 +188,17 @@ export function ChatPanel() {
     getAiConfig()
       .then((cfg) => {
         if (cancelled) return;
-        setModel(cfg.mode === "local" ? "ollama" : cfg.defaultModel);
+        // Seed the model to match the configured mode. In "auto" we prefer the
+        // user's cloud default when a key exists, else fall back to the local
+        // sentinel (mirrors the backend's provider resolution).
+        const hasApiKey = Object.values(cfg.apiKeySet).some(Boolean);
+        const seeded =
+          cfg.mode === "local"
+            ? "ollama"
+            : cfg.mode === "auto" && !hasApiKey
+              ? "ollama"
+              : cfg.defaultModel;
+        setModel(seeded);
         setEffort(cfg.defaultEffort);
       })
       .catch(() => {
@@ -684,6 +694,22 @@ export function ChatPanel() {
                 <Badge className="gap-1 self-start" key={key} variant="secondary">
                   <ShieldCheck className="size-3" />
                   {t("chat.veil.activeChip", { provider: part.data.provider })}
+                </Badge>
+              );
+            }
+            // Fallback: a structured card the client doesn't recognize (e.g. a
+            // data part added or renamed on the backend). Surface a small
+            // placeholder so a written-but-unhandled result is never silently
+            // invisible. `data-step`/`data-source` intentionally render nothing
+            // here (they're consumed above), so skip them.
+            if (
+              part.type.startsWith("data-") &&
+              part.type !== "data-step" &&
+              part.type !== "data-source"
+            ) {
+              return (
+                <Badge className="self-start" key={key} variant="outline">
+                  {t("chat.card.unsupported")}
                 </Badge>
               );
             }

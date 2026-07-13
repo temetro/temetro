@@ -364,6 +364,7 @@
       "failedTitle": "Patient konnte nicht gelöscht werden",
       "failedBody": "Bitte versuchen Sie es erneut."
     },
+    "filterLabel": "Filter",
     "filterStatus": "Nach Status filtern",
     "allStatuses": "Alle Status",
     "moreActions": "Weitere Aktionen"
@@ -1133,7 +1134,12 @@
       "title": "Verbinden Sie ein KI-Modell, um zu beginnen",
       "body": "Es ist noch kein KI-Anbieter eingerichtet. Fügen Sie einen API-Schlüssel hinzu oder verweisen Sie temetro auf ein lokales Ollama-Modell, damit der Assistent antworten kann.",
       "action": "KI-Einstellungen öffnen",
-      "dismiss": "Ausblenden"
+      "dismiss": "Ausblenden",
+      "offTitle": "Der KI-Assistent ist ausgeschaltet",
+      "offBody": "KI ist unter Einstellungen → KI auf Aus gestellt. Schalten Sie sie ein, um den Assistenten zu nutzen."
+    },
+    "card": {
+      "unsupported": "Nicht unterstützte Karte"
     },
     "input": {
       "placeholder": "Fragen Sie etwas oder tippen Sie /patient 10293",
@@ -2091,6 +2097,13 @@
       "modeLocal": "Lokales Modell (Ollama)",
       "modeApiHint": "Anfragen gehen an Ihren gewählten Anbieter. Patientenkennungen werden von Veil anonymisiert, bevor sie das System verlassen.",
       "modeLocalHint": "Anfragen laufen gegen ein Modell auf Ihrer eigenen Infrastruktur. Keine Patientendaten verlassen die Klinik.",
+      "modeAuto": "Automatisch",
+      "modeOff": "Aus",
+      "modeAutoHint": "Verwendet einen Cloud-API-Schlüssel, sofern vorhanden, andernfalls Ihr lokales Ollama-Modell.",
+      "modeOffHint": "Der KI-Assistent ist deaktiviert. Es werden keine Anfragen gesendet.",
+      "offTitle": "Assistent aus",
+      "offDescription": "Der KI-Assistent ist für Ihr Konto ausgeschaltet.",
+      "offNote": "Wählen Sie oben Automatisch, Cloud-API-Schlüssel oder Lokales Modell, um den Assistenten zu aktivieren.",
       "providerTitle": "Anbieter & API-Schlüssel",
       "providerDescription": "Ihr Schlüssel wird verschlüsselt gespeichert und nie wieder angezeigt. Sie können einen Schlüssel pro Anbieter speichern und zwischen ihnen wechseln.",
       "provider": "Anbieter",

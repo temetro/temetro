@@ -208,6 +208,12 @@ chatRouter.post("/", async (req, res, next) => {
     }
 
     const settings = await getAiSettings(req.user!.id);
+    if (settings.mode === "off") {
+      throw new HttpError(
+        400,
+        "The AI assistant is turned off. Turn it on in Settings → AI.",
+      );
+    }
     const modelId = requestedModel || settings.defaultModel;
     const resolved = resolveModel(settings, modelId);
     const veil = createVeil(settings.veilLevel, resolved.isExternal);

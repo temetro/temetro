@@ -2,8 +2,12 @@
 // AI panel. The chat agent reads these to decide which provider/model to call
 // and how strict the Veil de-identification safeguard should be.
 
-// Two inference modes: a user-provided cloud API key, or a local Ollama model.
-export type AiMode = "api" | "local";
+// Inference modes:
+//   api    — a user-provided cloud API key
+//   local  — a local Ollama model
+//   auto   — auto-pick: use a cloud key when one is set, else fall back to local
+//   off    — the assistant is disabled
+export type AiMode = "api" | "local" | "auto" | "off";
 
 // The three supported cloud providers for API-key mode.
 export type ApiProvider = "openai" | "anthropic" | "gemini";

@@ -5,7 +5,7 @@ import { z } from "zod";
 // is the plaintext key for the *currently selected* provider — it is encrypted
 // before storage and never echoed back.
 export const aiConfigInputSchema = z.object({
-  mode: z.enum(["api", "local"]).optional(),
+  mode: z.enum(["api", "local", "auto", "off"]).optional(),
   provider: z.enum(["openai", "anthropic", "gemini"]).optional(),
   ollamaBaseUrl: z.string().url().optional(),
   ollamaModel: z.string().min(1).max(120).optional(),

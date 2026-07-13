@@ -69,8 +69,30 @@ export function resolveModel(
   settings: AiSettingsRow,
   requestedModelId: string,
 ): ResolvedModel {
-  // Local mode (or the local sentinel) → Ollama's OpenAI-compatible endpoint.
-  if (settings.mode === "local" || requestedModelId === OLLAMA_SENTINEL) {
+  // Off → the assistant is disabled. Guard here in case a request slips past the
+  // route-level short-circuit.
+  if (settings.mode === "off") {
+    throw new HttpError(
+      400,
+      "The AI assistant is turned off. Turn it on in Settings → AI.",
+    );
+  }
+
+  const requested = providerForModel(requestedModelId);
+  // In api/auto mode, find a cloud provider that actually has a key. Auto with
+  // no key (and api mode's remaining fall-through) drops to local Ollama below.
+  const provider =
+    settings.mode === "api" || settings.mode === "auto"
+      ? chooseProvider(settings, requested)
+      : null;
+
+  // Local when: explicit local mode, the local sentinel was picked, or auto with
+  // no configured cloud key. → Ollama's OpenAI-compatible endpoint.
+  if (
+    settings.mode === "local" ||
+    requestedModelId === OLLAMA_SENTINEL ||
+    (settings.mode === "auto" && !provider)
+  ) {
     const ollama = createOpenAICompatible({
       name: "ollama",
       baseURL: `${settings.ollamaBaseUrl.replace(/\/$/, "")}/v1`,
@@ -82,11 +104,7 @@ export function resolveModel(
     };
   }
 
-  // API mode. Pick a provider that actually has a key, falling back gracefully
-  // so a configured key (e.g. Gemini) is used even if the picked model belongs
-  // to a different, unconfigured provider.
-  const requested = providerForModel(requestedModelId);
-  const provider = chooseProvider(settings, requested);
+  // API mode with a picked cloud model but no matching/any key.
   if (!provider) {
     throw new HttpError(
       400,

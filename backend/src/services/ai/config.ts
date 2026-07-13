@@ -13,7 +13,9 @@ import {
 type AiSettingsRow = typeof userAiSettings.$inferSelect;
 
 const DEFAULTS: Omit<AiSettingsRow, "userId" | "updatedAt"> = {
-  mode: "local",
+  // Default to auto: use a cloud key if the user adds one, else local Ollama.
+  // A fresh user with nothing configured then sees the setup banner.
+  mode: "auto",
   provider: "anthropic",
   ollamaBaseUrl: DEFAULT_OLLAMA_BASE_URL,
   ollamaModel: "llama3.1",

@@ -14,9 +14,13 @@ import { getAiConfig } from "@/lib/ai-settings";
 // message just fails silently, so the banner spells out the missing setup and
 // links straight to AI settings. Rendered in both the empty and active chat
 // states so a user mid-conversation with no provider still sees why replies fail.
+// Which advisory (if any) to show: the setup nudge (no provider wired), or a
+// notice that the assistant has been switched off.
+type Notice = "setup" | "off" | null;
+
 export function AiSetupNotice() {
   const { t } = useTranslation();
-  const [needsSetup, setNeedsSetup] = useState(false);
+  const [notice, setNotice] = useState<Notice>(null);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -24,22 +28,34 @@ export function AiSetupNotice() {
     getAiConfig()
       .then((cfg) => {
         if (!active) return;
-        // Configured = an API key for any provider, or a local Ollama endpoint.
+        if (cfg.mode === "off") {
+          setNotice("off");
+          return;
+        }
         const hasApiKey = Object.values(cfg.apiKeySet).some(Boolean);
-        const hasLocal =
-          cfg.mode === "local" && cfg.ollamaBaseUrl.trim().length > 0;
-        setNeedsSetup(!(hasApiKey || hasLocal));
+        // Whether the assistant is actually wired up for the chosen mode:
+        //  - api / auto  → needs a cloud API key (auto silently falls back to
+        //                  local, but with no key we nudge the user to finish
+        //                  setup rather than depend on an unverified Ollama).
+        //  - local       → needs a non-empty Ollama endpoint (opted in).
+        const configured =
+          cfg.mode === "local"
+            ? cfg.ollamaBaseUrl.trim().length > 0
+            : hasApiKey;
+        setNotice(configured ? null : "setup");
       })
       .catch(() => {
         // If we can't read the config, don't nag — the chat still works.
-        if (active) setNeedsSetup(false);
+        if (active) setNotice(null);
       });
     return () => {
       active = false;
     };
   }, []);
 
-  if (!needsSetup || dismissed) return null;
+  if (!notice || dismissed) return null;
+
+  const isOff = notice === "off";
 
   return (
     <div
@@ -48,10 +64,14 @@ export function AiSetupNotice() {
     >
       <TriangleAlert className="size-4 shrink-0 text-warning" />
       <p className="min-w-0 flex-1 truncate text-foreground">
-        <span className="font-medium">{t("chat.setupNotice.title")}</span>
+        <span className="font-medium">
+          {isOff
+            ? t("chat.setupNotice.offTitle")
+            : t("chat.setupNotice.title")}
+        </span>
         <span className="text-muted-foreground max-sm:hidden">
           {" — "}
-          {t("chat.setupNotice.body")}
+          {isOff ? t("chat.setupNotice.offBody") : t("chat.setupNotice.body")}
         </span>
       </p>
       <Button

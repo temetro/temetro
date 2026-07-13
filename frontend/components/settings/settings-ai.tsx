@@ -15,8 +15,7 @@ import {
 } from "@/components/ui/select";
 import {
   FieldLabel,
-  SettingsCard,
-  SettingsSection,
+  SettingsFrame,
   ToggleRow,
 } from "@/components/settings/settings-parts";
 import {
@@ -41,7 +40,7 @@ const PROVIDERS: ApiProvider[] = ["openai", "anthropic", "gemini"];
 const VEIL_LEVELS: VeilLevel[] = ["full", "names", "off"];
 
 const DEFAULTS: AiConfig = {
-  mode: "local",
+  mode: "auto",
   provider: "anthropic",
   ollamaBaseUrl: "http://localhost:11434",
   ollamaModel: "llama3.1",
@@ -196,15 +195,26 @@ export function AIPanel() {
 
   const keyIsSet = config.apiKeySet[config.provider];
 
+  // Which mode-hint copy to show under the Mode select.
+  const modeHintSuffix =
+    config.mode === "api"
+      ? "Api"
+      : config.mode === "local"
+        ? "Local"
+        : config.mode === "off"
+          ? "Off"
+          : "Auto";
+
   return (
     <>
       {policy ? (
-        <SettingsSection
+        <SettingsFrame
+          bodyClassName="space-y-3"
           description={t("settings.ai.availability.description")}
           title={t("settings.ai.availability.title")}
         >
           {isAdmin ? (
-            <div className="space-y-3">
+            <>
               <ToggleRow
                 checked={policy.aiEnabled}
                 description={t("settings.ai.availability.enabledHint")}
@@ -240,58 +250,67 @@ export function AIPanel() {
                   </Button>
                 </div>
               ) : null}
-            </div>
+            </>
           ) : (
-            <SettingsCard className="px-4 py-3.5">
-              <p className="text-sm text-muted-foreground">
-                {policy.aiEnabled
-                  ? policy.disabledForEmployees
-                    ? t("settings.ai.availability.readonlyEmployeesOnly")
-                    : t("settings.ai.availability.readonlyEnabled")
-                  : t("settings.ai.availability.readonlyDisabled")}
-              </p>
-            </SettingsCard>
+            <p className="text-sm text-muted-foreground">
+              {policy.aiEnabled
+                ? policy.disabledForEmployees
+                  ? t("settings.ai.availability.readonlyEmployeesOnly")
+                  : t("settings.ai.availability.readonlyEnabled")
+                : t("settings.ai.availability.readonlyDisabled")}
+            </p>
           )}
-        </SettingsSection>
+        </SettingsFrame>
       ) : null}
 
-      <SettingsSection
+      <SettingsFrame
         description={t("settings.ai.modeDescription")}
         title={t("settings.ai.modeTitle")}
       >
-        <SettingsCard className="space-y-5 p-5">
-          <div className="space-y-1.5">
-            <FieldLabel>{t("settings.ai.mode")}</FieldLabel>
-            <Select
-              onValueChange={(value) => set("mode", value as AiMode)}
-              value={config.mode}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectPopup>
-                <SelectItem value="api">{t("settings.ai.modeApi")}</SelectItem>
-                <SelectItem value="local">
-                  {t("settings.ai.modeLocal")}
-                </SelectItem>
-              </SelectPopup>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              {config.mode === "api"
-                ? t("settings.ai.modeApiHint")
-                : t("settings.ai.modeLocalHint")}
-            </p>
-          </div>
-        </SettingsCard>
-      </SettingsSection>
+        <div className="space-y-1.5">
+          <FieldLabel>{t("settings.ai.mode")}</FieldLabel>
+          <Select
+            onValueChange={(value) => set("mode", value as AiMode)}
+            value={config.mode}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectPopup>
+              <SelectItem value="auto">
+                {t("settings.ai.modeAuto")}
+              </SelectItem>
+              <SelectItem value="api">{t("settings.ai.modeApi")}</SelectItem>
+              <SelectItem value="local">
+                {t("settings.ai.modeLocal")}
+              </SelectItem>
+              <SelectItem value="off">{t("settings.ai.modeOff")}</SelectItem>
+            </SelectPopup>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            {t(`settings.ai.mode${modeHintSuffix}Hint`)}
+          </p>
+        </div>
+      </SettingsFrame>
 
-      {config.mode === "api" ? (
-        <SettingsSection
+      {config.mode === "off" ? (
+        <SettingsFrame
+          description={t("settings.ai.offDescription")}
+          title={t("settings.ai.offTitle")}
+        >
+          <p className="text-sm text-muted-foreground">
+            {t("settings.ai.offNote")}
+          </p>
+        </SettingsFrame>
+      ) : config.mode !== "local" ? (
+        // API and Automatic both configure a cloud provider (Automatic falls
+        // back to local Ollama when no key is set).
+        <SettingsFrame
+          bodyClassName="space-y-5"
           description={t("settings.ai.providerDescription")}
           title={t("settings.ai.providerTitle")}
         >
-          <SettingsCard className="space-y-5 p-5">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <FieldLabel>{t("settings.ai.provider")}</FieldLabel>
                 <Select
@@ -377,15 +396,14 @@ export function AIPanel() {
                 </SelectPopup>
               </Select>
             </div>
-          </SettingsCard>
-        </SettingsSection>
+        </SettingsFrame>
       ) : (
-        <SettingsSection
+        <SettingsFrame
+          bodyClassName="space-y-5"
           description={t("settings.ai.localDescription")}
           title={t("settings.ai.localTitle")}
         >
-          <SettingsCard className="space-y-5 p-5">
-            <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <FieldLabel>{t("settings.ai.ollamaBaseUrl")}</FieldLabel>
                 <Input
@@ -414,40 +432,40 @@ export function AIPanel() {
                 ? t("settings.ai.testing")
                 : t("settings.ai.testConnection")}
             </Button>
-          </SettingsCard>
-        </SettingsSection>
+        </SettingsFrame>
       )}
 
-      <SettingsSection
-        description={t("settings.ai.veilDescription")}
-        title={t("settings.ai.veilTitle")}
-      >
-        <SettingsCard className="space-y-4 p-5">
+      {config.mode !== "off" ? (
+        <SettingsFrame
+          bodyClassName="space-y-4"
+          description={t("settings.ai.veilDescription")}
+          title={t("settings.ai.veilTitle")}
+        >
           <div className="space-y-1.5">
-            <FieldLabel>{t("settings.ai.veilLevel")}</FieldLabel>
-            <Select
-              onValueChange={(value) => set("veilLevel", value as VeilLevel)}
-              value={config.veilLevel}
-            >
-              <SelectTrigger className="sm:w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectPopup>
-                {VEIL_LEVELS.map((level) => (
-                  <SelectItem key={level} value={level}>
-                    {t(`settings.ai.veilLevels.${level}`)}
-                  </SelectItem>
-                ))}
-              </SelectPopup>
-            </Select>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {config.mode === "local"
-              ? t("settings.ai.veilLocalNote")
-              : t("settings.ai.veilApiNote")}
-          </p>
-        </SettingsCard>
-      </SettingsSection>
+              <FieldLabel>{t("settings.ai.veilLevel")}</FieldLabel>
+              <Select
+                onValueChange={(value) => set("veilLevel", value as VeilLevel)}
+                value={config.veilLevel}
+              >
+                <SelectTrigger className="sm:w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectPopup>
+                  {VEIL_LEVELS.map((level) => (
+                    <SelectItem key={level} value={level}>
+                      {t(`settings.ai.veilLevels.${level}`)}
+                    </SelectItem>
+                  ))}
+                </SelectPopup>
+              </Select>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {config.mode === "local"
+                ? t("settings.ai.veilLocalNote")
+                : t("settings.ai.veilApiNote")}
+            </p>
+        </SettingsFrame>
+      ) : null}
 
       {dirty ? (
         <div className="sticky bottom-4 z-10">

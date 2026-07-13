@@ -303,6 +303,8 @@ export function PatientDetail({
             <AvatarFallback>{patient.initials}</AvatarFallback>
           </Avatar>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
+            {/* Name, status, and the overflow menu share one left-aligned row;
+                Edit now lives inside the menu rather than as a separate button. */}
             <div className="flex flex-wrap items-center gap-2">
               <span className="font-semibold text-base text-foreground">
                 {patient.name}
@@ -310,6 +312,59 @@ export function PatientDetail({
               <Badge variant={statusVariant[patient.status]}>
                 {t(`patients.status.${patient.status}`)}
               </Badge>
+              <Menu>
+                <MenuTrigger
+                  render={
+                    <Button
+                      aria-label={t("patientCard.moreActions")}
+                      size="icon-sm"
+                      type="button"
+                      variant="outline"
+                    />
+                  }
+                >
+                  <MoreHorizontal className="size-4" />
+                </MenuTrigger>
+                <MenuPopup align="start">
+                  {onEdit && (
+                    <MenuItem onClick={onEdit}>
+                      <Pencil className="size-4" />
+                      {t("patientCard.edit")}
+                    </MenuItem>
+                  )}
+                  <MenuItem onClick={() => printPatientSummary(patient, t)}>
+                    <FileDown className="size-4" />
+                    {t("patientCard.exportPdf")}
+                  </MenuItem>
+                  {onScribe && (
+                    <MenuItem onClick={onScribe}>
+                      <Mic className="size-4" />
+                      {t("scribe.recordVisit")}
+                    </MenuItem>
+                  )}
+                  {onTransfer && (
+                    <MenuItem onClick={onTransfer}>
+                      <ArrowLeftRight className="size-4" />
+                      {t("patients.transfer.action")}
+                    </MenuItem>
+                  )}
+                  {onWalletPush && (
+                    <MenuItem onClick={onWalletPush}>
+                      <Send className="size-4" />
+                      {t("walletPush.action")}
+                    </MenuItem>
+                  )}
+                  {onDelete && (
+                    <>
+                      <MenuSeparator />
+                      <MenuItem onClick={onDelete} variant="destructive">
+                        <Trash2 className="size-4" />
+                        {t("patients.delete.action")}
+                      </MenuItem>
+                    </>
+                  )}
+                </MenuPopup>
+              </Menu>
             </div>
             <span className="text-muted-foreground text-sm">{idLine}</span>
             {patient.alerts.length > 0 && (
@@ -322,64 +377,6 @@ export function PatientDetail({
               </div>
             )}
           </div>
-        </div>
-        {/* Actions — one primary (Edit) with the rest tucked into an overflow
-            menu so the header stays uncluttered. */}
-        <div className="flex items-center gap-2">
-          {onEdit && (
-            <Button onClick={onEdit} size="sm" type="button" variant="outline">
-              <Pencil className="size-4" />
-              {t("patientCard.edit")}
-            </Button>
-          )}
-          <Menu>
-            <MenuTrigger
-              render={
-                <Button
-                  aria-label={t("patientCard.moreActions")}
-                  className="ms-auto"
-                  size="icon-sm"
-                  type="button"
-                  variant="outline"
-                />
-              }
-            >
-              <MoreHorizontal className="size-4" />
-            </MenuTrigger>
-            <MenuPopup align="end">
-              <MenuItem onClick={() => printPatientSummary(patient, t)}>
-                <FileDown className="size-4" />
-                {t("patientCard.exportPdf")}
-              </MenuItem>
-              {onScribe && (
-                <MenuItem onClick={onScribe}>
-                  <Mic className="size-4" />
-                  {t("scribe.recordVisit")}
-                </MenuItem>
-              )}
-              {onTransfer && (
-                <MenuItem onClick={onTransfer}>
-                  <ArrowLeftRight className="size-4" />
-                  {t("patients.transfer.action")}
-                </MenuItem>
-              )}
-              {onWalletPush && (
-                <MenuItem onClick={onWalletPush}>
-                  <Send className="size-4" />
-                  {t("walletPush.action")}
-                </MenuItem>
-              )}
-              {onDelete && (
-                <>
-                  <MenuSeparator />
-                  <MenuItem onClick={onDelete} variant="destructive">
-                    <Trash2 className="size-4" />
-                    {t("patients.delete.action")}
-                  </MenuItem>
-                </>
-              )}
-            </MenuPopup>
-          </Menu>
         </div>
       </div>
 

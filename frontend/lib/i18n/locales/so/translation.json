@@ -364,6 +364,7 @@
       "failedTitle": "Bukaanka lama tirtiri karin",
       "failedBody": "Fadlan isku day mar kale."
     },
+    "filterLabel": "Kala sooc",
     "filterStatus": "Ku kala sooc xaaladda",
     "allStatuses": "Dhammaan xaaladaha",
     "moreActions": "Ficillo dheeraad ah"
@@ -1133,7 +1134,12 @@
       "title": "Ku xir moodeel AI si aad u bilowdo",
       "body": "Weli bixiye AI lama dejin. Ku dar furaha API ama ku tilmaam temetro moodeel Ollama oo maxalli ah si kaaliyuhu u jawaabo.",
       "action": "Fur dejinta AI",
-      "dismiss": "Rid"
+      "dismiss": "Rid",
+      "offTitle": "Kaaliyaha AI waa la damiyay",
+      "offBody": "AI waxaa loo dejiyay Damin gudaha Settings → AI. Shid si aad u isticmaasho kaaliyaha."
+    },
+    "card": {
+      "unsupported": "Kaadh aan la taageerin"
     },
     "input": {
       "placeholder": "Waydii wax kasta, ama qor /patient 10293",
@@ -2091,6 +2097,13 @@
       "modeLocal": "Moodeel maxalli ah (Ollama)",
       "modeApiHint": "Codsiyada waxay u socdaan bixiyahaaga aad dooratay. Aqoonsiyada bukaanka waxaa qariya Veil ka hor inta aysan bixin.",
       "modeLocalHint": "Codsiyada waxay ku socdaan moodeel kaabayaashaada ah. Xog bukaan kama baxdo rugta.",
+      "modeAuto": "Toos ah",
+      "modeOff": "Damin",
+      "modeAutoHint": "Wuxuu isticmaalaa furaha API-ga daruuraha marka la dejiyo, haddii kale wuxuu ku noqdaa moodelkaaga Ollama ee gudaha.",
+      "modeOffHint": "Kaaliyaha AI waa la damiyay. Wax codsi ah lama dirayo.",
+      "offTitle": "Kaaliyuhu waa damsan yahay",
+      "offDescription": "Kaaliyaha AI waa laga damiyay akoonkaaga.",
+      "offNote": "Dooro Toos ah, Furaha API daruuraha, ama Moodel Gudaha kor si aad u shidid kaaliyaha.",
       "providerTitle": "Bixiye & furaha API",
       "providerDescription": "Furahaaga waa la shifraa marka la kaydiyo mana dib loo muujiyo. Waxaad kaydin kartaa fur bixiye kasta oo aad kala beddeli kartaa.",
       "provider": "Bixiye",

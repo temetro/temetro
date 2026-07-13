@@ -173,29 +173,6 @@ export function PatientsView() {
               value={query}
             />
           </div>
-          <Select
-            onValueChange={(value) => {
-              setStatusFilter((value ?? "all") as StatusFilter);
-              setPage(1);
-            }}
-            value={statusFilter}
-          >
-            <SelectTrigger
-              aria-label={t("patients.filterStatus")}
-              className="w-full sm:w-40"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectPopup>
-              {STATUS_FILTERS.map((value) => (
-                <SelectItem key={value} value={value}>
-                  {value === "all"
-                    ? t("patients.allStatuses")
-                    : t(`patients.status.${value}`)}
-                </SelectItem>
-              ))}
-            </SelectPopup>
-          </Select>
           <Button
             className="rounded-3xl"
             onClick={() => {
@@ -233,7 +210,38 @@ export function PatientsView() {
         </div>
       </div>
 
-      <CardFrame className="mt-8 w-full">
+      {/* Filter sits on its own row just above the table so the toolbar stays a
+          clean title + search + primary actions cluster. */}
+      <div className="mt-8 flex items-center gap-3">
+        <span className="text-sm font-medium text-muted-foreground">
+          {t("patients.filterLabel")}
+        </span>
+        <Select
+          onValueChange={(value) => {
+            setStatusFilter((value ?? "all") as StatusFilter);
+            setPage(1);
+          }}
+          value={statusFilter}
+        >
+          <SelectTrigger
+            aria-label={t("patients.filterStatus")}
+            className="w-40"
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectPopup>
+            {STATUS_FILTERS.map((value) => (
+              <SelectItem key={value} value={value}>
+                {value === "all"
+                  ? t("patients.allStatuses")
+                  : t(`patients.status.${value}`)}
+              </SelectItem>
+            ))}
+          </SelectPopup>
+        </Select>
+      </div>
+
+      <CardFrame className="mt-4 w-full">
         <Table variant="card">
           <TableHeader>
             <TableRow>

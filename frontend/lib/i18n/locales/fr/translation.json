@@ -364,6 +364,7 @@
       "failedTitle": "Impossible de supprimer le patient",
       "failedBody": "Veuillez réessayer."
     },
+    "filterLabel": "Filtre",
     "filterStatus": "Filtrer par statut",
     "allStatuses": "Tous les statuts",
     "moreActions": "Plus d’actions"
@@ -1133,7 +1134,12 @@
       "title": "Connectez un modèle d'IA pour commencer",
       "body": "Aucun fournisseur d'IA n'est encore configuré. Ajoutez une clé API ou pointez temetro vers un modèle Ollama local pour que l'assistant puisse répondre.",
       "action": "Ouvrir les paramètres d'IA",
-      "dismiss": "Ignorer"
+      "dismiss": "Ignorer",
+      "offTitle": "L'assistant IA est désactivé",
+      "offBody": "L'IA est réglée sur Désactivée dans Paramètres → IA. Activez-la pour utiliser l'assistant."
+    },
+    "card": {
+      "unsupported": "Carte non prise en charge"
     },
     "input": {
       "placeholder": "Demandez n'importe quoi, ou tapez /patient 10293",
@@ -2091,6 +2097,13 @@
       "modeLocal": "Modèle local (Ollama)",
       "modeApiHint": "Les requêtes vont vers le fournisseur que vous avez choisi. Les identifiants des patients sont dé-identifiés par Veil avant leur départ.",
       "modeLocalHint": "Les requêtes s'exécutent sur un modèle de votre propre infrastructure. Aucune donnée patient ne quitte la clinique.",
+      "modeAuto": "Automatique",
+      "modeOff": "Désactivé",
+      "modeAutoHint": "Utilise une clé API cloud si elle est définie, sinon revient à votre modèle Ollama local.",
+      "modeOffHint": "L'assistant IA est désactivé. Aucune requête n'est envoyée.",
+      "offTitle": "Assistant désactivé",
+      "offDescription": "L'assistant IA est désactivé pour votre compte.",
+      "offNote": "Choisissez Automatique, Clé API cloud ou Modèle local ci-dessus pour activer l'assistant.",
       "providerTitle": "Fournisseur & clé API",
       "providerDescription": "Votre clé est chiffrée au repos et n'est plus jamais affichée. Vous pouvez stocker une clé par fournisseur et basculer entre elles.",
       "provider": "Fournisseur",

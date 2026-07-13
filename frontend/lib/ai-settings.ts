@@ -5,7 +5,9 @@ import type { Effort } from "@/lib/ai-models";
 // saved to /api/ai/config. Provider API keys are write-only: they are never
 // returned, only `apiKeySet` reports which providers have a stored key.
 
-export type AiMode = "api" | "local";
+// "auto" auto-picks a cloud provider when a key is set, else falls back to local
+// Ollama; "off" disables the assistant entirely.
+export type AiMode = "api" | "local" | "auto" | "off";
 export type ApiProvider = "openai" | "anthropic" | "gemini";
 export type VeilLevel = "off" | "names" | "full";
 

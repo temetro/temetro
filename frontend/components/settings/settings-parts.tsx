@@ -6,8 +6,51 @@ import { Check, Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/utils";
+import {
+  CardFrame,
+  CardFrameAction,
+  CardFrameDescription,
+  CardFrameHeader,
+  CardFrameTitle,
+} from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 
+// A settings section rendered inside the COSS "frame" surface: a titled header
+// (with optional description + action) sitting above a padded body. Replaces the
+// old plain-`div` SettingsCard pattern so every settings panel shares one framed
+// look. Use `bodyClassName` to control the body layout (spacing/grid).
+export function SettingsFrame({
+  title,
+  description,
+  action,
+  children,
+  className,
+  bodyClassName,
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  bodyClassName?: string;
+}) {
+  return (
+    <CardFrame className={className}>
+      <CardFrameHeader className="border-b border-border/60">
+        <CardFrameTitle className="text-base">{title}</CardFrameTitle>
+        {description ? (
+          <CardFrameDescription>{description}</CardFrameDescription>
+        ) : null}
+        {action ? <CardFrameAction>{action}</CardFrameAction> : null}
+      </CardFrameHeader>
+      <div className={cn("p-5", bodyClassName)}>{children}</div>
+    </CardFrame>
+  );
+}
+
+// Back-compat wrapper: existing panels compose with SettingsSection, which now
+// renders through the COSS frame surface so the whole settings page shares one
+// framed look. The body keeps vertical spacing between stacked children.
 export function SettingsSection({
   title,
   description,
@@ -20,18 +63,14 @@ export function SettingsSection({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-          {description ? (
-            <p className="text-sm text-muted-foreground">{description}</p>
-          ) : null}
-        </div>
-        {action ? <div className="shrink-0">{action}</div> : null}
-      </div>
+    <SettingsFrame
+      action={action}
+      bodyClassName="space-y-4"
+      description={description}
+      title={title}
+    >
       {children}
-    </section>
+    </SettingsFrame>
   );
 }
 

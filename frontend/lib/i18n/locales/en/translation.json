@@ -364,6 +364,7 @@
       "failedTitle": "Couldn't delete patient",
       "failedBody": "Please try again."
     },
+    "filterLabel": "Filter",
     "filterStatus": "Filter by status",
     "allStatuses": "All statuses",
     "moreActions": "More actions"
@@ -1133,7 +1134,12 @@
       "title": "Connect an AI model to get started",
       "body": "No AI provider is set up yet. Add an API key or point temetro at a local Ollama model so the assistant can answer.",
       "action": "Open AI settings",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "offTitle": "The AI assistant is turned off",
+      "offBody": "AI is set to Off in Settings → AI. Turn it on to use the assistant."
+    },
+    "card": {
+      "unsupported": "Unsupported card"
     },
     "input": {
       "placeholder": "Ask anything, or type /patient 10293",
@@ -2089,8 +2095,15 @@
       "mode": "Mode",
       "modeApi": "Cloud API key",
       "modeLocal": "Local model (Ollama)",
+      "modeAuto": "Automatic",
+      "modeOff": "Off",
       "modeApiHint": "Requests go to your chosen provider. Patient identifiers are de-identified by Veil before they leave.",
       "modeLocalHint": "Requests run against a model on your own infrastructure. No patient data leaves the clinic.",
+      "modeAutoHint": "Uses a cloud API key when one is set, otherwise falls back to your local Ollama model.",
+      "modeOffHint": "The AI assistant is disabled. No requests are sent.",
+      "offTitle": "Assistant off",
+      "offDescription": "The AI assistant is turned off for your account.",
+      "offNote": "Choose Automatic, Cloud API key, or Local model above to enable the assistant.",
       "providerTitle": "Provider & API key",
       "providerDescription": "Your key is encrypted at rest and never shown again. You can store a key per provider and switch between them.",
       "provider": "Provider",

@@ -15,6 +15,7 @@ import {
 } from "../lib/wallet-crypto.js";
 import { ed25519PubToX25519Hex } from "../lib/wallet-x25519.js";
 import { listAppointments } from "./appointments.js";
+import { listAttachments } from "./attachments.js";
 import { listInvoices } from "./invoices.js";
 import { getPatient } from "./patients.js";
 import { signWithClinicKey } from "./signing.js";
@@ -122,19 +123,29 @@ export async function createRecordUpdate(
   // Appointments and invoices live in their own tables (not on the Patient
   // snapshot), so pull the ones for this patient and ship them alongside — the
   // wallet has no other way to see them and they'd otherwise silently vanish.
-  const [orgAppointments, orgInvoices] = await Promise.all([
+  // Attachments (files/documents) are shipped as metadata so the wallet can list
+  // them and show a count; the bytes stay on the clinic for now.
+  const [orgAppointments, orgInvoices, attachmentRows] = await Promise.all([
     listAppointments(orgId),
     listInvoices(orgId),
+    listAttachments(orgId, fileNumber),
   ]);
   const appointments = orgAppointments.filter(
     (a) => a.fileNumber === fileNumber,
   );
   const invoices = orgInvoices.filter((i) => i.fileNumber === fileNumber);
+  const documents = attachmentRows.map((a) => ({
+    id: a.id,
+    filename: a.filename,
+    mimeType: a.mimeType,
+    sizeBytes: a.sizeBytes,
+    createdAt: a.createdAt,
+  }));
 
   // The wallet opens this, verifies the signature over the same bytes, then
-  // replaces its on-device record with `patient` (+ appointments/invoices).
+  // replaces its on-device record with `patient` (+ appointments/invoices/documents).
   const bundle = utf8ToBytes(
-    JSON.stringify({ patient, appointments, invoices, changes }),
+    JSON.stringify({ patient, appointments, invoices, documents, changes }),
   );
   const { signature, publicKey } = await signWithClinicKey(orgId, bundle);
   const x25519Hex = ed25519PubToX25519Hex(decodeWalletNumber(walletNumber));
