@@ -7,6 +7,22 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.14.1] — 2026-07-15
+
+### Fixed
+- **"Send to wallet" now works from every dialog, not just the patient sheet.** The wallet step in
+  the appointment, invoice, prescription, patient-edit, and scribe dialogs was gated on a wallet-link
+  check that resolved asynchronously; if the clinician saved before it resolved (or it briefly
+  failed), the dialog silently closed without pushing. The dialogs now await the link check before
+  deciding, and an empty change summary can no longer be sent
+  (`frontend/components/wallet/use-wallet-sync.ts`, `wallet-sync-step.tsx`).
+
+### Changed
+- **Settings sections composed from `CardFrame` primitives.** Each settings section now builds on
+  `CardFrameHeader`/`CardFrameTitle`/`CardFrameDescription` + a new `CardFramePanel` body, and the
+  per-row `SettingsCard` renders a real `Card`, giving a consistent framed surface
+  (`frontend/components/ui/card.tsx`, `frontend/components/settings/settings-parts.tsx`).
+
 ## [0.14.0] — 2026-07-13
 
 ### Changed
