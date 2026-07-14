@@ -7,6 +7,14 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.14.2] — 2026-07-15
+
+### Fixed
+- **Docker images build on ARM64 again.** Next 16's default Turbopack production build has no native
+  bindings for `linux/arm64` in the Alpine image, so `docker compose up --build` failed with
+  "Turbopack is not supported on this platform". The frontend now builds with Webpack
+  (`next build --webpack`), which builds on every architecture (`frontend/package.json`).
+
 ## [0.14.1] — 2026-07-15
 
 ### Fixed
