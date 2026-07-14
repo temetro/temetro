@@ -396,7 +396,7 @@ export function PatientFormDialog({
           t("patientForm.updatedTitle"),
           t("patientForm.updatedBody", { name: saved.name }),
         );
-        if (sync.linked) {
+        if (await sync.ensureLinked()) {
           setStep("wallet");
           return;
         }

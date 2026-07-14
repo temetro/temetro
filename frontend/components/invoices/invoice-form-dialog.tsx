@@ -273,7 +273,7 @@ export function InvoiceFormDialog({
             })
           : await createInvoice(payload);
       onSaved(saved);
-      if (sync.linked) {
+      if (await sync.ensureLinked()) {
         setWalletSummary(
           mode === "edit"
             ? t("walletSync.summary.invoiceUpdated", { number: saved.number })

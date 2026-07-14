@@ -195,7 +195,7 @@ export function AddAppointmentDialog({
       t("appointments.dialog.addedTitle"),
       `${selected.name} · ${time}`,
     );
-    if (sync.linked) {
+    if (await sync.ensureLinked()) {
       setWalletSummary(
         t("walletSync.summary.appointment", { date: keyOf(date), time }),
       );

@@ -347,7 +347,7 @@ export function AddPrescriptionDialog({
       t("prescriptions.dialog.addedTitle"),
       `${medication.trim()} · ${selected.name}`,
     );
-    if (sync.linked) {
+    if (await sync.ensureLinked()) {
       setWalletSummary(
         t("walletSync.summary.prescription", { drug: medication.trim() }),
       );

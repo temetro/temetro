@@ -60,6 +60,9 @@ export function WalletSyncStep({
   const { t } = useTranslation();
   const { state, update, error, push } = sync;
   const status = update?.status ?? "pending";
+  // The summary is the human-readable change the patient approves. Guard against
+  // an empty one (the backend 400s on empty changes) with a translated fallback.
+  const changeSummary = summary.trim() || t("walletSync.summaryFallback");
 
   return (
     <>
@@ -79,7 +82,7 @@ export function WalletSyncStep({
                 {t("walletSync.changesLabel")}
               </span>
               <div className="rounded-lg border bg-muted/50 px-3 py-2 text-foreground text-sm">
-                {summary}
+                {changeSummary}
               </div>
             </div>
             {error && (
@@ -119,7 +122,7 @@ export function WalletSyncStep({
             <Button onClick={onDone} type="button" variant="outline">
               {t("walletSync.skip")}
             </Button>
-            <Button onClick={() => push([summary])} type="button">
+            <Button onClick={() => push([changeSummary])} type="button">
               <Send className="size-4" />
               {t("walletSync.send")}
             </Button>

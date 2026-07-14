@@ -233,7 +233,7 @@ export function ScribeDialog({
       const updated = await saveNote(patient.fileNumber, draft);
       notify.success(t("scribe.saved.title"), patient.name);
       onSaved(updated);
-      if (sync.linked) {
+      if (await sync.ensureLinked()) {
         setPhase("review");
         setWalletStep(true);
       } else {

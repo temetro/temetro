@@ -2237,6 +2237,7 @@
       "prescription": "Rijeeto cusub: {{drug}}",
       "demographics": "Xogta bukaanka la cusboonaysiiyay",
       "note": "Qoraal caafimaad cusub"
-    }
+    },
+    "summaryFallback": "Diiwaanka waa la cusboonaysiiyay"
   }
 }

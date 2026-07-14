@@ -74,13 +74,43 @@ export function useWalletSync(fileNumber: string | null | undefined) {
     };
   }, [state, update]);
 
+  // Authoritatively resolve link status at submit time. The `linked` state above
+  // is populated asynchronously by the effect, so a fast save (or a transient
+  // failure that collapsed it to false) can leave a wallet-backed patient looking
+  // unlinked. Callers await this before deciding whether to show the wallet step,
+  // so the decision is never made on an unresolved check.
+  const ensureLinked = useCallback(async (): Promise<boolean> => {
+    if (!fileNumber) {
+      setLinked(false);
+      return false;
+    }
+    setChecking(true);
+    try {
+      await getWalletLink(fileNumber);
+      setLinked(true);
+      return true;
+    } catch {
+      setLinked(false);
+      return false;
+    } finally {
+      setChecking(false);
+    }
+  }, [fileNumber]);
+
   const push = useCallback(
     async (changes: string[]) => {
       if (!fileNumber) return;
+      // Never push an empty/whitespace change set — the backend rejects it (400).
+      const clean = changes.map((c) => c.trim()).filter(Boolean);
+      if (clean.length === 0) {
+        setError("generic");
+        setState("error");
+        return;
+      }
       setError(null);
       setState("pending");
       try {
-        const created = await pushWalletUpdate({ fileNumber, changes });
+        const created = await pushWalletUpdate({ fileNumber, changes: clean });
         setUpdate(created);
       } catch (err) {
         setError(err instanceof ApiError ? err.message : "generic");
@@ -96,7 +126,7 @@ export function useWalletSync(fileNumber: string | null | undefined) {
     setError(null);
   }, []);
 
-  return { linked, checking, state, update, error, push, reset };
+  return { linked, checking, state, update, error, ensureLinked, push, reset };
 }
 
 export type UseWalletSync = ReturnType<typeof useWalletSync>;

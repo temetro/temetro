@@ -2237,6 +2237,7 @@
       "prescription": "Nouvelle ordonnance : {{drug}}",
       "demographics": "Données démographiques mises à jour",
       "note": "Nouvelle note clinique"
-    }
+    },
+    "summaryFallback": "Dossier mis à jour"
   }
 }
