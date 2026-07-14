@@ -136,6 +136,26 @@ export function CardFrameFooter({
   });
 }
 
+// The padded body of a frame: content that sits between the frame header and
+// footer. Mirrors the other CardFrame* subcomponents (useRender + data-slot) so
+// a frame can be composed entirely from primitives instead of a raw <div>.
+export function CardFramePanel({
+  className,
+  render,
+  ...props
+}: useRender.ComponentProps<"div">): React.ReactElement {
+  const defaultProps = {
+    className: cn("p-5", className),
+    "data-slot": "card-frame-panel",
+  };
+
+  return useRender({
+    defaultTagName: "div",
+    props: mergeProps<"div">(defaultProps, props),
+    render,
+  });
+}
+
 export function CardHeader({
   className,
   render,

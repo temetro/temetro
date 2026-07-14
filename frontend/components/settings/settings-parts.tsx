@@ -5,12 +5,13 @@ import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-import { cn } from "@/lib/utils";
 import {
+  Card,
   CardFrame,
   CardFrameAction,
   CardFrameDescription,
   CardFrameHeader,
+  CardFramePanel,
   CardFrameTitle,
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -43,7 +44,7 @@ export function SettingsFrame({
         ) : null}
         {action ? <CardFrameAction>{action}</CardFrameAction> : null}
       </CardFrameHeader>
-      <div className={cn("p-5", bodyClassName)}>{children}</div>
+      <CardFramePanel className={bodyClassName}>{children}</CardFramePanel>
     </CardFrame>
   );
 }
@@ -74,6 +75,10 @@ export function SettingsSection({
   );
 }
 
+// A card surface used inside settings panels. Rendering a real COSS `Card` (with
+// `data-slot="card"`) keeps settings cards consistent with the rest of the app
+// and lets them pick up the frame's card treatment. `Card` is `flex flex-col`,
+// so row layouts must pass `flex-row` in their className.
 export function SettingsCard({
   className,
   children,
@@ -81,11 +86,7 @@ export function SettingsCard({
   className?: string;
   children: ReactNode;
 }) {
-  return (
-    <div className={cn("rounded-2xl border border-border bg-card/30", className)}>
-      {children}
-    </div>
-  );
+  return <Card className={className}>{children}</Card>;
 }
 
 export function ToggleRow({
@@ -103,7 +104,7 @@ export function ToggleRow({
   onCheckedChange?: (checked: boolean) => void;
 }) {
   return (
-    <SettingsCard className="flex items-center justify-between gap-4 px-4 py-3.5">
+    <SettingsCard className="flex flex-row items-center justify-between gap-4 px-4 py-3.5">
       <div className="space-y-0.5">
         <p className="text-sm font-medium">{title}</p>
         {description ? (

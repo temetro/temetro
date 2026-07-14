@@ -176,7 +176,7 @@ export function SigningPanel() {
         description={t("settings.network.description")}
         title={t("settings.network.title")}
       >
-        <SettingsCard className="flex items-center justify-between gap-4 p-5">
+        <SettingsCard className="flex flex-row items-center justify-between gap-4 p-5">
           <div className="min-w-0 space-y-0.5">
             <div className="flex items-center gap-2">
               <p className="text-sm font-medium">
@@ -251,7 +251,7 @@ export function SigningPanel() {
         description={t("settings.signing.backupDescription")}
         title={t("settings.signing.backupTitle")}
       >
-        <SettingsCard className="flex items-center justify-between gap-4 p-4">
+        <SettingsCard className="flex flex-row items-center justify-between gap-4 p-4">
           <div className="space-y-0.5">
             <p className="text-sm font-medium">
               {t("settings.signing.backupLabel")}

@@ -375,7 +375,7 @@ export function ProfilePanel() {
         description={t("settings.profile.dangerZoneDescription")}
         title={t("settings.profile.dangerZone")}
       >
-        <SettingsCard className="flex items-center justify-between gap-4 p-4">
+        <SettingsCard className="flex flex-row items-center justify-between gap-4 p-4">
           <div className="space-y-0.5">
             <p className="text-sm font-medium">
               {t("settings.profile.deleteAccount")}
