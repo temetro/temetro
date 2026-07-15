@@ -245,10 +245,15 @@ export function MessagesView() {
   const [appts, setAppts] = useState<Appointment[]>([]);
   const [apptQuery, setApptQuery] = useState("");
 
-  // Refs so the socket handler (registered once) reads current values.
+  // Refs so the socket handler (registered once) reads current values. Written
+  // in an effect rather than during render: a render can be thrown away or
+  // replayed, and mutating a ref there makes it observable — the write has to
+  // happen once the render is committed.
   const selectedIdRef = useRef<string | null>(null);
   const myIdRef = useRef<string>("");
-  myIdRef.current = myId;
+  useEffect(() => {
+    myIdRef.current = myId;
+  }, [myId]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -354,7 +359,6 @@ export function MessagesView() {
     openedDeepLink.current = deepLinkConversation;
     open(deepLinkConversation);
     // `open` is stable enough for this one-shot; deps intentionally minimal.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deepLinkConversation, conversations]);
 
   const send = (event: FormEvent) => {

@@ -7,7 +7,7 @@ import {
   Split,
   Trash2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AiBadge } from "@/components/ai-badge";
@@ -67,9 +67,14 @@ export function InvoiceDetailSheet({
   const [count, setCount] = useState(3);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
+  // Collapse the "show more" list back when a different invoice is shown.
+  // Adjusted during render so the sheet never paints the previous invoice's
+  // expanded state.
+  const [prevInvoiceId, setPrevInvoiceId] = useState(invoice?.id);
+  if (prevInvoiceId !== invoice?.id) {
+    setPrevInvoiceId(invoice?.id);
     setCount(3);
-  }, [invoice?.id]);
+  }
 
   if (!invoice) {
     return (

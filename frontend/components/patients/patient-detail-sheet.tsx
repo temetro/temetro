@@ -102,14 +102,29 @@ export function PatientDetailSheet({
   // Bumped on open so the editor remounts with the latest patient data.
   const [editKey, setEditKey] = useState(0);
 
+  // Clear the previous chart the moment a different one is opened, so the sheet
+  // can't show one patient's data under another's name while the fetch is in
+  // flight. Adjusted during render rather than in the effects below, which are
+  // only for the fetching itself. Keyed on the role too, so losing clinical
+  // access drops the wallet state instead of leaving the "Push update" button
+  // lit from the previous render.
+  const chart = open ? `${fileNumber ?? ""}|${role ?? ""}` : null;
+  const [prevChart, setPrevChart] = useState<string | null>(null);
+  if (prevChart !== chart) {
+    setPrevChart(chart);
+    setWalletLinked(false);
+    if (chart) {
+      setStatus("loading");
+      setPatient(null);
+      setPrescriptions([]);
+      setAppointments([]);
+      setInvoices([]);
+    }
+  }
+
   useEffect(() => {
     if (!open || !fileNumber) return;
     let active = true;
-    setStatus("loading");
-    setPatient(null);
-    setPrescriptions([]);
-    setAppointments([]);
-    setInvoices([]);
     getPatient(fileNumber)
       .then((data) => {
         if (!active) return;
@@ -138,9 +153,10 @@ export function PatientDetailSheet({
 
   // Whether this patient is wallet-linked (drives the "Push update" button).
   // Separate from the main load so it re-checks once the role resolves without
-  // refetching the record. Only clinicians can push.
+  // refetching the record. Only clinicians can push. The reset rides on the
+  // same render-phase clear as the chart above, so the button can't stay lit
+  // from the previous patient.
   useEffect(() => {
-    setWalletLinked(false);
     if (!open || !fileNumber || !hasClinicalAccess(role)) return;
     let active = true;
     getWalletLink(fileNumber)

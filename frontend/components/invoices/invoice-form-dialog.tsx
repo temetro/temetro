@@ -172,10 +172,14 @@ export function InvoiceFormDialog({
     onOpenChange(next);
   };
 
-  // Seed the form when opening.
-  useEffect(() => {
-    if (!open) return;
-    if (mode === "edit" && invoice) {
+  // Seed the form when opening. Adjusted during render rather than in an
+  // effect, so the dialog never paints one frame of the previous invoice.
+  // `false` means closed, so reopening on the same invoice re-seeds.
+  const [prevSeed, setPrevSeed] = useState<Invoice | null | false>(false);
+  const seed = open ? (invoice ?? null) : false;
+  if (prevSeed !== seed) {
+    setPrevSeed(seed);
+    if (open && mode === "edit" && invoice) {
       setIssuedAt(new Date(`${invoice.issuedAt}T00:00:00`));
       // Existing invoices legitimately carry past issue dates.
       setAllowBackdate(true);
@@ -186,7 +190,7 @@ export function InvoiceFormDialog({
       setLineItems(
         invoice.lineItems.length ? invoice.lineItems : [emptyLine()],
       );
-    } else {
+    } else if (open) {
       setSelected(null);
       setIssuedAt(new Date());
       setAllowBackdate(false);
@@ -196,7 +200,7 @@ export function InvoiceFormDialog({
       setNotes("");
       setLineItems([emptyLine()]);
     }
-  }, [open, mode, invoice]);
+  }
 
   // Load patients lazily for the create combobox.
   useEffect(() => {

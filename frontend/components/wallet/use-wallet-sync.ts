@@ -28,15 +28,21 @@ export function useWalletSync(fileNumber: string | null | undefined) {
   const [update, setUpdate] = useState<WalletUpdate | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Drop the previous patient's link state as soon as the selection changes,
+  // adjusted during render: `linked` gates the wallet step, so carrying it over
+  // for even one render would offer to push another patient's record.
+  const [prevFileNumber, setPrevFileNumber] = useState(fileNumber);
+  if (prevFileNumber !== fileNumber) {
+    setPrevFileNumber(fileNumber);
+    setLinked(false);
+    setChecking(Boolean(fileNumber));
+  }
+
   // Resolve link status whenever the chosen patient changes. A 404 simply means
   // "not wallet-backed", so failures collapse to `linked = false`.
   useEffect(() => {
-    if (!fileNumber) {
-      setLinked(false);
-      return;
-    }
+    if (!fileNumber) return;
     let active = true;
-    setChecking(true);
     getWalletLink(fileNumber)
       .then(() => {
         if (active) setLinked(true);

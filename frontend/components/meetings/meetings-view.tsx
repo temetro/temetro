@@ -59,7 +59,6 @@ export function MeetingsView() {
   // ?with=<userId> from the Messages inbox "call" button — open the scheduler
   // pre-targeted at that person so the user can connect with them.
   const deepLinkWith = searchParams.get("with");
-  const openedDeepLink = useRef<string | null>(null);
   const openedWith = useRef<string | null>(null);
 
   const [tab, setTab] = useState<Tab>("rooms");
@@ -104,16 +103,18 @@ export function MeetingsView() {
     };
   }, []);
 
-  // Auto-join a room deep-linked from an invite (?room=).
-  useEffect(() => {
-    if (!deepLinkRoom || rooms.length === 0) return;
-    if (openedDeepLink.current === deepLinkRoom) return;
+  // Auto-join a room deep-linked from an invite (?room=). Resolved during
+  // render once the room list arrives, so the room opens on the same paint the
+  // list does instead of flashing the default tab first.
+  const [openedDeepLink, setOpenedDeepLink] = useState<string | null>(null);
+  if (deepLinkRoom && rooms.length > 0 && openedDeepLink !== deepLinkRoom) {
     const room = rooms.find((r) => r.id === deepLinkRoom);
-    if (!room) return;
-    openedDeepLink.current = deepLinkRoom;
-    setTab("rooms");
-    setActiveRoom(room);
-  }, [deepLinkRoom, rooms]);
+    if (room) {
+      setOpenedDeepLink(deepLinkRoom);
+      setTab("rooms");
+      setActiveRoom(room);
+    }
+  }
 
   // Open the scheduler pre-targeted at a person (?with=) from the inbox.
   useEffect(() => {

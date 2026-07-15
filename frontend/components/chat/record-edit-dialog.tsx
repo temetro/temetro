@@ -6,7 +6,7 @@
 // array fields (invoice line items, inventory items) edited as add/remove rows.
 
 import { Plus, X } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
@@ -196,10 +196,14 @@ export function RecordEditDialog({
   const schema = EDIT_SCHEMAS[kind];
   const [draft, setDraft] = useState<Rec>(record);
 
-  // Re-seed the draft whenever a fresh record is opened for editing.
-  useEffect(() => {
-    if (open) setDraft(record);
-  }, [open, record]);
+  // Re-seed the draft whenever a fresh record is opened for editing. Adjusted
+  // during render so the form never paints the previous record's values.
+  const [prevSeed, setPrevSeed] = useState<Rec | null>(null);
+  const seed = open ? record : null;
+  if (prevSeed !== seed) {
+    setPrevSeed(seed);
+    if (seed) setDraft(seed);
+  }
 
   const setField = (key: string, value: unknown) =>
     setDraft((d) => ({ ...d, [key]: value }));

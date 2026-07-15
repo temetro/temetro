@@ -61,6 +61,9 @@ export function NotesView() {
     return () => {
       active = false;
     };
+    // `t` intentionally omitted: it is only read to build a failure message,
+    // and re-fetching on a language change would be pointless.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startNew = () => {

@@ -125,7 +125,10 @@ interface TimelineIndicatorProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 function TimelineIndicator({
-  asChild = false,
+  // Accepted for API parity but unused: COSS/Base UI composes with `render`,
+  // not `asChild`. Destructured so it never lands on the DOM node.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  asChild: _asChild = false,
   className,
   children,
   ...props

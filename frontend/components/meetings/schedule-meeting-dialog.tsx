@@ -54,12 +54,21 @@ export function ScheduleMeetingDialog({
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState(false);
 
+  // Re-seed the form each time the dialog opens. Adjusted during render so it
+  // never paints the previous meeting's title or participants.
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (open) {
+      setTitle("");
+      setDate(defaultDate ?? "");
+      setTime("09:00");
+      setPicked(new Set(defaultParticipants ?? []));
+    }
+  }
+
   useEffect(() => {
     if (!open) return;
-    setTitle("");
-    setDate(defaultDate ?? "");
-    setTime("09:00");
-    setPicked(new Set(defaultParticipants ?? []));
     listClinicMembers()
       .then(setMembers)
       .catch(() => setMembers([]));

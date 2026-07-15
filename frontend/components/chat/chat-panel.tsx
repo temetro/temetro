@@ -139,8 +139,14 @@ export function ChatPanel() {
   // Persisted conversation: a client-owned thread id (a fresh one per new chat),
   // saved to the server after each exchange so history survives reloads.
   const [threadId, setThreadId] = useState<string>(() => nanoid());
+  // Mirrored into a ref for the transport's fetch closure, which is memoized and
+  // must not be rebuilt per thread. Written in an effect rather than during
+  // render: a render can be thrown away or replayed, and mutating a ref there
+  // makes it observable — the write has to happen once the render is committed.
   const threadIdRef = useRef(threadId);
-  threadIdRef.current = threadId;
+  useEffect(() => {
+    threadIdRef.current = threadId;
+  }, [threadId]);
   // Skip the auto-save that would otherwise fire right after loading a thread
   // (which would needlessly bump it to the top of the history).
   const justLoadedRef = useRef(false);
@@ -214,9 +220,11 @@ export function ChatPanel() {
   // stays visible until acknowledged and isn't duplicated. Reset the dismissed
   // flag whenever a fresh error arrives.
   const [errorDismissed, setErrorDismissed] = useState(false);
-  useEffect(() => {
+  const [prevError, setPrevError] = useState(error);
+  if (prevError !== error) {
+    setPrevError(error);
     if (error) setErrorDismissed(false);
-  }, [error]);
+  }
 
   const isCloudModel = (getModel(model)?.provider ?? "ollama") !== "ollama";
 
@@ -301,9 +309,16 @@ export function ChatPanel() {
   );
 
   // Drain the queue one message at a time whenever the chat returns to idle.
+  //
+  // This is the shape the rule exists to catch, but it's the shape we want: the
+  // trigger is the transport going idle — an external async system — and the
+  // dequeue has to happen in the same tick we hand the message to `send`, or a
+  // re-render could drain it twice. There's no render-phase equivalent, since
+  // `send` is a side effect.
   useEffect(() => {
     if (status !== "ready" || pendingConsent || queued.length === 0) return;
     const [next, ...rest] = queued;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setQueued(rest);
     if (next) void send(next.text, next.files);
   }, [status, pendingConsent, queued, send]);
@@ -338,6 +353,10 @@ export function ChatPanel() {
 
   // Open a saved thread from `/?thread=<id>` (sidebar history); a bare `/` starts
   // a fresh chat. Driven by the URL so the sidebar links and "New chat" work.
+  //
+  // Stays an effect: the thread branch is an async fetch, and the fresh-chat
+  // branch mints an id with nanoid(), which is impure and so can't be adjusted
+  // during render — moving it there would just trade this for a purity error.
   const requestedThread = searchParams.get("thread");
   useEffect(() => {
     if (requestedThread) {
@@ -367,6 +386,7 @@ export function ChatPanel() {
       };
     }
     // No ?thread → fresh chat (e.g. after "New chat").
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setThreadId(nanoid());
     setMessages([]);
   }, [requestedThread, setMessages]);

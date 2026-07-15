@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -72,13 +72,22 @@ export function CalendarDialog({
   });
   const [selectedKey, setSelectedKey] = useState<string>(startKey);
 
-  // When opened via a deep-link date, jump the view to that month/day.
-  useEffect(() => {
-    if (!open || !initialDate || !/^\d{4}-\d{2}-\d{2}$/.test(initialDate)) return;
-    const d = parseKey(initialDate);
-    setViewMonth(new Date(d.getFullYear(), d.getMonth(), 1));
-    setSelectedKey(initialDate);
-  }, [open, initialDate]);
+  // When opened via a deep-link date, jump the view to that month/day. Adjusted
+  // during render rather than in an effect, so the calendar never paints the
+  // current month before jumping to the linked one.
+  const jumpTo =
+    open && initialDate && /^\d{4}-\d{2}-\d{2}$/.test(initialDate)
+      ? initialDate
+      : null;
+  const [prevJumpTo, setPrevJumpTo] = useState<string | null>(null);
+  if (prevJumpTo !== jumpTo) {
+    setPrevJumpTo(jumpTo);
+    if (jumpTo) {
+      const d = parseKey(jumpTo);
+      setViewMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+      setSelectedKey(jumpTo);
+    }
+  }
 
   const byDate = useMemo(() => {
     const map = new Map<string, Appointment[]>();

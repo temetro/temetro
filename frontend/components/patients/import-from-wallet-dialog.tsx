@@ -79,8 +79,12 @@ export function ImportFromWalletDialog({
     }
   };
 
-  // Reset everything whenever the dialog is (re)opened.
-  useEffect(() => {
+  // Reset everything whenever the dialog is (re)opened. Adjusted during render
+  // so a reopened dialog never flashes the previous import's wallet number or
+  // state before clearing.
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
     if (open) {
       setMode("number");
       setWalletNumber("");
@@ -92,8 +96,10 @@ export function ImportFromWalletDialog({
       setPairUri(null);
       setReviewOpen(false);
     }
-    return stopPolling;
-  }, [open]);
+  }
+
+  // Stop polling when the dialog closes or unmounts.
+  useEffect(() => stopPolling, [open]);
 
   // Poll the request until the patient approves/denies on their device.
   useEffect(() => {

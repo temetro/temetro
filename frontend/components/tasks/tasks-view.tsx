@@ -103,18 +103,26 @@ function AddTaskDialog({
   const [priority, setPriority] = useState<Priority>("medium");
   const [status, setStatus] = useState<TaskStatus>(initialStatus);
 
-  // Re-seed the column when the dialog is opened from a specific column, and
-  // load the clinic's providers so a task can be assigned to a specific person.
+  // Re-seed the column when the dialog is opened from a specific column.
+  // Adjusted during render rather than in an effect, so the select never paints
+  // with the previous column's value.
+  const [prevSeed, setPrevSeed] = useState<string | null>(null);
+  const seed = open ? initialStatus : null;
+  if (prevSeed !== seed) {
+    setPrevSeed(seed);
+    if (seed) setStatus(seed);
+  }
+
+  // Load the clinic's providers so a task can be assigned to a specific person.
   useEffect(() => {
     if (!open) return;
-    setStatus(initialStatus);
     listProviders()
       .then((list) => {
         setProviders(list);
         setProviderId((id) => id || (list[0]?.userId ?? ""));
       })
       .catch(() => setProviders([]));
-  }, [open, initialStatus]);
+  }, [open]);
 
   const reset = () => {
     setTitle("");

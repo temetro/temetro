@@ -76,7 +76,6 @@ function VideoTile({
         speaking ? "border-success" : "border-transparent",
       )}
     >
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
       <video
         autoPlay
         className={cn("size-full object-cover", !showVideo && "invisible")}

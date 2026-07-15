@@ -1,7 +1,7 @@
 "use client";
 
 import { Info, UserPlus } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { AddStaffDialog } from "@/components/settings/add-staff-dialog";
@@ -64,36 +64,47 @@ export function CareTeamPanel({
   const [pendingRemove, setPendingRemove] = useState<StaffMember | null>(null);
   const [removing, setRemoving] = useState(false);
 
-  const load = useCallback(async () => {
-    try {
-      const data = await apiFetch<StaffMember[]>("/api/staff");
-      setMembers(data);
-      setError(null);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : t("settings.careTeam.loadError"),
-      );
-    } finally {
-      setLoading(false);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // The effect owns the fetch; `reload()` just bumps a key to re-run it. That
+  // keeps every setState inside a promise callback rather than running
+  // synchronously when the effect fires, and it drops the exhaustive-deps
+  // suppression the old useCallback needed.
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let active = true;
+    apiFetch<StaffMember[]>("/api/staff")
+      .then((data) => {
+        if (!active) return;
+        setMembers(data);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (!active) return;
+        setError(
+          err instanceof Error ? err.message : t("settings.careTeam.loadError"),
+        );
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+    // `t` is intentionally omitted: re-fetching the staff list on a language
+    // change would be pointless, and the message is only read on failure.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reloadKey]);
 
   // Deep-link: open a specific member (e.g. from a password-reset system card).
-  const appliedDeepLink = useRef(false);
-  useEffect(() => {
-    if (appliedDeepLink.current || !initialMemberId || members.length === 0)
-      return;
+  // Resolved during render once the list arrives, so the member's dialog opens
+  // on the same paint the list does.
+  const [appliedDeepLink, setAppliedDeepLink] = useState(false);
+  if (!appliedDeepLink && initialMemberId && members.length > 0) {
+    setAppliedDeepLink(true);
     const target = members.find((m) => m.userId === initialMemberId);
-    if (target) {
-      setSelected(target);
-      appliedDeepLink.current = true;
-    }
-  }, [initialMemberId, members]);
+    if (target) setSelected(target);
+  }
 
   const myRole = members.find((m) => m.userId === session?.user?.id)?.role;
   const canManage = myRole === "owner" || myRole === "admin";
@@ -119,7 +130,7 @@ export function CareTeamPanel({
       }),
     );
     setPendingRemove(null);
-    void load();
+    reload();
   };
 
   return (
@@ -211,7 +222,7 @@ export function CareTeamPanel({
 
       {canManage && (
         <AddStaffDialog
-          onCreated={() => void load()}
+          onCreated={reload}
           onOpenChange={setAdding}
           open={adding}
         />
@@ -225,7 +236,7 @@ export function CareTeamPanel({
           selected?.role !== "owner"
         }
         member={selected}
-        onChanged={() => void load()}
+        onChanged={reload}
         onOpenChange={(o) => !o && setSelected(null)}
         onRemove={(m) => {
           setSelected(null);

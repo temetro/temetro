@@ -8,11 +8,17 @@ import { useEffect, useState } from "react";
 export function useSpeaking(stream: MediaStream | null): boolean {
   const [speaking, setSpeaking] = useState(false);
 
+  // Stop reporting "speaking" the moment the stream goes away or changes, so a
+  // muted tile can't keep a stale ring. Adjusted during render rather than in
+  // the effect below, which is only for driving the Web Audio graph.
+  const [prevStream, setPrevStream] = useState(stream);
+  if (prevStream !== stream) {
+    setPrevStream(stream);
+    setSpeaking(false);
+  }
+
   useEffect(() => {
-    if (!stream || stream.getAudioTracks().length === 0) {
-      setSpeaking(false);
-      return;
-    }
+    if (!stream || stream.getAudioTracks().length === 0) return;
     let ctx: AudioContext | null = null;
     let raf = 0;
     try {

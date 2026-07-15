@@ -44,10 +44,19 @@ export function TransferPatientDialog({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Re-seed the form each time the dialog opens. Adjusted during render so it
+  // never paints the previous patient's provider.
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (open) {
+      setProviderId(patient.primaryProviderId ?? "");
+      setError(null);
+    }
+  }
+
   useEffect(() => {
     if (!open) return;
-    setProviderId(patient.primaryProviderId ?? "");
-    setError(null);
     let active = true;
     listProviders()
       .then((list) => active && setProviders(list))

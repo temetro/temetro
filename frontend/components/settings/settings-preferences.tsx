@@ -113,13 +113,17 @@ export function ProfilePanel() {
     };
   }, []);
 
-  // Seed the display name from the session once it loads.
-  useEffect(() => {
+  // Seed the display name from the session once it loads. Adjusted during
+  // render so the field isn't briefly empty after the session resolves. Still
+  // `prev ||`, so it never clobbers something the clinician has typed.
+  const [prevUserName, setPrevUserName] = useState(user?.name);
+  if (prevUserName !== user?.name) {
+    setPrevUserName(user?.name);
     if (user?.name) {
       setName((prev) => prev || user.name);
       setBaselineName((prev) => prev || user.name);
     }
-  }, [user?.name]);
+  }
 
   const setPref = (key: string, value: boolean | string) =>
     setPrefs((prev) => ({ ...prev, [key]: value }));

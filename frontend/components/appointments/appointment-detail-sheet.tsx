@@ -87,15 +87,18 @@ export function AppointmentDetailSheet({
   const [status, setStatus] = useState<AppointmentStatus>("confirmed");
   const [busy, setBusy] = useState(false);
 
-  // Seed the form from the selected appointment whenever it changes.
-  useEffect(() => {
-    if (!appt) return;
+  // Seed the form from the selected appointment whenever it changes. Adjusted
+  // during render rather than in an effect, so the sheet never paints one frame
+  // of the previous appointment's values.
+  const [prevAppt, setPrevAppt] = useState(appt);
+  if (appt && prevAppt !== appt) {
+    setPrevAppt(appt);
     setDate(new Date(`${appt.date}T00:00:00`));
     setTime(appt.time);
     setType(appt.type);
     setProvider(appt.provider);
     setStatus(appt.status);
-  }, [appt]);
+  }
 
   useEffect(() => {
     if (!open) return;

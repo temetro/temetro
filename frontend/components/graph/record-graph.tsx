@@ -75,7 +75,7 @@ const dotClass: Record<Kind, string> = {
 // A round node with the label below it and hidden connection handles so edges
 // meet the dot's centre cleanly. Memoized; it re-renders only when the hovered
 // id changes (via context), never via React Flow re-measuring.
-const RecordNode = memo(function RecordNode({ id, data }: NodeProps) {
+const RecordNode = memo(function RecordNode({ data }: NodeProps) {
   const { label, sub, kind, family } = data as RecordNodeData;
   const hovered = useContext(HoverContext);
   const focus: "active" | "dim" | null =

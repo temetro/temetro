@@ -39,12 +39,18 @@ export function PatientPortalSection() {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const portalUrl = slug ? `${origin}/portal/${slug}` : "";
 
+  // Drop the previous clinic's QR as soon as the slug changes, rather than
+  // leaving it on screen until the new one arrives. Adjusted during render, so
+  // switching clinics never shows the old clinic's pairing code.
+  const [prevSlug, setPrevSlug] = useState(slug);
+  if (prevSlug !== slug) {
+    setPrevSlug(slug);
+    setQrUri("");
+  }
+
   // Fetch the relay-based pairing descriptor for the QR (non-secret).
   useEffect(() => {
-    if (!slug) {
-      setQrUri("");
-      return;
-    }
+    if (!slug) return;
     let active = true;
     getPortalLink(slug)
       .then((link) => {

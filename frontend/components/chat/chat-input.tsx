@@ -9,6 +9,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -78,17 +79,23 @@ export function ChatInput({
   const [addKey, setAddKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Voice dictation (Web Speech API). Detected client-side so SSR markup and the
-  // first client render agree (button starts disabled, enabled by the effect).
-  const [speechSupported, setSpeechSupported] = useState(false);
+  // Voice dictation (Web Speech API). Read through useSyncExternalStore so SSR
+  // markup and the first client render agree: the server snapshot is `false`
+  // (no Speech API to detect), and the client re-reads on hydration. Support
+  // never changes for the life of the page, so the subscription is a no-op.
+  const speechSupported = useSyncExternalStore(
+    () => () => {},
+    () => getSpeechRecognition() !== null,
+    () => false,
+  );
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   // The textarea contents when dictation started; transcript is appended to it.
   const dictationBaseRef = useRef("");
 
   useEffect(() => {
-    setSpeechSupported(getSpeechRecognition() !== null);
-    return () => recognitionRef.current?.stop();
+    const recognition = recognitionRef;
+    return () => recognition.current?.stop();
   }, []);
 
   const toggleDictation = useCallback(() => {

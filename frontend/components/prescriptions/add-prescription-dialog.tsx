@@ -221,9 +221,19 @@ export function AddPrescriptionDialog({
       .slice(0, 6);
   }, [inventory, medication]);
 
-  // Keep the highlighted option in range as the result lists change.
-  useEffect(() => setActiveIndex(0), [query]);
-  useEffect(() => setMedIndex(0), [medication]);
+  // Keep the highlighted option in range as the result lists change. Adjusted
+  // during render rather than in an effect: React re-runs this render before
+  // committing, so the list never paints with a stale highlight.
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (prevQuery !== query) {
+    setPrevQuery(query);
+    setActiveIndex(0);
+  }
+  const [prevMedication, setPrevMedication] = useState(medication);
+  if (prevMedication !== medication) {
+    setPrevMedication(medication);
+    setMedIndex(0);
+  }
 
   const pickPatient = (p: Patient) => {
     setSelected(p);

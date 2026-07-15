@@ -76,9 +76,10 @@ export function PatientsView() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  // Runs once on mount, and `loading` already starts true, so there's nothing
+  // to flip synchronously here.
   useEffect(() => {
     let active = true;
-    setLoading(true);
     listPatients()
       .then((data) => {
         if (!active) return;
@@ -97,6 +98,9 @@ export function PatientsView() {
     return () => {
       active = false;
     };
+    // `t` intentionally omitted: it is only read to build a failure message,
+    // and re-fetching on a language change would be pointless.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const q = query.trim().toLowerCase();

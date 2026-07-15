@@ -8,7 +8,7 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -115,12 +115,19 @@ export function EmployeeDetailDialog({
   const [confirmPw, setConfirmPw] = useState("");
   const [savingPw, setSavingPw] = useState(false);
 
-  useEffect(() => {
+  // Re-seed when a different member (or their role/specialty) is shown, and
+  // always clear the password fields so they can't carry across. Adjusted
+  // during render rather than in an effect, so the dialog never paints another
+  // member's values — and a typed password never survives a switch.
+  const seed = `${member?.id ?? ""}|${member?.role ?? ""}|${member?.specialty ?? ""}`;
+  const [prevSeed, setPrevSeed] = useState(seed);
+  if (prevSeed !== seed) {
+    setPrevSeed(seed);
     setRole(member?.role ?? "");
     setSpecialty(member?.specialty ?? "");
     setNewPw("");
     setConfirmPw("");
-  }, [member?.id, member?.role, member?.specialty]);
+  }
 
   const summary = rolePermissionSummary(member?.role);
   const secondary = member?.username ? `@${member.username}` : member?.email;
