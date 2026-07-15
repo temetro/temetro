@@ -7,6 +7,44 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.15.0] — 2026-07-15
+
+### Fixed
+- **Prescriptions pushed to a wallet now actually arrive.** `createPrescription` writes to the
+  `prescriptions` table, but the sealed bundle only carried `patient.medications`, which comes from
+  the separate `patient_medications` table and never grows when a prescription is written. The
+  patient approved a bundle identical to what they already had, so nothing appeared in the app's
+  Prescriptions section — the "New prescription: X" line in `changes` is display text, not data.
+  The bundle now ships `prescriptions` alongside the appointments and invoices that were already
+  handled this way, keeping prescriber/status/dates (`backend/src/services/wallet-updates.ts`).
+- **No more bogus "this clinic's key changed" warnings.** Update events now carry a stable
+  `clinicId`. Wallets pinned a clinic's signing key against its display *name*, which is mutable
+  and falls back to the literal "A clinic" for unnamed orgs — so two unnamed clinics collided on
+  one pin and the second always warned.
+- **Silent drops on the wallet-push path are now logged.** `sendToWallet` no-ops when an org has no
+  live relay hub, and `applyUpdateResponse` returned `null` without a word when a response arrived
+  unsigned or already resolved. From the clinic side both looked exactly like a patient who never
+  tapped Approve.
+- **Windows checkouts no longer break the backend image.** The repo had no `.gitattributes`, so Git
+  for Windows' default `core.autocrlf=true` rewrote `docker-entrypoint.sh` to CRLF; the container
+  then died with `exec /usr/local/bin/docker-entrypoint.sh: no such file or directory`. Line
+  endings are pinned, and the image strips CR before `chmod` so existing checkouts are fixed too.
+- **Settings frames use the COSS default padding.** `CardFramePanel` (added in 0.14.0) isn't part of
+  the COSS registry: its `p-5` inset content twice over, and wrapping the body made every card a
+  grandchild of `CardFrame`, so the frame's direct-child selectors never applied and each card drew
+  its own border — a box inside a box. Body padding now sits on the card, where COSS puts it.
+- **99 lint errors cleared.** `npm run lint` had been failing (the build hides it via
+  `eslint.ignoreDuringBuilds`). Vendored `components/charts` and `components/ai-elements` are now
+  ignored; the 31 in our own code are fixed. Two were real bugs: the employee dialog could keep a
+  typed password when switching to another member, and the wallet-sync hook could carry a patient's
+  `linked` state to a newly-selected patient, briefly offering to push a record to someone else's
+  wallet.
+
+### Changed
+- The clinic→wallet update event carries `clinicId`, and the sealed bundle carries `prescriptions`.
+  Both are additive; older wallets ignore them. See the
+  [signing API docs](https://docs.temetro.com/docs/api/signing#clinic--wallet-record-updates).
+
 ## [0.14.2] — 2026-07-15
 
 ### Fixed
