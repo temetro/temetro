@@ -1,0 +1,32 @@
+# Normalize line endings so the repo builds the same on Windows, macOS and Linux.
+#
+# Git for Windows installs with core.autocrlf=true by default, which rewrites
+# checked-out files to CRLF. That is harmless for source we only ever compile,
+# but fatal for anything the Docker images execute: a shell script whose shebang
+# becomes "#!/bin/sh\r" fails at container start with
+#   exec /usr/local/bin/docker-entrypoint.sh: no such file or directory
+# which names the file it just copied in and reads like the file is missing.
+* text=auto
+
+# Scripts that run inside a Linux container must stay LF regardless of platform.
+*.sh text eol=lf
+docker-entrypoint.sh text eol=lf
+Dockerfile text eol=lf
+*.Dockerfile text eol=lf
+.dockerignore text eol=lf
+
+# Lockfiles: keep LF so they don't churn across platforms.
+package-lock.json text eol=lf
+
+# Binary assets — never touch these.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary

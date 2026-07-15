@@ -6,5 +6,15 @@ dist
 *.log
 .DS_Store
 Dockerfile
+.dockerignore
 docker-compose.yml
+docker-compose.tunnel.yml
 README.md
+CLAUDE.md
+# Deploy manifests for other targets — not needed inside the image.
+fly.toml
+railway.json
+render.yaml
+# Tracked, but only the runtime migrator (dist/migrate.js) runs in the image.
+drizzle.config.ts
+.env.example

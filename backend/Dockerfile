@@ -19,7 +19,13 @@ RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/drizzle ./drizzle
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Strip CR before chmod. .gitattributes keeps this file LF on fresh clones, but
+# a Windows checkout made before that existed still has CRLF on disk, and a
+# "#!/bin/sh\r" shebang fails at container start with a "no such file or
+# directory" error that names the file it just copied in. Cheap to make the
+# image self-healing rather than rely on every contributor re-cloning.
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh \
+  && chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 4000
 # The entrypoint auto-generates any missing secrets, then we apply migrations
 # and start the API.
