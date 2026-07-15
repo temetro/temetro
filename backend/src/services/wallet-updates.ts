@@ -18,6 +18,7 @@ import { listAppointments } from "./appointments.js";
 import { listAttachments } from "./attachments.js";
 import { listInvoices } from "./invoices.js";
 import { getPatient } from "./patients.js";
+import { listPrescriptions } from "./prescriptions.js";
 import { signWithClinicKey } from "./signing.js";
 
 type UpdateRow = typeof walletRecordUpdates.$inferSelect;
@@ -25,8 +26,15 @@ type UpdateRow = typeof walletRecordUpdates.$inferSelect;
 // The payload the relay pushes to a wallet. `sealed` is the encrypted patient
 // snapshot; `signature`/`clinicPublicKey`/`fingerprint` let the wallet verify
 // provenance (TOFU pin) before applying.
+//
+// `clinicId` is the stable org id. The wallet pins a clinic's signing key
+// against it — pinning against the mutable `clinicName` meant every unnamed org
+// collided on the "A clinic" fallback and tripped a bogus "key changed" warning.
+// It also doubles as the relay routing id the wallet needs to fetch document
+// bytes over the portal.
 export type WalletUpdateEvent = {
   requestId: string;
+  clinicId: string;
   clinicName: string;
   sealed: string;
   signature: string;
@@ -120,20 +128,30 @@ export async function createRecordUpdate(
   const patient = await getPatient(orgId, fileNumber);
   if (!patient) throw new HttpError(404, "Patient not found.");
 
-  // Appointments and invoices live in their own tables (not on the Patient
-  // snapshot), so pull the ones for this patient and ship them alongside — the
-  // wallet has no other way to see them and they'd otherwise silently vanish.
-  // Attachments (files/documents) are shipped as metadata so the wallet can list
-  // them and show a count; the bytes stay on the clinic for now.
-  const [orgAppointments, orgInvoices, attachmentRows] = await Promise.all([
-    listAppointments(orgId),
-    listInvoices(orgId),
-    listAttachments(orgId, fileNumber),
-  ]);
+  // Appointments, invoices and prescriptions live in their own tables (not on
+  // the Patient snapshot), so pull the ones for this patient and ship them
+  // alongside — the wallet has no other way to see them and they'd otherwise
+  // silently vanish. `patient.medications` comes from `patient_medications`,
+  // which `createPrescription` never writes to, so a prescription that isn't
+  // shipped here would leave the approved bundle identical to what the wallet
+  // already had.
+  // Attachments (files/documents) are shipped as metadata; the bytes stay on the
+  // clinic and the wallet fetches them on demand over the portal `result-file`
+  // action, keyed by the same attachment id shipped here.
+  const [orgAppointments, orgInvoices, orgPrescriptions, attachmentRows] =
+    await Promise.all([
+      listAppointments(orgId),
+      listInvoices(orgId),
+      listPrescriptions(orgId),
+      listAttachments(orgId, fileNumber),
+    ]);
   const appointments = orgAppointments.filter(
     (a) => a.fileNumber === fileNumber,
   );
   const invoices = orgInvoices.filter((i) => i.fileNumber === fileNumber);
+  const prescriptions = orgPrescriptions.filter(
+    (p) => p.fileNumber === fileNumber,
+  );
   const documents = attachmentRows.map((a) => ({
     id: a.id,
     filename: a.filename,
@@ -143,9 +161,16 @@ export async function createRecordUpdate(
   }));
 
   // The wallet opens this, verifies the signature over the same bytes, then
-  // replaces its on-device record with `patient` (+ appointments/invoices/documents).
+  // replaces its on-device record with `patient` (+ the sibling-table lists).
   const bundle = utf8ToBytes(
-    JSON.stringify({ patient, appointments, invoices, documents, changes }),
+    JSON.stringify({
+      patient,
+      appointments,
+      invoices,
+      prescriptions,
+      documents,
+      changes,
+    }),
   );
   const { signature, publicKey } = await signWithClinicKey(orgId, bundle);
   const x25519Hex = ed25519PubToX25519Hex(decodeWalletNumber(walletNumber));
@@ -176,6 +201,7 @@ export async function toEvent(row: UpdateRow): Promise<WalletUpdateEvent> {
     .where(eq(organization.id, row.organizationId));
   return {
     requestId: row.id,
+    clinicId: row.organizationId,
     clinicName: org?.name ?? "A clinic",
     sealed: row.payloadSealed,
     signature: row.clinicSignature,
@@ -234,9 +260,24 @@ export async function applyUpdateResponse(
     .select()
     .from(walletRecordUpdates)
     .where(eq(walletRecordUpdates.id, requestId));
-  if (!row || row.resolvedAt) return null;
-  if (row.walletNumber !== walletNumber.trim()) return null;
-  if (!signatureHex) return null;
+  // These all mean the patient tapped Approve and nothing happened, so say so —
+  // silently returning null here is indistinguishable from a lost connection.
+  if (!row) {
+    console.warn(`Wallet update ${requestId}: no such update row.`);
+    return null;
+  }
+  if (row.resolvedAt) {
+    console.warn(`Wallet update ${requestId}: already resolved.`);
+    return null;
+  }
+  if (row.walletNumber !== walletNumber.trim()) {
+    console.warn(`Wallet update ${requestId}: wallet number did not match.`);
+    return null;
+  }
+  if (!signatureHex) {
+    console.warn(`Wallet update ${requestId}: response carried no signature.`);
+    return null;
+  }
 
   const publicKey = decodeWalletNumber(walletNumber);
   const message = utf8ToBytes(`${decision}:${requestId}`);

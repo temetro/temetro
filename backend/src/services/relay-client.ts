@@ -40,7 +40,17 @@ export function sendToWallet(
   event: string,
   data: unknown,
 ): void {
-  hubs.get(orgId)?.emit("wallet:send", { walletNumber, event, data });
+  const hub = hubs.get(orgId);
+  if (!hub) {
+    // No live hub means the push is dropped on the floor. The row still sits
+    // pending and `wallet:online` replays it once a device reconnects, but say
+    // so — a silent no-op here looks exactly like a wallet that ignored us.
+    console.warn(
+      `Temetro Network: no hub connection for clinic ${orgId}; "${event}" not sent (queued for wallet:online replay).`,
+    );
+    return;
+  }
+  hub.emit("wallet:send", { walletNumber, event, data });
 }
 
 // Tell the relay to expect a device response for `requestId` and route it back
