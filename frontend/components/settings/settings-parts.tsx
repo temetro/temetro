@@ -11,29 +11,35 @@ import {
   CardFrameAction,
   CardFrameDescription,
   CardFrameHeader,
-  CardFramePanel,
   CardFrameTitle,
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 
 // A settings section rendered inside the COSS "frame" surface: a titled header
-// (with optional description + action) sitting above a padded body. Replaces the
-// old plain-`div` SettingsCard pattern so every settings panel shares one framed
-// look. Use `bodyClassName` to control the body layout (spacing/grid).
+// above one or more cards.
+//
+// Children are rendered as *direct* children of CardFrame on purpose. CardFrame
+// styles its cards through direct-child selectors (`*:data-[slot=card]:-m-px`,
+// the clip-path, `rounded-t/b-xl`, `shadow-none`, `before:hidden`) — it pulls
+// each card out by a pixel so it sits flush inside the frame's own border. Put
+// anything between the frame and the card, even an unstyled div, and every one
+// of those selectors stops matching: the card keeps its own border and shadow
+// and you get a box inside a box.
+//
+// So: no padding here. Body padding belongs on the Card (`<SettingsCard
+// className="p-5">`), which is where COSS puts it.
 export function SettingsFrame({
   title,
   description,
   action,
   children,
   className,
-  bodyClassName,
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
-  bodyClassName?: string;
 }) {
   return (
     <CardFrame className={className}>
@@ -44,14 +50,14 @@ export function SettingsFrame({
         ) : null}
         {action ? <CardFrameAction>{action}</CardFrameAction> : null}
       </CardFrameHeader>
-      <CardFramePanel className={bodyClassName}>{children}</CardFramePanel>
+      {children}
     </CardFrame>
   );
 }
 
-// Back-compat wrapper: existing panels compose with SettingsSection, which now
+// Back-compat wrapper: existing panels compose with SettingsSection, which
 // renders through the COSS frame surface so the whole settings page shares one
-// framed look. The body keeps vertical spacing between stacked children.
+// framed look.
 export function SettingsSection({
   title,
   description,
@@ -64,12 +70,7 @@ export function SettingsSection({
   children: ReactNode;
 }) {
   return (
-    <SettingsFrame
-      action={action}
-      bodyClassName="space-y-4"
-      description={description}
-      title={title}
-    >
+    <SettingsFrame action={action} description={description} title={title}>
       {children}
     </SettingsFrame>
   );
@@ -78,7 +79,8 @@ export function SettingsSection({
 // A card surface used inside settings panels. Rendering a real COSS `Card` (with
 // `data-slot="card"`) keeps settings cards consistent with the rest of the app
 // and lets them pick up the frame's card treatment. `Card` is `flex flex-col`,
-// so row layouts must pass `flex-row` in their className.
+// so row layouts must pass `flex-row` in their className. It carries no padding
+// of its own — pass `p-5` (the settings default) or a `divide-y` list.
 export function SettingsCard({
   className,
   children,

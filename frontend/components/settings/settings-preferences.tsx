@@ -337,38 +337,34 @@ export function ProfilePanel() {
         description={t("settings.profile.patientNotificationsDescription")}
         title={t("settings.profile.patientNotifications")}
       >
-        <div className="space-y-3">
-          {patientNotifications.map((item) => (
-            <ToggleRow
-              checked={Boolean(prefs[`notif.${item.titleKey}`])}
-              description={t(`settings.profile.notif.${item.descKey}`)}
-              key={item.titleKey}
-              onCheckedChange={(checked) =>
-                setPref(`notif.${item.titleKey}`, checked)
-              }
-              title={t(`settings.profile.notif.${item.titleKey}`)}
-            />
-          ))}
-        </div>
+        {patientNotifications.map((item) => (
+          <ToggleRow
+            checked={Boolean(prefs[`notif.${item.titleKey}`])}
+            description={t(`settings.profile.notif.${item.descKey}`)}
+            key={item.titleKey}
+            onCheckedChange={(checked) =>
+              setPref(`notif.${item.titleKey}`, checked)
+            }
+            title={t(`settings.profile.notif.${item.titleKey}`)}
+          />
+        ))}
       </SettingsSection>
 
       <SettingsSection
         description={t("settings.profile.accountNotificationsDescription")}
         title={t("settings.profile.accountNotifications")}
       >
-        <div className="space-y-3">
-          {accountNotifications.map((item) => (
-            <ToggleRow
-              checked={Boolean(prefs[`notif.${item.titleKey}`])}
-              description={t(`settings.profile.notif.${item.descKey}`)}
-              key={item.titleKey}
-              onCheckedChange={(checked) =>
-                setPref(`notif.${item.titleKey}`, checked)
-              }
-              title={t(`settings.profile.notif.${item.titleKey}`)}
-            />
-          ))}
-        </div>
+        {accountNotifications.map((item) => (
+          <ToggleRow
+            checked={Boolean(prefs[`notif.${item.titleKey}`])}
+            description={t(`settings.profile.notif.${item.descKey}`)}
+            key={item.titleKey}
+            onCheckedChange={(checked) =>
+              setPref(`notif.${item.titleKey}`, checked)
+            }
+            title={t(`settings.profile.notif.${item.titleKey}`)}
+          />
+        ))}
       </SettingsSection>
 
       <SettingsSection

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import {
   FieldLabel,
+  SettingsCard,
   SettingsFrame,
   ToggleRow,
 } from "@/components/settings/settings-parts";
@@ -209,7 +210,6 @@ export function AIPanel() {
     <>
       {policy ? (
         <SettingsFrame
-          bodyClassName="space-y-3"
           description={t("settings.ai.availability.description")}
           title={t("settings.ai.availability.title")}
         >
@@ -238,7 +238,7 @@ export function AIPanel() {
                 />
               ) : null}
               {policyDirty ? (
-                <div className="flex justify-end">
+                <SettingsCard className="flex flex-row justify-end p-4">
                   <Button
                     disabled={savingPolicy}
                     onClick={savePolicy}
@@ -248,17 +248,19 @@ export function AIPanel() {
                       ? t("settings.ai.saving")
                       : t("settings.ai.saveChanges")}
                   </Button>
-                </div>
+                </SettingsCard>
               ) : null}
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {policy.aiEnabled
-                ? policy.disabledForEmployees
-                  ? t("settings.ai.availability.readonlyEmployeesOnly")
-                  : t("settings.ai.availability.readonlyEnabled")
-                : t("settings.ai.availability.readonlyDisabled")}
-            </p>
+            <SettingsCard className="p-5">
+              <p className="text-sm text-muted-foreground">
+                {policy.aiEnabled
+                  ? policy.disabledForEmployees
+                    ? t("settings.ai.availability.readonlyEmployeesOnly")
+                    : t("settings.ai.availability.readonlyEnabled")
+                  : t("settings.ai.availability.readonlyDisabled")}
+              </p>
+            </SettingsCard>
           )}
         </SettingsFrame>
       ) : null}
@@ -267,7 +269,7 @@ export function AIPanel() {
         description={t("settings.ai.modeDescription")}
         title={t("settings.ai.modeTitle")}
       >
-        <div className="space-y-1.5">
+        <SettingsCard className="space-y-1.5 p-5">
           <FieldLabel>{t("settings.ai.mode")}</FieldLabel>
           <Select
             onValueChange={(value) => set("mode", value as AiMode)}
@@ -290,7 +292,7 @@ export function AIPanel() {
           <p className="text-xs text-muted-foreground">
             {t(`settings.ai.mode${modeHintSuffix}Hint`)}
           </p>
-        </div>
+        </SettingsCard>
       </SettingsFrame>
 
       {config.mode === "off" ? (
@@ -298,18 +300,20 @@ export function AIPanel() {
           description={t("settings.ai.offDescription")}
           title={t("settings.ai.offTitle")}
         >
-          <p className="text-sm text-muted-foreground">
-            {t("settings.ai.offNote")}
-          </p>
+          <SettingsCard className="p-5">
+            <p className="text-sm text-muted-foreground">
+              {t("settings.ai.offNote")}
+            </p>
+          </SettingsCard>
         </SettingsFrame>
       ) : config.mode !== "local" ? (
         // API and Automatic both configure a cloud provider (Automatic falls
         // back to local Ollama when no key is set).
         <SettingsFrame
-          bodyClassName="space-y-5"
           description={t("settings.ai.providerDescription")}
           title={t("settings.ai.providerTitle")}
         >
+          <SettingsCard className="space-y-5 p-5">
           <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <FieldLabel>{t("settings.ai.provider")}</FieldLabel>
@@ -396,13 +400,14 @@ export function AIPanel() {
                 </SelectPopup>
               </Select>
             </div>
+          </SettingsCard>
         </SettingsFrame>
       ) : (
         <SettingsFrame
-          bodyClassName="space-y-5"
           description={t("settings.ai.localDescription")}
           title={t("settings.ai.localTitle")}
         >
+          <SettingsCard className="space-y-5 p-5">
           <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <FieldLabel>{t("settings.ai.ollamaBaseUrl")}</FieldLabel>
@@ -432,15 +437,16 @@ export function AIPanel() {
                 ? t("settings.ai.testing")
                 : t("settings.ai.testConnection")}
             </Button>
+          </SettingsCard>
         </SettingsFrame>
       )}
 
       {config.mode !== "off" ? (
         <SettingsFrame
-          bodyClassName="space-y-4"
           description={t("settings.ai.veilDescription")}
           title={t("settings.ai.veilTitle")}
         >
+          <SettingsCard className="space-y-4 p-5">
           <div className="space-y-1.5">
               <FieldLabel>{t("settings.ai.veilLevel")}</FieldLabel>
               <Select
@@ -464,6 +470,7 @@ export function AIPanel() {
                 ? t("settings.ai.veilLocalNote")
                 : t("settings.ai.veilApiNote")}
             </p>
+          </SettingsCard>
         </SettingsFrame>
       ) : null}
 

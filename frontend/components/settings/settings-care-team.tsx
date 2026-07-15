@@ -128,13 +128,13 @@ export function CareTeamPanel({
       title={t("settings.careTeam.title")}
     >
       {error && (
-        <p className="rounded-2xl bg-destructive/10 px-3 py-2 text-sm text-destructive">
-          {error}
-        </p>
+        <SettingsCard className="bg-destructive/10 p-4">
+          <p className="text-sm text-destructive">{error}</p>
+        </SettingsCard>
       )}
 
       {canManage && (
-        <div className="flex items-center justify-between gap-4">
+        <SettingsCard className="flex flex-row items-center justify-between gap-4 p-4">
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Info className="size-3.5 shrink-0" />
             {t("settings.careTeam.clickHint")}
@@ -143,7 +143,7 @@ export function CareTeamPanel({
             <UserPlus className="size-4" />
             {t("settings.careTeam.addMember")}
           </Button>
-        </div>
+        </SettingsCard>
       )}
 
       <SettingsCard className="divide-y divide-border">
