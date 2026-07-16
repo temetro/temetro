@@ -7,6 +7,16 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.15.1] — 2026-07-17
+
+### Fixed
+- **Settings frames with more than one panel now breathe.** When a settings section stacked
+  several cards — the AI availability toggles and the patient/account notification lists — the
+  panels sat flush against each other with no gap, reading as one joined block. Those frames now
+  use the COSS "separated panels" spacing (a 1rem gap that keeps each card's rounded corners),
+  while intentional joined lists (care team, records) stay flush. Opt-in via a new `separated`
+  prop on `SettingsFrame`/`SettingsSection` (`frontend/components/settings/settings-parts.tsx`).
+
 ## [0.15.0] — 2026-07-15
 
 ### Fixed
