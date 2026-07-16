@@ -211,6 +211,7 @@ export function AIPanel() {
       {policy ? (
         <SettingsFrame
           description={t("settings.ai.availability.description")}
+          separated
           title={t("settings.ai.availability.title")}
         >
           {isAdmin ? (

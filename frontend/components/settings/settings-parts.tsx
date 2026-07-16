@@ -14,6 +14,7 @@ import {
   CardFrameTitle,
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 
 // A settings section rendered inside the COSS "frame" surface: a titled header
 // above one or more cards.
@@ -34,15 +35,23 @@ export function SettingsFrame({
   action,
   children,
   className,
+  separated = false,
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
+  /**
+   * COSS "Separated Panels": add a 1rem gap so sibling panels read as distinct
+   * cards instead of one flush joined list. The `gap-4` matches CardFrame's
+   * built-in `--clip-top/--clip-bottom: -1rem`, which keeps each panel's rounded
+   * corners clipping correctly across the gap. Leave off for a joined list.
+   */
+  separated?: boolean;
 }) {
   return (
-    <CardFrame className={className}>
+    <CardFrame className={cn(separated && "gap-4", className)}>
       <CardFrameHeader className="border-b border-border/60">
         <CardFrameTitle className="text-base">{title}</CardFrameTitle>
         {description ? (
@@ -63,14 +72,22 @@ export function SettingsSection({
   description,
   action,
   children,
+  separated = false,
 }: {
   title: string;
   description?: string;
   action?: ReactNode;
   children: ReactNode;
+  /** See {@link SettingsFrame}'s `separated` — spaces sibling panels apart. */
+  separated?: boolean;
 }) {
   return (
-    <SettingsFrame action={action} description={description} title={title}>
+    <SettingsFrame
+      action={action}
+      description={description}
+      separated={separated}
+      title={title}
+    >
       {children}
     </SettingsFrame>
   );

@@ -339,6 +339,7 @@ export function ProfilePanel() {
 
       <SettingsSection
         description={t("settings.profile.patientNotificationsDescription")}
+        separated
         title={t("settings.profile.patientNotifications")}
       >
         {patientNotifications.map((item) => (
@@ -356,6 +357,7 @@ export function ProfilePanel() {
 
       <SettingsSection
         description={t("settings.profile.accountNotificationsDescription")}
+        separated
         title={t("settings.profile.accountNotifications")}
       >
         {accountNotifications.map((item) => (
