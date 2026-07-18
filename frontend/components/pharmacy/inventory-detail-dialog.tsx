@@ -109,6 +109,10 @@ export function InventoryDetailDialog({
               label={t("inventory.dialog.expires")}
               value={item.expiresAt || "—"}
             />
+            <Row
+              label={t("inventory.dialog.barcode")}
+              value={item.barcode || "—"}
+            />
             {item.notes ? (
               <div className="flex flex-col gap-1 py-2">
                 <span className="text-muted-foreground text-sm">

@@ -1,4 +1,11 @@
 {
+  "scan": {
+    "title": "Code scannen",
+    "description": "Richte die Kamera auf einen Barcode oder QR-Code.",
+    "cancel": "Abbrechen",
+    "permissionDenied": "Kamerazugriff verweigert. Aktiviere ihn zum Scannen.",
+    "unavailable": "Scannen ist auf diesem Gerät nicht verfügbar."
+  },
   "scribe": {
     "recordVisit": "Besuch aufnehmen",
     "title": "Besuchs-Schreiber",
@@ -686,6 +693,10 @@
       "location": "Standort",
       "locationPlaceholder": "z. B. A3",
       "expires": "Verfällt",
+      "barcode": "Barcode / NDC",
+      "barcodePlaceholder": "Code scannen oder eingeben",
+      "scan": "Barcode scannen",
+      "scannedTitle": "Barcode gescannt",
       "cancel": "Abbrechen",
       "submit": "Artikel hinzufügen",
       "nameRequiredTitle": "Medikamentenname erforderlich",

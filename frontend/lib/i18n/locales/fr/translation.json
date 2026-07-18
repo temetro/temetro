@@ -1,4 +1,11 @@
 {
+  "scan": {
+    "title": "Scanner un code",
+    "description": "Dirigez la caméra vers un code-barres ou un QR code.",
+    "cancel": "Annuler",
+    "permissionDenied": "Accès à la caméra refusé. Activez-le pour scanner.",
+    "unavailable": "Le scan n'est pas disponible sur cet appareil."
+  },
   "scribe": {
     "recordVisit": "Enregistrer la visite",
     "title": "Scribe de visite",
@@ -686,6 +693,10 @@
       "location": "Emplacement",
       "locationPlaceholder": "ex. A3",
       "expires": "Expire le",
+      "barcode": "Code-barres / NDC",
+      "barcodePlaceholder": "Scanner ou saisir un code",
+      "scan": "Scanner le code-barres",
+      "scannedTitle": "Code-barres scanné",
       "cancel": "Annuler",
       "submit": "Ajouter l'article",
       "nameRequiredTitle": "Nom du médicament requis",

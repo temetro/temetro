@@ -29,6 +29,8 @@ export const inventory = pgTable(
     stockQuantity: integer("stock_quantity").notNull().default(0),
     reorderThreshold: integer("reorder_threshold").notNull().default(0),
     location: text("location").notNull().default(""),
+    // Scanned medication barcode / NDC (GTIN when read from a GS1 DataMatrix).
+    barcode: text("barcode"),
     expiresAt: date("expires_at"),
     notes: text("notes"),
     createdBy: text("created_by").references(() => user.id, {

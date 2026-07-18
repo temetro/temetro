@@ -253,6 +253,13 @@
       "when": 1783530491321,
       "tag": "0035_slippery_retro_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1784406410448,
+      "tag": "0036_aspiring_expediter",
+      "breakpoints": true
     }
   ]
 }

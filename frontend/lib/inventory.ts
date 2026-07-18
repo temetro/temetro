@@ -11,6 +11,7 @@ export type InventoryItem = {
   stockQuantity: number;
   reorderThreshold: number;
   location: string;
+  barcode: string | null;
   expiresAt: string | null;
   notes: string | null;
   createdAt: string;
@@ -26,6 +27,7 @@ export type InventoryInput = {
   stockQuantity?: number;
   reorderThreshold?: number;
   location?: string;
+  barcode?: string | null;
   expiresAt?: string | null;
   notes?: string | null;
 };

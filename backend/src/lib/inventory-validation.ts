@@ -13,6 +13,7 @@ export const inventoryInputSchema = z.object({
   stockQuantity: z.number().int().min(0).max(1_000_000).default(0),
   reorderThreshold: z.number().int().min(0).max(1_000_000).default(0),
   location: z.string().trim().max(200).default(""),
+  barcode: z.string().trim().max(120).nullish(),
   expiresAt: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD.")

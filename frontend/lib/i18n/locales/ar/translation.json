@@ -1,4 +1,11 @@
 {
+  "scan": {
+    "title": "مسح رمز",
+    "description": "وجّه الكاميرا نحو باركود أو رمز QR.",
+    "cancel": "إلغاء",
+    "permissionDenied": "تم رفض الوصول إلى الكاميرا. فعّله للمسح.",
+    "unavailable": "المسح غير متاح على هذا الجهاز."
+  },
   "scribe": {
     "recordVisit": "تسجيل الزيارة",
     "title": "كاتب الزيارة",
@@ -702,6 +709,10 @@
       "location": "الموقع",
       "locationPlaceholder": "مثال: A3",
       "expires": "تنتهي الصلاحية",
+      "barcode": "الباركود / NDC",
+      "barcodePlaceholder": "امسح أو اكتب رمزًا",
+      "scan": "مسح الباركود",
+      "scannedTitle": "تم مسح الباركود",
       "cancel": "إلغاء",
       "submit": "إضافة عنصر",
       "nameRequiredTitle": "اسم الدواء مطلوب",

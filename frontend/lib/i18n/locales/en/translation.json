@@ -1,4 +1,11 @@
 {
+  "scan": {
+    "title": "Scan a code",
+    "description": "Point the camera at a barcode or QR code.",
+    "cancel": "Cancel",
+    "permissionDenied": "Camera access was denied. Enable it to scan.",
+    "unavailable": "Scanning isn't available on this device."
+  },
   "scribe": {
     "recordVisit": "Record visit",
     "title": "Visit scribe",
@@ -686,6 +693,10 @@
       "location": "Location",
       "locationPlaceholder": "e.g. A3",
       "expires": "Expires",
+      "barcode": "Barcode / NDC",
+      "barcodePlaceholder": "Scan or type a code",
+      "scan": "Scan barcode",
+      "scannedTitle": "Barcode scanned",
       "cancel": "Cancel",
       "submit": "Add item",
       "nameRequiredTitle": "Medication name required",

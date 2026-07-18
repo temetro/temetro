@@ -1,4 +1,11 @@
 {
+  "scan": {
+    "title": "Iskaan garee koodh",
+    "description": "U jeedi kamarada barcode ama koodh QR.",
+    "cancel": "Jooji",
+    "permissionDenied": "Gelitaanka kamarada waa la diiday. Daar si aad u iskaan gariso.",
+    "unavailable": "Iskaanku kuma shaqeeyo qalabkan."
+  },
   "scribe": {
     "recordVisit": "Duub booqasho",
     "title": "Qoraaga booqashada",
@@ -686,6 +693,10 @@
       "location": "Goobta",
       "locationPlaceholder": "tusaale A3",
       "expires": "Dhacaya",
+      "barcode": "Barcode / NDC",
+      "barcodePlaceholder": "Iskaan garee ama qor koodh",
+      "scan": "Iskaan garee barcode",
+      "scannedTitle": "Barcode la iskaan gareeyay",
       "cancel": "Jooji",
       "submit": "Ku dar shay",
       "nameRequiredTitle": "Magaca daawada ayaa loo baahan yahay",

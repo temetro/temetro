@@ -1,8 +1,10 @@
 "use client";
 
+import { ScanLine } from "lucide-react";
 import { type FormEvent, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { BarcodeScanner } from "@/components/scan/barcode-scanner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { parseGs1 } from "@/lib/gs1";
 import type { InventoryInput } from "@/lib/inventory";
 import { notify } from "@/lib/toast";
 
@@ -48,7 +51,12 @@ export function AddInventoryDialog({
   const [stockQuantity, setStockQuantity] = useState("0");
   const [reorderThreshold, setReorderThreshold] = useState("0");
   const [location, setLocation] = useState("");
+  const [barcode, setBarcode] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
+  // Lot/batch parsed from a GS1 scan. No dedicated field, so it rides along in
+  // notes (surfaced on the item detail).
+  const [notes, setNotes] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
 
   const reset = () => {
     setName("");
@@ -58,7 +66,24 @@ export function AddInventoryDialog({
     setStockQuantity("0");
     setReorderThreshold("0");
     setLocation("");
+    setBarcode("");
     setExpiresAt("");
+    setNotes("");
+  };
+
+  // A scanned medication barcode: store the code, and when it's a GS1
+  // DataMatrix, auto-fill expiry (AI 17) and lot (AI 10, -> notes).
+  const handleScan = (raw: string) => {
+    setScannerOpen(false);
+    const gs1 = parseGs1(raw);
+    if (gs1) {
+      setBarcode(gs1.gtin ?? raw);
+      if (gs1.expiry) setExpiresAt(gs1.expiry);
+      if (gs1.lot) setNotes((n) => n || `Lot: ${gs1.lot}`);
+    } else {
+      setBarcode(raw.trim());
+    }
+    notify.success(t("inventory.dialog.scannedTitle"), gs1?.gtin ?? raw.trim());
   };
 
   const submit = (event: FormEvent) => {
@@ -79,7 +104,9 @@ export function AddInventoryDialog({
       stockQuantity: Number.parseInt(stockQuantity, 10) || 0,
       reorderThreshold: Number.parseInt(reorderThreshold, 10) || 0,
       location: location.trim(),
+      barcode: barcode.trim() || null,
       expiresAt: expiresAt || null,
+      notes: notes.trim() || null,
     });
     notify.success(t("inventory.dialog.addedTitle"), trimmed);
     reset();
@@ -87,6 +114,7 @@ export function AddInventoryDialog({
   };
 
   return (
+    <>
     <Dialog
       onOpenChange={(o) => {
         onOpenChange(o);
@@ -174,6 +202,26 @@ export function AddInventoryDialog({
                 />
               </Field>
             </div>
+
+            <Field label={t("inventory.dialog.barcode")}>
+              <div className="flex items-center gap-2">
+                <Input
+                  inputMode="numeric"
+                  onChange={(event) => setBarcode(event.target.value)}
+                  placeholder={t("inventory.dialog.barcodePlaceholder")}
+                  value={barcode}
+                />
+                <Button
+                  aria-label={t("inventory.dialog.scan")}
+                  onClick={() => setScannerOpen(true)}
+                  size="icon"
+                  type="button"
+                  variant="outline"
+                >
+                  <ScanLine className="size-4" />
+                </Button>
+              </div>
+            </Field>
           </DialogPanel>
 
           <DialogFooter>
@@ -187,5 +235,11 @@ export function AddInventoryDialog({
         </form>
       </DialogPopup>
     </Dialog>
+    <BarcodeScanner
+      onDetected={handleScan}
+      onOpenChange={setScannerOpen}
+      open={scannerOpen}
+    />
+    </>
   );
 }
