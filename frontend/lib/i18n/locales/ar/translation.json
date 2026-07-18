@@ -1566,6 +1566,11 @@
     "moreActions": "إجراءات إضافية"
   },
   "patientForm": {
+    "close": "إغلاق",
+    "tabs": {
+      "add": "إضافة",
+      "show": "عرض"
+    },
     "editTitle": "تعديل السجل",
     "createTitle": "إضافة مريض",
     "editDescription": "حدّث سجل {{name}} وأضف بيانات جديدة.",

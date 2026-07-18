@@ -1546,6 +1546,11 @@
     "moreActions": "More actions"
   },
   "patientForm": {
+    "close": "Close",
+    "tabs": {
+      "add": "Add",
+      "show": "Show"
+    },
     "editTitle": "Edit record",
     "createTitle": "Add patient",
     "editDescription": "Update {{name}}'s chart and add new data.",

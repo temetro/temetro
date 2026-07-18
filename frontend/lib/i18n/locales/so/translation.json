@@ -1546,6 +1546,11 @@
     "moreActions": "Ficillo dheeraad ah"
   },
   "patientForm": {
+    "close": "Xir",
+    "tabs": {
+      "add": "Ku dar",
+      "show": "Muuji"
+    },
     "editTitle": "Wax ka beddel diiwaanka",
     "createTitle": "Ku dar bukaan",
     "editDescription": "Cusbooneysii diiwaanka {{name}} oo ku dar xog cusub.",

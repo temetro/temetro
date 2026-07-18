@@ -23,6 +23,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTab } from "@/components/ui/tabs";
+import { PatientDetail } from "@/components/patients/patient-detail";
 import { ROLE_LABELS } from "@/lib/access";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
@@ -239,6 +241,11 @@ export function PatientFormDialog({
     isEdit && patient ? patient.fileNumber : generateFileNumber()
   );
   const [step, setStep] = useState<"form" | "wallet">("form");
+  // Editing an existing record shows Show/Add tabs: "Show" (default) is the
+  // read-only record; "Add" is the editable form with the Add buttons. Create
+  // and import-review keep the plain form (nothing to show yet).
+  const showTabs = isEdit && !isReview && Boolean(patient);
+  const [tab, setTab] = useState<"add" | "show">(showTabs ? "show" : "add");
 
   // Only edits to an existing (non-review) record can sync to a wallet — a newly
   // created patient has no wallet, and review mode stages an import.
@@ -453,10 +460,27 @@ export function PatientFormDialog({
           />
         ) : (
         <form className="contents" onSubmit={handleSubmit}>
+          {showTabs && (
+            <div className="px-1 pt-1">
+              <Tabs
+                onValueChange={(value) => setTab(value as "add" | "show")}
+                value={tab}
+              >
+                <TabsList className="w-full">
+                  <TabsTab value="add">{t("patientForm.tabs.add")}</TabsTab>
+                  <TabsTab value="show">{t("patientForm.tabs.show")}</TabsTab>
+                </TabsList>
+              </Tabs>
+            </div>
+          )}
           <DialogPanel
             scrollFade={false}
             className="no-scrollbar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto"
           >
+            {showTabs && tab === "show" && patient ? (
+              <PatientDetail patient={patient} />
+            ) : (
+              <>
             <Field label={t("patientForm.fileNumber")}>
               <div className="flex items-center gap-2">
                 <Input
@@ -780,6 +804,8 @@ export function PatientFormDialog({
             )}
 
             <StagedFilesField onChange={setFiles} value={files} />
+              </>
+            )}
           </DialogPanel>
 
           <DialogFooter className="flex-col items-stretch gap-2 sm:flex-row sm:items-center">
@@ -787,17 +813,19 @@ export function PatientFormDialog({
               <p className="text-sm text-destructive sm:me-auto">{error}</p>
             )}
             <DialogClose render={<Button type="button" variant="outline" />}>
-              {t("patientForm.cancel")}
+              {tab === "show" ? t("patientForm.close") : t("patientForm.cancel")}
             </DialogClose>
-            <Button disabled={!name.trim() || submitting} type="submit">
-              {submitting
-                ? t("patientForm.saving")
-                : isReview
-                  ? t("patientForm.saveDraft")
-                  : isEdit
-                    ? t("patientForm.saveChanges")
-                    : t("patientForm.savePatient")}
-            </Button>
+            {tab !== "show" && (
+              <Button disabled={!name.trim() || submitting} type="submit">
+                {submitting
+                  ? t("patientForm.saving")
+                  : isReview
+                    ? t("patientForm.saveDraft")
+                    : isEdit
+                      ? t("patientForm.saveChanges")
+                      : t("patientForm.savePatient")}
+              </Button>
+            )}
           </DialogFooter>
         </form>
         )}

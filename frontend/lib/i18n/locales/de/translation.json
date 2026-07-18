@@ -1546,6 +1546,11 @@
     "moreActions": "Weitere Aktionen"
   },
   "patientForm": {
+    "close": "Schließen",
+    "tabs": {
+      "add": "Hinzufügen",
+      "show": "Anzeigen"
+    },
     "editTitle": "Datensatz bearbeiten",
     "createTitle": "Patient hinzufügen",
     "editDescription": "Aktualisieren Sie die Akte von {{name}} und fügen Sie neue Daten hinzu.",

@@ -1546,6 +1546,11 @@
     "moreActions": "Plus d’actions"
   },
   "patientForm": {
+    "close": "Fermer",
+    "tabs": {
+      "add": "Ajouter",
+      "show": "Afficher"
+    },
     "editTitle": "Modifier le dossier",
     "createTitle": "Ajouter un patient",
     "editDescription": "Mettez à jour le dossier de {{name}} et ajoutez de nouvelles données.",
