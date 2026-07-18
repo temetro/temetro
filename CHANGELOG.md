@@ -7,6 +7,26 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.16.0] — 2026-07-18
+
+### Added
+- **Show / Add tabs on the patient record dialog.** Editing a record now opens on a read-only
+  "Show" view (the existing `PatientDetail`), with an "Add" tab for the editable form and its Add
+  buttons. Saving from the Add tab still offers the existing "send to the patient's wallet" step
+  when the patient is wallet-linked (`frontend/components/chat/patient-form-dialog.tsx`).
+- **Barcode scanning in the pharmacy.** The inventory Add-item dialog can now scan a medication
+  barcode with the camera (`@zxing/browser`, native `BarcodeDetector` where available) into a new
+  Barcode/NDC field, auto-filling expiry (AI 17) and lot (AI 10) from a GS1 DataMatrix. Adds a
+  nullable `inventory.barcode` column (migration `0036`).
+- **Scan a patient's wallet code when importing.** "Import from a patient app" gains a Scan button
+  that reads the QR or 2D barcode shown in the patient's wallet app and fills the wallet number
+  (`frontend/components/patients/import-from-wallet-dialog.tsx`).
+
+### Changed
+- **Settings "separated panels" now match COSS exactly.** The opt-in `separated` settings frames
+  render a real COSS Frame — a muted tray holding distinct bordered panels spaced apart — instead
+  of a `gap-4` bolted onto the panel-fusing `CardFrame`. New `frontend/components/ui/frame.tsx`.
+
 ## [0.15.1] — 2026-07-17
 
 ### Fixed
