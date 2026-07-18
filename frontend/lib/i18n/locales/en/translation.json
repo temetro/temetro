@@ -298,6 +298,8 @@
       "qrCaption": "Scan this in the patient app",
       "generateQr": "Show QR code",
       "walletLabel": "Patient wallet number",
+      "scan": "Scan patient's code",
+      "scanHint": "Scan the QR or barcode shown in the patient's wallet app.",
       "walletPlaceholder": "tmw_…",
       "tempLabel": "Share temporarily",
       "tempHint": "The record is automatically deleted from this clinic when the share window ends.",

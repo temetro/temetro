@@ -298,6 +298,8 @@
       "qrCaption": "Dies in der Patienten-App scannen",
       "generateQr": "QR-Code anzeigen",
       "walletLabel": "Patienten-Wallet-Nummer",
+      "scan": "Code des Patienten scannen",
+      "scanHint": "Scanne den QR- oder Barcode aus der Wallet-App des Patienten.",
       "walletPlaceholder": "tmw_…",
       "tempLabel": "Temporär teilen",
       "tempHint": "Die Akte wird automatisch aus dieser Klinik gelöscht, wenn das Freigabefenster endet.",

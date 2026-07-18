@@ -1,11 +1,12 @@
 "use client";
 
-import { Check, Loader2, QrCode, Smartphone, X } from "lucide-react";
+import { Check, Loader2, QrCode, ScanLine, Smartphone, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import QRCodeSvg from "react-qr-code";
 
 import { PatientFormDialog } from "@/components/chat/patient-form-dialog";
+import { BarcodeScanner } from "@/components/scan/barcode-scanner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -63,6 +64,15 @@ export function ImportFromWalletDialog({
   const { t } = useTranslation();
   const [mode, setMode] = useState<Mode>("number");
   const [walletNumber, setWalletNumber] = useState("");
+  const [scanOpen, setScanOpen] = useState(false);
+
+  // Scanning the wallet code shown on the patient's phone (QR or 2D barcode)
+  // drops its wallet number straight into the field.
+  const handleScan = (value: string) => {
+    setScanOpen(false);
+    setMode("number");
+    setWalletNumber(value.trim());
+  };
   const [temporary, setTemporary] = useState(false);
   const [durationHours, setDurationHours] = useState<number>(24);
   const [phase, setPhase] = useState<Phase>("form");
@@ -302,13 +312,25 @@ export function ImportFromWalletDialog({
                     <span className="text-xs text-muted-foreground">
                       {t("patients.importApp.walletLabel")}
                     </span>
-                    <Input
-                      autoFocus
-                      disabled={phase === "requesting"}
-                      onChange={(e) => setWalletNumber(e.target.value)}
-                      placeholder={t("patients.importApp.walletPlaceholder")}
-                      value={walletNumber}
-                    />
+                    <div className="flex items-center gap-2">
+                      <Input
+                        autoFocus
+                        disabled={phase === "requesting"}
+                        onChange={(e) => setWalletNumber(e.target.value)}
+                        placeholder={t("patients.importApp.walletPlaceholder")}
+                        value={walletNumber}
+                      />
+                      <Button
+                        aria-label={t("patients.importApp.scan")}
+                        disabled={phase === "requesting"}
+                        onClick={() => setScanOpen(true)}
+                        size="icon"
+                        type="button"
+                        variant="outline"
+                      >
+                        <ScanLine className="size-4" />
+                      </Button>
+                    </div>
                   </label>
                 ) : (
                   <p className="text-sm text-muted-foreground">
@@ -411,6 +433,14 @@ export function ImportFromWalletDialog({
           patient={request.draft}
         />
       ) : null}
+
+      <BarcodeScanner
+        description={t("patients.importApp.scanHint")}
+        onDetected={handleScan}
+        onOpenChange={setScanOpen}
+        open={scanOpen}
+        title={t("patients.importApp.scan")}
+      />
     </>
   );
 }

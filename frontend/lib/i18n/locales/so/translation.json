@@ -298,6 +298,8 @@
       "qrCaption": "Ku sawir tan app-ka bukaanka",
       "generateQr": "Tus koodhka QR",
       "walletLabel": "Lambarka wallet-ka bukaanka",
+      "scan": "Iskaan garee koodhka bukaanka",
+      "scanHint": "Iskaan garee koodhka QR ama barcode ee ka muuqda abka wallet-ka bukaanka.",
       "walletPlaceholder": "tmw_…",
       "tempLabel": "Wadaag si ku meel gaar ah",
       "tempHint": "Diiwaanka si toos ah ayaa looga tirtirayaa rugtan marka daaqadda wadaagista dhammaato.",

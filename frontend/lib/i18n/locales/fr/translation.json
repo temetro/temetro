@@ -298,6 +298,8 @@
       "qrCaption": "Scannez ceci dans l'application patient",
       "generateQr": "Afficher le code QR",
       "walletLabel": "Numéro de portefeuille du patient",
+      "scan": "Scanner le code du patient",
+      "scanHint": "Scannez le QR code ou le code-barres affiché dans l'app portefeuille du patient.",
       "walletPlaceholder": "tmw_…",
       "tempLabel": "Partager temporairement",
       "tempHint": "Le dossier est automatiquement supprimé de cette clinique à la fin de la période de partage.",
