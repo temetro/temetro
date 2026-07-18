@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { createContext, useContext, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -13,8 +13,14 @@ import {
   CardFrameHeader,
   CardFrameTitle,
 } from "@/components/ui/card";
+import { Frame, FramePanel } from "@/components/ui/frame";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+
+// Whether the enclosing frame is a COSS "Separated Panels" tray. When true,
+// SettingsCard/ToggleRow render as a FramePanel (a distinct bordered card on the
+// muted tray) instead of a fused CardFrame Card.
+const SeparatedFrameContext = createContext(false);
 
 // A settings section rendered inside the COSS "frame" surface: a titled header
 // above one or more cards.
@@ -43,15 +49,36 @@ export function SettingsFrame({
   children: ReactNode;
   className?: string;
   /**
-   * COSS "Separated Panels": add a 1rem gap so sibling panels read as distinct
-   * cards instead of one flush joined list. The `gap-4` matches CardFrame's
-   * built-in `--clip-top/--clip-bottom: -1rem`, which keeps each panel's rounded
-   * corners clipping correctly across the gap. Leave off for a joined list.
+   * COSS "Separated Panels": render a muted Frame tray whose children are
+   * distinct bordered FramePanels spaced apart (the real coss.com/ui/frame
+   * look), instead of the fused CardFrame surface. Leave off for a joined list.
    */
   separated?: boolean;
 }) {
+  if (separated) {
+    return (
+      <Frame className={className}>
+        <div
+          className="flex items-start justify-between gap-4 px-4 py-3"
+          data-slot="frame-header"
+        >
+          <div className="flex flex-col gap-0.5">
+            <p className="text-base font-semibold">{title}</p>
+            {description ? (
+              <p className="text-sm text-muted-foreground">{description}</p>
+            ) : null}
+          </div>
+          {action ? <div className="shrink-0">{action}</div> : null}
+        </div>
+        <SeparatedFrameContext.Provider value={true}>
+          {children}
+        </SeparatedFrameContext.Provider>
+      </Frame>
+    );
+  }
+
   return (
-    <CardFrame className={cn(separated && "gap-4", className)}>
+    <CardFrame className={className}>
       <CardFrameHeader className="border-b border-border/60">
         <CardFrameTitle className="text-base">{title}</CardFrameTitle>
         {description ? (
@@ -105,6 +132,16 @@ export function SettingsCard({
   className?: string;
   children: ReactNode;
 }) {
+  const separated = useContext(SeparatedFrameContext);
+  if (separated) {
+    // A distinct panel on the Frame tray. `flex flex-col` mirrors Card's default
+    // layout; callers that need a row (ToggleRow) override with `flex-row`.
+    return (
+      <FramePanel className={cn("flex flex-col", className)}>
+        {children}
+      </FramePanel>
+    );
+  }
   return <Card className={className}>{children}</Card>;
 }
 
