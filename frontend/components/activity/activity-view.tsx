@@ -212,7 +212,7 @@ export function ActivityView() {
 
                 <button
                   className={cn(
-                    "-mx-2 flex-1 rounded-lg px-2 py-1 text-start transition-colors hover:bg-accent/40",
+                    "-mx-2 flex-1 cursor-pointer rounded-lg px-2 py-1 text-start transition-colors hover:bg-accent/40",
                     isLast ? "pb-1" : "mb-5",
                   )}
                   onClick={() => setSelected(entry)}
