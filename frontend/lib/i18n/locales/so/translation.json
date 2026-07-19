@@ -697,7 +697,7 @@
       "expires": "Dhacaya",
       "barcode": "Barcode / NDC",
       "barcodePlaceholder": "Iskaan garee ama qor koodh",
-      "scan": "Iskaan garee barcode",
+      "scanHint": "Ku xir iskaanka barcode-ka USB oo iskaan garee daawada — ama qor koodhka.",
       "scannedTitle": "Barcode la iskaan gareeyay",
       "cancel": "Jooji",
       "submit": "Ku dar shay",

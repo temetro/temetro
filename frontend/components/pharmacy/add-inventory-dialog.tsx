@@ -1,10 +1,14 @@
 "use client";
 
-import { ScanLine } from "lucide-react";
-import { type FormEvent, type ReactNode, useState } from "react";
+import {
+  type FormEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 
-import { BarcodeScanner } from "@/components/scan/barcode-scanner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -56,7 +60,6 @@ export function AddInventoryDialog({
   // Lot/batch parsed from a GS1 scan. No dedicated field, so it rides along in
   // notes (surfaced on the item detail).
   const [notes, setNotes] = useState("");
-  const [scannerOpen, setScannerOpen] = useState(false);
 
   const reset = () => {
     setName("");
@@ -73,18 +76,68 @@ export function AddInventoryDialog({
 
   // A scanned medication barcode: store the code, and when it's a GS1
   // DataMatrix, auto-fill expiry (AI 17) and lot (AI 10, -> notes).
-  const handleScan = (raw: string) => {
-    setScannerOpen(false);
-    const gs1 = parseGs1(raw);
-    if (gs1) {
-      setBarcode(gs1.gtin ?? raw);
-      if (gs1.expiry) setExpiresAt(gs1.expiry);
-      if (gs1.lot) setNotes((n) => n || `Lot: ${gs1.lot}`);
-    } else {
-      setBarcode(raw.trim());
-    }
-    notify.success(t("inventory.dialog.scannedTitle"), gs1?.gtin ?? raw.trim());
-  };
+  const handleScan = useCallback(
+    (raw: string) => {
+      const gs1 = parseGs1(raw);
+      if (gs1) {
+        setBarcode(gs1.gtin ?? raw);
+        if (gs1.expiry) setExpiresAt(gs1.expiry);
+        if (gs1.lot) setNotes((n) => n || `Lot: ${gs1.lot}`);
+      } else {
+        setBarcode(raw.trim());
+      }
+      notify.success(
+        t("inventory.dialog.scannedTitle"),
+        gs1?.gtin ?? raw.trim(),
+      );
+    },
+    [t],
+  );
+
+  // Hardware barcode scanners are keyboard wedges: they "type" the code as a
+  // fast burst of keystrokes terminated by Enter. While the dialog is open we
+  // watch keydowns globally and, when a fast burst ends in Enter, treat the
+  // buffer as a scan — so the pharmacist can just scan a medication without
+  // first focusing any field. The timing gate (keys < 50ms apart) keeps
+  // ordinary typing out of the buffer; once a burst is detected we swallow the
+  // characters so they don't leak into the focused input.
+  useEffect(() => {
+    if (!open) return;
+    let buffer = "";
+    let lastTime = 0;
+    const MAX_GAP_MS = 50;
+    const MIN_LEN = 6;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      const now = Date.now();
+      const fast = now - lastTime <= MAX_GAP_MS;
+      lastTime = now;
+
+      if (event.key === "Enter") {
+        if (fast && buffer.length >= MIN_LEN) {
+          event.preventDefault();
+          event.stopPropagation();
+          handleScan(buffer);
+        }
+        buffer = "";
+        return;
+      }
+      if (
+        event.key.length === 1 &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.altKey
+      ) {
+        buffer = fast ? buffer + event.key : event.key;
+        if (fast && buffer.length >= 2) event.preventDefault();
+      } else {
+        buffer = "";
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [open, handleScan]);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -114,7 +167,6 @@ export function AddInventoryDialog({
   };
 
   return (
-    <>
     <Dialog
       onOpenChange={(o) => {
         onOpenChange(o);
@@ -204,23 +256,24 @@ export function AddInventoryDialog({
             </div>
 
             <Field label={t("inventory.dialog.barcode")}>
-              <div className="flex items-center gap-2">
-                <Input
-                  inputMode="numeric"
-                  onChange={(event) => setBarcode(event.target.value)}
-                  placeholder={t("inventory.dialog.barcodePlaceholder")}
-                  value={barcode}
-                />
-                <Button
-                  aria-label={t("inventory.dialog.scan")}
-                  onClick={() => setScannerOpen(true)}
-                  size="icon"
-                  type="button"
-                  variant="outline"
-                >
-                  <ScanLine className="size-4" />
-                </Button>
-              </div>
+              <Input
+                inputMode="numeric"
+                onChange={(event) => setBarcode(event.target.value)}
+                // A hardware scanner sends Enter after the code; parse it here
+                // (instead of submitting the form) so a scan into this field is
+                // handled like the global wedge burst.
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    if (barcode.trim()) handleScan(barcode);
+                  }
+                }}
+                placeholder={t("inventory.dialog.barcodePlaceholder")}
+                value={barcode}
+              />
+              <span className="text-muted-foreground text-xs">
+                {t("inventory.dialog.scanHint")}
+              </span>
             </Field>
           </DialogPanel>
 
@@ -235,11 +288,5 @@ export function AddInventoryDialog({
         </form>
       </DialogPopup>
     </Dialog>
-    <BarcodeScanner
-      onDetected={handleScan}
-      onOpenChange={setScannerOpen}
-      open={scannerOpen}
-    />
-    </>
   );
 }

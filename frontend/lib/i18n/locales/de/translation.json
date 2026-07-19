@@ -697,7 +697,7 @@
       "expires": "Verfällt",
       "barcode": "Barcode / NDC",
       "barcodePlaceholder": "Code scannen oder eingeben",
-      "scan": "Barcode scannen",
+      "scanHint": "Schließen Sie einen USB-Barcode-Scanner an und scannen Sie das Medikament – oder geben Sie den Code ein.",
       "scannedTitle": "Barcode gescannt",
       "cancel": "Abbrechen",
       "submit": "Artikel hinzufügen",

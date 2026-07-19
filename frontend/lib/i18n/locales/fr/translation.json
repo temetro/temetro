@@ -697,7 +697,7 @@
       "expires": "Expire le",
       "barcode": "Code-barres / NDC",
       "barcodePlaceholder": "Scanner ou saisir un code",
-      "scan": "Scanner le code-barres",
+      "scanHint": "Branchez un lecteur de code-barres USB et scannez le médicament — ou saisissez le code.",
       "scannedTitle": "Code-barres scanné",
       "cancel": "Annuler",
       "submit": "Ajouter l'article",

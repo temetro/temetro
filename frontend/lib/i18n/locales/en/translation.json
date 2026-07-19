@@ -697,7 +697,7 @@
       "expires": "Expires",
       "barcode": "Barcode / NDC",
       "barcodePlaceholder": "Scan or type a code",
-      "scan": "Scan barcode",
+      "scanHint": "Connect a USB barcode scanner and scan the medication — or type the code.",
       "scannedTitle": "Barcode scanned",
       "cancel": "Cancel",
       "submit": "Add item",
