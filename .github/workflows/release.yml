@@ -3,6 +3,11 @@
 # Trigger: push a semver tag, e.g.
 #   git tag v0.1.0 && git push origin v0.1.0
 #
+# Multi-arch (amd64 + arm64) is built on NATIVE runners — amd64 on ubuntu-24.04,
+# arm64 on ubuntu-24.04-arm — and merged into a manifest. We do NOT emulate arm64
+# with QEMU anymore: a runner/QEMU update started crashing `npm ci` under
+# emulation ("illegal instruction") and hanging the build for hours.
+#
 # The frontend image bakes NO API URL — it resolves the backend from the host
 # the browser uses at runtime — so one published image works for every clinic.
 #
@@ -18,27 +23,30 @@ on:
     tags:
       - "v*.*.*"
 
-permissions:
-  contents: write # create the GitHub Release (the update check reads this)
-
 env:
   REGISTRY_NAMESPACE: khalidxv
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
+  # One build per (image × platform) on the platform's native runner, pushed to
+  # Docker Hub by digest (no tag yet). The merge job stitches the per-arch
+  # digests into a single tagged multi-arch manifest.
+  build:
+    name: Build ${{ matrix.image }} (${{ matrix.platform }})
+    runs-on: ${{ matrix.platform == 'linux/arm64' && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [backend, frontend]
+        platform: [linux/amd64, linux/arm64]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Derive version from tag
-        id: meta
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-
-      # QEMU lets the amd64 runner emulate arm64 so the images below build for
-      # both platforms (Intel + Apple Silicon self-hosters).
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+      - name: Prepare platform pair
+        run: |
+          platform="${{ matrix.platform }}"
+          echo "PLATFORM_PAIR=${platform//\//-}" >> "$GITHUB_ENV"
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
@@ -49,25 +57,93 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build & push backend
+      - name: Build & push by digest
+        id: build
         uses: docker/build-push-action@v6
         with:
-          context: ./backend
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ env.REGISTRY_NAMESPACE }}/temetro-backend:${{ steps.meta.outputs.version }}
-            ${{ env.REGISTRY_NAMESPACE }}/temetro-backend:latest
+          context: ./${{ matrix.image }}
+          platforms: ${{ matrix.platform }}
+          provenance: false
+          outputs: type=image,name=${{ env.REGISTRY_NAMESPACE }}/temetro-${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
 
-      - name: Build & push frontend
-        uses: docker/build-push-action@v6
+      - name: Export digest
+        run: |
+          mkdir -p "${{ runner.temp }}/digests"
+          digest="${{ steps.build.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v4
         with:
-          context: ./frontend
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: |
-            ${{ env.REGISTRY_NAMESPACE }}/temetro-frontend:${{ steps.meta.outputs.version }}
-            ${{ env.REGISTRY_NAMESPACE }}/temetro-frontend:latest
+          name: digests-${{ matrix.image }}-${{ env.PLATFORM_PAIR }}
+          path: ${{ runner.temp }}/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  # Combine the per-arch digests for each image into one multi-arch manifest and
+  # tag it (X.Y.Z + latest).
+  merge:
+    name: Merge ${{ matrix.image }} manifest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [backend, frontend]
+    steps:
+      - name: Derive version from tag
+        id: meta
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Download digests
+        uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/digests
+          pattern: digests-${{ matrix.image }}-*
+          merge-multiple: true
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create manifest list and push
+        working-directory: ${{ runner.temp }}/digests
+        env:
+          IMAGE: ${{ env.REGISTRY_NAMESPACE }}/temetro-${{ matrix.image }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          docker buildx imagetools create \
+            -t "$IMAGE:$VERSION" \
+            -t "$IMAGE:latest" \
+            $(printf "$IMAGE@sha256:%s " *)
+
+      - name: Inspect
+        env:
+          IMAGE: ${{ env.REGISTRY_NAMESPACE }}/temetro-${{ matrix.image }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: docker buildx imagetools inspect "$IMAGE:$VERSION"
+
+  # Both images are published — now cut the GitHub Release with the changelog.
+  release:
+    name: GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: merge
+    permissions:
+      contents: write # create the GitHub Release (the update check reads this)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Derive version from tag
+        id: meta
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
       # Pull this version's section out of CHANGELOG.md so the release has real,
       # human-written notes (the auto "Full Changelog" link is still appended
