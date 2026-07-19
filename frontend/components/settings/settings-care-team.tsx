@@ -136,6 +136,7 @@ export function CareTeamPanel({
   return (
     <SettingsSection
       description={t("settings.careTeam.description")}
+      separated
       title={t("settings.careTeam.title")}
     >
       {error && (
@@ -157,7 +158,7 @@ export function CareTeamPanel({
         </SettingsCard>
       )}
 
-      <SettingsCard className="divide-y divide-border">
+      <SettingsCard className="divide-y divide-border overflow-hidden p-0">
         {loading ? (
           <p className="p-6 text-center text-sm text-muted-foreground">
             {t("settings.careTeam.loading")}
