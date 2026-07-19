@@ -7,6 +7,24 @@ for how releases are cut and published.
 
 ## [Unreleased]
 
+## [0.17.0] — 2026-07-19
+
+### Changed
+- **Pharmacy Add-item now uses a hardware barcode scanner.** The inventory Add-item dialog is
+  built for a USB barcode scanner connected to the computer (a keyboard wedge): scanning a
+  medication types the code as a fast keystroke burst ending in Enter, which is parsed and
+  auto-fills the Barcode/NDC, expiry (AI 17), and lot (AI 10) fields — no need to focus any input
+  first. The barcode field also parses on Enter for manual entry. This replaces the camera scanner
+  in this dialog (the camera scanner stays for importing a patient's wallet code)
+  (`frontend/components/pharmacy/add-inventory-dialog.tsx`).
+- **Care team settings use Separated Panels.** The Care team section now renders as distinct
+  bordered panels on a muted tray, matching the Preferences and AI settings frames
+  (`frontend/components/settings/settings-care-team.tsx`).
+
+### Fixed
+- **Pointer cursor on Activity rows.** Hovering an entry in the Activity feed now shows the pointer
+  cursor (`frontend/components/activity/activity-view.tsx`).
+
 ## [0.16.0] — 2026-07-18
 
 ### Added
